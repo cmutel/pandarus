@@ -25,7 +25,7 @@ install:
   - pip install -r requirements.test.txt
 
 script:
-  - py.test --cov pandarus -v --cov-report
+  - py.test --cov pandarus -v
 
 after_success:
   - codecov
