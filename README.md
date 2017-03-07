@@ -29,14 +29,15 @@ For more information, see the [online documentation](https://pandarus.readthedoc
 
 ## Requirements
 
-    * [docopt](http://docopt.org/)
-    * [eight](https://pypi.python.org/pypi/eight)
-    * [fiona](http://toblerity.org/fiona/index.html)
-    * [GDAL](https://pypi.python.org/pypi/GDAL/)
-    * [pyprind](https://pypi.python.org/pypi/PyPrind/)
-    * [pyproj](https://code.google.com/p/pyproj/)
-    * [Rtree](http://toblerity.org/rtree/)
-    * [shapely](https://pypi.python.org/pypi/Shapely)
+* [appdirs](https://pypi.python.org/pypi/appdirs)
+* [docopt](http://docopt.org/)
+* [fiona](https://pypi.python.org/pypi/Fiona)
+* [pyprind](https://pypi.python.org/pypi/PyPrind/)
+* [pyproj](https://pypi.python.org/pypi/pyproj)
+* [rasterio](https://github.com/mapbox/rasterio)
+* [rasterstats](https://pypi.python.org/pypi/rasterstats)
+* [Rtree](https://pypi.python.org/pypi/Rtree/)
+* [shapely](https://pypi.python.org/pypi/Shapely)
 
 ## Development
 
