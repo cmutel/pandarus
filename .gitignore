@@ -1,0 +1,17 @@
+__pycache__
+*.pyc
+.coverage
+.cache
+docs/_static
+docs/_templates
+docs/_build
+dev
+build
+cover
+htmlcov
+dist
+pandarus.egg-info
+MANIFEST
+Icon*
+.cache
+tests/data/test-data.qgs

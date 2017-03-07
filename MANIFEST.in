@@ -1,0 +1,6 @@
+include *.txt
+include README.rst
+include pandarus/*.py
+include pandarus/tests/*.py
+include pandarus/export/*.py
+include pandarus/tests/data/*.*

@@ -1,0 +1,10 @@
+{
+"type": "FeatureCollection",
+"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },
+"features": [
+{ "type": "Feature", "properties": { "name": "grid cell 0" }, "geometry": { "type": "Polygon", "coordinates": [ [ [ 0.0, 0.0 ], [ 0.0, 1.0 ], [ 1.0, 1.0 ], [ 1.0, 0.0 ], [ 0.0, 0.0 ] ] ] } },
+{ "type": "Feature", "properties": { "name": "grid cell 1" }, "geometry": { "type": "Polygon", "coordinates": [ [ [ 0.0, 1.0 ], [ 0.0, 2.0 ], [ 1.0, 2.0 ], [ 1.0, 1.0 ], [ 0.0, 1.0 ] ] ] } },
+{ "type": "Feature", "properties": { "name": "grid cell 2" }, "geometry": { "type": "Polygon", "coordinates": [ [ [ 1.0, 0.0 ], [ 1.0, 1.0 ], [ 2.0, 1.0 ], [ 2.0, 0.0 ], [ 1.0, 0.0 ] ] ] } },
+{ "type": "Feature", "properties": { "name": "grid cell 3" }, "geometry": { "type": "Polygon", "coordinates": [ [ [ 1.0, 1.0 ], [ 1.0, 2.0 ], [ 2.0, 2.0 ], [ 2.0, 1.0 ], [ 1.0, 1.0 ] ] ] } }
+]
+}

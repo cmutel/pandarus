@@ -1,0 +1,10 @@
+appdirs
+docopt
+eight
+fiona
+pyprind
+pyproj
+Rtree
+rasterio
+rasterstats
+shapely

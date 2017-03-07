@@ -1,0 +1,31 @@
+language: python
+
+sudo: false
+
+cache: pip
+
+addons:
+  apt:
+    packages:
+    - libgdal1h
+    - gdal-bin
+    - libgdal-dev
+    - libspatialindex-dev
+
+matrix:
+  include:
+    - python: 3.5
+
+before_install:
+  - pip install -U pip
+
+install:
+
+  - pip install -r requirements.txt
+  - pip install -r requirements.test.txt
+
+script:
+  - py.test --cov pandarus -v --cov-report
+
+after_success:
+  - codecov
