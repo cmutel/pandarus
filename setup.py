@@ -14,8 +14,8 @@ setup(
         'Operating System :: Microsoft :: Windows',
         'Operating System :: POSIX',
         'Programming Language :: Python',
-        'Programming Language :: Python :: 2.7',
-        'Programming Language :: Python :: 2 :: Only',
+        'Programming Language :: Python :: 3.5',
+        'Programming Language :: Python :: 3 :: Only',
         'Topic :: Scientific/Engineering :: Mathematics',
     ],
     package_data={'pandarus': [
@@ -40,8 +40,8 @@ setup(
         "shapely",
     ],
     license=open('LICENSE.txt').read(),
-    long_description=open('README.rst').read(),
+    long_description=open('README.md').read(),
     name='pandarus',
     packages=["pandarus"],
-    url="https://bitbucket.org/cmutel/pandarus",
+    url="https://github.com/cmutel/pandarus",
 )
