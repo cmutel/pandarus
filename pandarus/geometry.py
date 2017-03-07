@@ -1,5 +1,3 @@
-from __future__ import division
-
 import itertools
 from shapely.geometry import (
     GeometryCollection,

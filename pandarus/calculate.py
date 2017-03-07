@@ -1,7 +1,4 @@
 # -*- coding: utf-8 -*-
-from __future__ import print_function, unicode_literals
-from eight import *
-
 from .filesystem import json_exporter, get_appdirs_path
 from .maps import Map
 from .matching import MatchMaker, areal_calculation, intersection_calculation

@@ -1,8 +1,4 @@
 # -*- coding: utf-8 -*-
-from __future__ import print_function, unicode_literals
-from eight import *
-from future.utils import python_2_unicode_compatible
-
 from .maps import Map
 from .geometry import (
     get_intersection,

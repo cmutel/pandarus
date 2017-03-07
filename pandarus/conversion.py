@@ -1,6 +1,3 @@
-from __future__ import print_function, unicode_literals
-from eight import *
-
 from .filesystem import sha256, get_appdirs_path
 import fiona
 import os

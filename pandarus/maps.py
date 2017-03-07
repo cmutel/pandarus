@@ -1,8 +1,4 @@
 # -*- coding: utf-8 -*-
-from __future__ import print_function, unicode_literals
-from eight import *
-from future.utils import python_2_unicode_compatible
-
 from .conversion import check_type, convert_to_vector
 from .filesystem import sha256
 from fiona import crs as fiona_crs
