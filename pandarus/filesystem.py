@@ -7,7 +7,11 @@ import json
 
 
 def sha256(filepath, blocksize=65536):
-    """Generate SHA 256 hash for file at `filepath`"""
+    """Generate SHA 256 hash for file at ``filepath``.
+
+    ``blocksize`` (default is 65536) is block size to feed to hasher.
+
+    Returns a ``str``."""
     hasher = hashlib.sha256()
     fo = open(filepath, 'rb')
     buf = fo.read(blocksize)
@@ -30,10 +34,13 @@ def json_exporter(data, metadata, filepath, compressed=True):
 
 
 def get_appdirs_path(subdir):
+    """Get path for an ``appdirs`` directory, with subdirectory ``subdir``.
+
+    Returns the full directory path."""
     dirpath = os.path.join(
         appdirs.user_data_dir("pandarus", "pandarus-cache"),
         subdir
     )
     if not os.path.isdir(dirpath):
         os.makedirs(dirpath)
-    return dirpath
+    return os.path.abspath(dirpath)

@@ -68,11 +68,6 @@ For example, if I was matching the raster ``/Users/cmutel/test.raster`` against 
 
     pandarus /Users/cmutel/test.raster /Users/cmutel/test.shp --field2=name /Users/cmutel/foo.bar csv
 
-From Python
------------
-
-Pandarus can also be used as a Python library. See the :ref:`controller` technical documentation.
-
 Output formats
 ==============
 
@@ -120,14 +115,9 @@ Pandarus is relatively computationally efficient. It uses `R tree <http://en.wik
 Wrapping vector and raster data in a common interface
 -----------------------------------------------------
 
-The :ref:`map` object provides a common API for both vector and raster data sources. Vector data is loaded using `Fiona <http://toblerity.org/fiona/index.html>`_, and raster data is loaded using the much less pleasant `GDAL <http://www.gdal.org/>`_ library. See the :ref:`map` and :ref:`raster` technical documentation.
+The map object provides a common API for both vector and raster data sources. Vector data is loaded using `Fiona <http://toblerity.org/fiona/index.html>`_, and raster data is loaded using the much less pleasant `GDAL <http://www.gdal.org/>`__ library. See the map and raster technical documentation.
 
 .. note:: The common API is not perfect. For example, GDAL raster geometries are given as `WKT <http://en.wikipedia.org/wiki/Well-known_text>`_ strings, but Fiona vector geometries are given as `GeoJSON <http://en.wikipedia.org/wiki/GeoJSON>`_ dictionaries (see ``pandarus.maps.to_shape``).
-
-Projection
-----------
-
-Projection between coordinate reference systems is done using a wrapper adapted from code by Sean Gillies based on `pyproj <https://code.google.com/p/pyproj/>`_. See the :ref:`projection` function.
 
 Installation
 ============
@@ -145,7 +135,6 @@ Requirements
 
     * `docopt <http://docopt.org/>`_
     * `fiona <http://toblerity.org/fiona/index.html>`_
-    * `GDAL <https://pypi.python.org/pypi/GDAL/>`_
     * `progressbar <https://pypi.python.org/pypi/progressbar/2.2>`_
     * `pyproj <https://code.google.com/p/pyproj/>`_
     * `Rtree <http://toblerity.org/rtree/>`_
@@ -158,20 +147,10 @@ Easier installation using Canopy
 
 Note that `Rtree` will still have to be manually installed, even when using Canopy. See the `rtree docs <http://toblerity.org/rtree/install.html>`_.
 
-Running tests
--------------
-
-.. warning:: The current level of testing is, shall we say, inadequate. You have been warned.
-
-To run the tests, install `nose <https://nose.readthedocs.io/en/latest/>`_, and run ``nosetests``.
-
 Technical reference
 -------------------
 
 .. toctree::
    :maxdepth: 2
 
-   map
-   raster
-   projection
-   controller
+   technical

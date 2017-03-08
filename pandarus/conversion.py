@@ -14,6 +14,11 @@ import rasterio.warp
 
 
 def check_type(filepath):
+    """Determine if a GIS dataset is raster or vector.
+
+    ``filepath`` is a filepath of a GIS dataset file.
+
+    Returns ``'vector'`` or ``'raster'``. Raises a ``ValueError`` if the file can't be opened with fiona or rasterio."""
     try:
         with fiona.open(filepath) as ds:
             assert ds.meta['schema']['geometry'] != 'None'

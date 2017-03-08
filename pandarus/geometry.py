@@ -15,7 +15,9 @@ from shapely.ops import cascaded_union
 
 
 def normalize_dictionary_values(dct, total=1):
-    """In a dictionary ``dct`` with numeric values, normalize these values to sum to ``total``"""
+    """In a dictionary ``dct`` with numeric values, normalize these values to sum to ``total``.
+
+    Returns a dictionary."""
     n = total / (sum(v['measure'] for v in dct.values()) or 1)
     for v in dct.values():
         v['measure'] *= n
@@ -23,7 +25,9 @@ def normalize_dictionary_values(dct, total=1):
 
 
 def clean(geom):
-    """Clean invalid geometries using buffer trick"""
+    """Clean invalid geometries using buffer trick.
+
+    ``geom`` is a shapely geometry; returns a shapely geometry."""
     if not geom.is_valid:
         geom = geom.buffer(0)
     return geom if geom.is_valid else GeometryCollection([])
@@ -138,6 +142,7 @@ def get_intersection(obj, kind, collection, indices,
 
 
 def measure_area(geom, to_meters=None):
+    """"""
     if to_meters is None:
         return geom.area
     else:
@@ -145,6 +150,7 @@ def measure_area(geom, to_meters=None):
 
 
 def measure_line(geom, to_meters=None):
+    """"""
     if to_meters is None:
         return geom.length
     else:
