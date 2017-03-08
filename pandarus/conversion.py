@@ -5,7 +5,6 @@ import rasterio
 import tempfile
 
 from rasterio.rio.helpers import coords, write_features
-from rasterio.transform import Affine
 from rasterio.crs import CRS
 
 import numpy as np

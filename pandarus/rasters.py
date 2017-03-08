@@ -143,25 +143,6 @@ def gen_zonal_stats(
     """
     stats, run_count = check_stats(stats, categorical)
 
-    # Handle 1.0 deprecations
-    transform = kwargs.get('transform')
-    if transform:
-        warnings.warn("GDAL-style transforms will disappear in 1.0. "
-                      "Use affine=Affine.from_gdal(*transform) instead",
-                      DeprecationWarning)
-        if not affine:
-            affine = Affine.from_gdal(*transform)
-
-    cp = kwargs.get('copy_properties')
-    if cp:
-        warnings.warn("Use `geojson_out` to preserve feature properties",
-                      DeprecationWarning)
-
-    bn = kwargs.get('band_num')
-    if bn:
-        warnings.warn("Use `band` to specify band number", DeprecationWarning)
-        band = band_num
-
     # check inputs related to percent coverage
     percent_cover = False
     if percent_cover_weighting or percent_cover_selection is not None:

@@ -16,7 +16,6 @@ import logging
 import math
 import multiprocessing
 import pyprind
-import time
 
 area_mapping = {
     'point': lambda x, y: 1,

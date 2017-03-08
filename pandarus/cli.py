@@ -19,11 +19,8 @@ Options:
 
 """
 # -*- coding: utf-8 -*-
-from __future__ import print_function, unicode_literals
-from eight import *
-
 from docopt import docopt
-from pandarus import *
+from pandarus import Pandarus
 import os
 import sys
 

@@ -1,4 +1,3 @@
-import itertools
 from shapely.geometry import (
     GeometryCollection,
     LinearRing,
@@ -10,7 +9,6 @@ from shapely.geometry import (
     Polygon,
     shape,
 )
-from functools import partial
 from shapely.ops import cascaded_union
 
 
