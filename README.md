@@ -1,5 +1,9 @@
 # Pandarus
 
+[![Build Status](https://travis-ci.org/cmutel/pandarus.svg?branch=master)](https://travis-ci.org/cmutel/pandarus) [![codecov](https://codecov.io/gh/cmutel/pandarus/branch/master/graph/badge.svg)](https://codecov.io/gh/cmutel/pandarus)
+ [![Docs](https://readthedocs.org/projects/pandarus/badge/?version=latest)](http://pandarus.readthedocs.io/?badge=latest)
+
+
 Pandarus is a GIS software toolkit for regionalized life cycle assessment. It is designed to work with [brightway LCA framework](https://brightwaylca.org), [brightway2-regional](), and [Constructive Geometries](https://bitbucket.org/cmutel/constructive-geometries).
 
 For more information, see the [online documentation](https://pandarus.readthedocs.io/).
