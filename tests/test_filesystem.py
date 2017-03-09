@@ -1,4 +1,4 @@
-from pandarus.filesystem import sha256, json_exporter
+from pandarus.filesystem import sha256, json_exporter, get_appdirs_path
 import tempfile
 import os
 
@@ -21,3 +21,17 @@ def test_json_exporting():
     assert fp
     assert fp.endswith(".bz2")
     assert os.path.isfile(fp)
+
+
+def test_appdirs_path():
+    dp = get_appdirs_path("test-dir")
+    assert os.path.exists(dp)
+    assert os.path.isdir(dp)
+    assert "test-dir" in dp
+    assert "pandarus" in dp
+
+    os.rmdir(dp)
+    assert not os.path.exists(dp)
+    dp = get_appdirs_path("test-dir")
+    assert os.path.exists(dp)
+    os.rmdir(dp)
