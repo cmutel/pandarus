@@ -105,6 +105,12 @@ def test_getitem():
     assert m[2] == expected
     assert hasattr(m, "_index_map")
 
+@pytest.mark.skipif('TRAVIS' in os.environ,
+                    reason="No GPKG driver in Travis")
+def test_getitem_geopackage():
+    print("Supported Fiona drivers:")
+    print(fiona.supported_drivers)
+
     m = Map(countries)
     assert m[0]
     assert m[0]['id'] == '1'
