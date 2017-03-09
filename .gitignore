@@ -16,3 +16,4 @@ MANIFEST
 Icon*
 .cache
 tests/data/test-data.qgs
+*.log
