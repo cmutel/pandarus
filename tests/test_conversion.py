@@ -163,3 +163,11 @@ def test_clean_raster_nodata():
     array = np.array([[0, -1., -99., -999., -9999.]])
     fp = create_raster('foo.tif', array, dtype='float64', nodata=-1e50)
     assert clean_raster(fp) is None
+
+def test_clean_raster_try_given_nodata():
+    array = np.array([[0, -1., -99., -999., -9999]])
+    fp = create_raster('foo.tif', array, dtype='float64', nodata=-1e50)
+    out = clean_raster(fp, nodata=42)
+    with rasterio.open(out) as f:
+        assert f.profile['nodata'] == 42
+    os.remove(fp)
