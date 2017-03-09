@@ -93,7 +93,9 @@ class Map(object):
     def __getitem__(self, index):
         """Get feature from a fiona dataset.
 
-        As Fiona is just a `simple wrapper to GDAL <https://github.com/Toblerity/Fiona/blob/0af2eac3fdee25d9660e4d90dcf97513cb4a15b4/fiona/ogrext2.pyx#L715>`__, and `GDAL has no guarantees on index starting values or continuity <https://trac.osgeo.org/gdal/ticket/356>`__, we construct a mapping dictionary from what we get when we enumerate the source file to what Python expects. This mapping dictionary is only created the first time ``__getitem__`` is called. Among commonly used formats, only Geopackage starts with 1 (geopackage[0] will just return ``None``)."""
+        As Fiona is just a `simple wrapper to GDAL <https://github.com/Toblerity/Fiona/blob/0af2eac3fdee25d9660e4d90dcf97513cb4a15b4/fiona/ogrext2.pyx#L715>`__, and `GDAL has no guarantees on index starting values or continuity <https://trac.osgeo.org/gdal/ticket/356>`__, we construct a mapping dictionary from what we get when we enumerate the source file to what Python expects. This mapping dictionary is only created the first time ``__getitem__`` is called. Among commonly used formats, only Geopackage starts with 1 (geopackage[0] will just return ``None``).
+
+        Note that our lookup dictionary breaks negative indexing."""
         if not hasattr(self, "_index_map"):
             self._create_index_map()
         return self.file[self._index_map[index]]
