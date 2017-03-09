@@ -30,7 +30,6 @@ setup(
     install_requires=[
         "appdirs",
         "docopt",
-        "eight",
         "fiona",
         "pyprind",
         "pyproj",
