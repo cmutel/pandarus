@@ -1,5 +1,6 @@
 from pandarus.maps import Map, DuplicateFieldID
 from rtree import Rtree
+import fiona
 import os
 import pandarus
 import pytest
@@ -87,6 +88,9 @@ def test_magic_methods():
     assert len(m) == 4
 
 def test_getitem():
+    print("Supported Fiona drivers:")
+    print(fiona.supported_drivers)
+
     m = Map(grid)
 
     expected = {
