@@ -3,6 +3,7 @@ import fiona
 import os
 import rasterio
 import tempfile
+import warnings
 
 from rasterio.rio.helpers import coords, write_features
 from rasterio.crs import CRS
@@ -155,8 +156,9 @@ def clean_raster(fp, new_fp=None, band=1, nodata=None):
 
     # Set nodata to a reasonable value if possible
     if profile.get('nodata') is None and (array < -1e30).sum():
-        print("No `nodata` value set, but large negative numbers present. "
-              "Please set a valid `nodata` value")
+        warnings.warn("No `nodata` value set, but large negative numbers present. "
+              "Please set a valid `nodata` value in raster file.")
+        return
     elif 'nodata' in profile and profile['nodata'] < -1e30:
         nodatas = [-1, -99, -999, -9999]
         if nodata is not None:
@@ -172,9 +174,11 @@ def clean_raster(fp, new_fp=None, band=1, nodata=None):
             array[np.isnan(array)] = nodata
             profile['nodata'] = nodata
         else:
-            print(("`nodata` value is large and negative ({}), but no suitable "
-                   "replacement value found. Please specify a `nodata` value."
+            warnings.warn((
+                "`nodata` value is large and negative ({}), but no suitable "
+                "replacement value found. Please specify a `nodata` value."
             ).format(profile['nodata']))
+            return
 
     if dtypes[band - 1] == rasterio.float64:
         if not ((array < np.finfo('float32').min).sum() or
@@ -183,9 +187,6 @@ def clean_raster(fp, new_fp=None, band=1, nodata=None):
             profile['dtype'] = np.float32
         else:
             print("Not converting to 32 bit float; out of range values present.")
-
-    if 'transform' in profile:
-        del profile['transform']
 
     profile['tiled'] = False
     if 'blockysize' in profile:
