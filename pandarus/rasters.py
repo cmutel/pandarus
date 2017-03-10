@@ -14,17 +14,6 @@ from shapely.geometry import shape
 # Same license as rasterstats
 
 
-def zonal_stats(*args, **kwargs):
-    """The primary zonal statistics entry point.
-
-    All arguments are passed directly to ``gen_zonal_stats``.
-    See its docstring for details.
-
-    The only difference is that ``zonal_stats`` will
-    return a list rather than a generator."""
-    return list(gen_zonal_stats(*args, **kwargs))
-
-
 def gen_zonal_stats(
         vectors, raster,
         layer=0,
@@ -195,10 +184,8 @@ def gen_zonal_stats(
                 percent_cover = False
 
             geom_bounds = tuple(geom.bounds)
-
             fsrc = rast.read(bounds=geom_bounds)
 
-            # rasterized geometry
             if percent_cover:
                 cover_weights = rasterize_pctcover_geom(
                     geom, shape=fsrc.shape, affine=fsrc.affine,
@@ -377,18 +364,15 @@ def rasterize_pctcover_geom(geom, shape, affine, scale=None, all_touched=False):
     if scale is None:
         scale = 10
 
-    min_dtype = min_scalar_type(scale**2)
+    min_dtype = min_scalar_type(scale ** 2)
 
-    pixel_size = affine[0]/scale
-    topleftlon = affine[2]
-    topleftlat = affine[5]
+    new_affine = Affine(affine[0]/scale, 0, affine[2],
+                        0, affine[4]/scale, affine[5])
 
-    new_affine = Affine(pixel_size, 0, topleftlon,
-                    0, -pixel_size, topleftlat)
-
-    new_shape = (shape[0]*scale, shape[1]*scale)
+    new_shape = (shape[0] * scale, shape[1] * scale)
 
     rv_array = rasterize_geom(geom, new_shape, new_affine, all_touched=all_touched)
+
     rv_array = rebin_sum(rv_array, shape, min_dtype)
 
     return rv_array.astype('float32') / (scale**2)
