@@ -15,6 +15,7 @@ import datetime
 import logging
 import math
 import multiprocessing
+import os
 import pyprind
 
 area_mapping = {
@@ -32,6 +33,7 @@ kind_mapping = {
     'Point': 'point',
     'MultiPoint': 'point',
 }
+
 
 class BetterBar(pyprind.ProgBar):
     def finish(self):
@@ -55,15 +57,17 @@ def chunker(iterable, chunk_size):
         yield list(iterable[i:i + chunk_size])
 
 
-def logger_init():
+def logger_init(dirpath=None):
     # Adapted from http://stackoverflow.com/a/34964369/164864
     logging_queue = multiprocessing.Queue()
     # this is the handler for all log records
-    filename = "{}-{}.log".format(
+    filepath = "{}-{}.log".format(
         'pandarus-worker', datetime.datetime.now().strftime("%d-%B-%Y-%I-%M%p")
     )
+    if dirpath is not None:
+        filepath = os.path.join(dirpath, filepath)
     handler = logging.FileHandler(
-        filename,
+        filepath,
         encoding='utf-8',
     )
     handler.setFormatter(logging.Formatter("%(asctime)s %(levelname)s %(lineno)d %(message)s"))
@@ -197,75 +201,6 @@ def areal_calculation(from_map, from_objs, worker_id, to_meters=True):
     return results
 
 
-def raster_matcher(from_map, from_objs, to_map, raster_fp, worker_id):
-    """Multiprocessing worker for map matching"""
-    logging.info("""Starting `raster_matcher`:
-    from map: {}
-    from objs: {} ({} to {})
-    to map: {}
-    raster_fp: {}
-    worker id: {}""".format(
-        from_map, len(from_objs or []) or 'all',
-        min(from_objs or [0]), max(from_objs or [0]),
-        raster_fp, to_map, worker_id
-    ))
-
-    results = []
-
-    to_map = Map(to_map)
-    if to_map.geometry not in ('Polygon', 'MultiPolygon'):
-        raise ValueError("`to_map` geometry must be polygons")
-    rtree_index = to_map.create_rtree_index()
-    logging.info("Worker {}: Loaded `to` map.".format(worker_id))
-
-    from_map = Map(from_map)
-    try:
-        kind = kind_mapping[from_map.geometry]
-    except KeyError:
-        raise ValueError("No valid geometry type in map {}".format(from_map))
-    logging.info("Worker {}: Loaded `from` map.".format(worker_id))
-
-    skip_projection = (from_map.crs == to_map.crs) or \
-        (Proj(wgs84(from_map.crs)).is_latlong() and \
-         Proj(wgs84(to_map.crs)).is_latlong())
-
-    if from_objs:
-        from_gen = ((index, from_map[index]) for index in from_objs)
-    else:
-        from_gen = enumerate(from_map)
-
-    if to_meters:
-        meter_projection = lambda x: project(x, to_map.crs, MOLLWEIDE)
-    else:
-        meter_projection = None
-
-    for from_index, from_obj in from_gen:
-        try:
-            geom = shape(from_obj['geometry'])
-
-            if not geom.is_valid:
-                geom = geom.buffer(0)
-            if not skip_projection:
-                geom = project(geom, from_map.crs, to_map.crs)
-
-            for k, v in allocation_mapper[kind](
-                geom,
-                to_map,
-                rtree_index.intersection(geom.bounds),
-                meter_projection
-            ).items():
-                results[(from_index, k)] = v
-
-        except TopologicalError:
-            logging.exception("Skipping topological error.")
-            continue
-        except:
-            logging.exception("Intersection worker failed.")
-            raise
-
-    return results
-
-
 class MatchMaker(object):
     @staticmethod
     def get_jobs(map_size):
@@ -277,7 +212,7 @@ class MatchMaker(object):
         return chunk_size, num_jobs, BetterBar(map_size)
 
     @classmethod
-    def areas(cls, from_map, from_objs=None, cpus=None):
+    def areas(cls, from_map, from_objs=None, cpus=None, log_dir=None):
         if from_objs:
             map_size = len(from_objs)
             ids = from_objs
@@ -287,7 +222,7 @@ class MatchMaker(object):
 
         chunk_size, num_jobs, bar = cls.get_jobs(map_size)
 
-        queue_listener, logging_queue = logger_init()
+        queue_listener, logging_queue = logger_init(log_dir)
         logging.info("""Starting MatchMaker `areas` calculation.
         Map: {}
         Map size: {}
@@ -340,7 +275,7 @@ class MatchMaker(object):
 
 
     @classmethod
-    def intersect(cls, from_map, to_map, from_objs=None, cpus=None):
+    def intersect(cls, from_map, to_map, from_objs=None, cpus=None, log_dir=None):
         if from_objs:
             map_size = len(from_objs)
             ids = from_objs
@@ -350,7 +285,7 @@ class MatchMaker(object):
 
         chunk_size, num_jobs, bar = cls.get_jobs(map_size)
 
-        queue_listener, logging_queue = logger_init()
+        queue_listener, logging_queue = logger_init(log_dir)
         logging.info("""Starting MatchMaker `intersect` calculation.
         From map: {}
         To map: {}
