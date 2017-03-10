@@ -1,123 +1,65 @@
 Pandarus
 ========
 
-Pandarus is software for taking two geospatial data sets (either raster or vector), and calculating their combined intersected areas. Here is an example of two input maps, one in blue, the other in red:
-
-.. image:: images/map.png
-    :align: center
-
-Pandarus would calculate the intersected areas of each spatial unit of both maps, and output the following:
-
-.. code-block:: python
-
-    {(0, 0): 0.25,
-     (0, 1): 0.25,
-     (0, 3): 0.25,
-     (0, 4): 0.25,
-     (1, 1): 0.25,
-     (1, 2): 0.25,
-     (1, 4): 0.25,
-     (1, 5): 0.25,
-     (2, 3): 0.25,
-     (2, 4): 0.25,
-     (2, 6): 0.25,
-     (2, 7): 0.25,
-     (3, 4): 0.25,
-     (3, 5): 0.25,
-     (3, 7): 0.25,
-     (3, 8): 0.25}
-
-The intersected areas are given in square meters. Because Pandarus was designed for global data sets, the `Mollweide projection <http://en.wikipedia.org/wiki/Mollweide_projection>`_ is used as the default projection for calculating areas. Although no projection is perfect, the Mollweide has been found to be a reasonable compromise (e.g. [1]_)
-
-.. warning:: Pandarus is still in development, and given how people misuse and even abuse geospatial data, it will certainly fail for some maps and use cases. Please feel free to file `bug reports <https://bitbucket.org/cmutel/pandarus/issues/new>`_ if things don't work as you expect.
-
-.. [1] Usery, E.L., and Seong, J.C., (2000) `A comparison of equal-area map projections for regional and global raster data <http://cegis.usgs.gov/projection/pdf/nmdrs.usery.prn.pdf>`_
-
-Referencing spatial features
-----------------------------
-
-There is no standard way to reference vector features or raster cells. Internally, Pandarus iterates over vector features in the file order, and assigns each an integer id starting from zero. For rasters, a similar procedure is followed, again with an incrementing integer id, iterating over cells starting from the bottom left of the raster, and iterating over rows and then columns.
-
-For vector data sets, the label of a data column which uniquely identifies each feature can be given, and Pandarus will translate the integer id to that data column value. Raster data sets will have their integer ids automatically translated to the label ``"Cell(x, y)``, where ``x`` and ``y`` are the longitude and latitude of the raster cell centroid.
+Pandarus is a GIS software toolkit for regionalized life cycle assessment. It is designed to work with `brightway LCA framework <https://brightwaylca.org>`__, `brightway2-regional <https://bitbucket.org/cmutel/brightway2-regional>`__, and `Constructive Geometries <https://bitbucket.org/cmutel/constructive-geometries>`__. A separate library, `pandarus-remote <https://bitbucket.org/cmutel/pandarus_remote>`__, provides a web API to run Pandarus on a server.
 
 Why Pandarus?
 -------------
 
 The software matches two different maps against each other, and `Pandarus was a bit of a matchmaker himself <http://en.wikipedia.org/wiki/Pandarus>`_. Plus, ancient names are 200% more science-y.
 
-Usage
-=====
+Calculating areas
+-----------------
 
-Pandarus installs a command line programs, ``pandarus``. It is called in the command shell or terminal:
+Because Pandarus was designed for global data sets, the `Mollweide projection <http://en.wikipedia.org/wiki/Mollweide_projection>`_ is used as the default equal-area projection for calculating areas (in square meters). Although no projection is perfect, the Mollweide has been found to be a reasonable compromise (e.g. [1]_)
 
-.. code-block:: bash
+.. [1] Usery, E.L., and Seong, J.C., (2000) `A comparison of equal-area map projections for regional and global raster data <http://cegis.usgs.gov/projection/pdf/nmdrs.usery.prn.pdf>`_
 
-    pandarus <map1> [--field1=<field1>] <map2> [--field2=<field2>] <output> [csv|json|pickle]
+Capabilities
+============
 
-After the program name, you need to give the locations of the two spatial data sets, as well as the name of the file to create for the output:
+Matching two vector datasets
+----------------------------
 
-    * ``<map1>`` is the filepath of the first raster or vector spatial data set
-    * ``<map2>`` is the filepath of the second raster or vector spatial data set
-    * ``<output>`` is the filepath of the outputted file
-    * ``<field1>`` and ``<field2>``, if specified, are the names of the columns used to uniquely identify each feature in ``<map1>`` and/or ``<map2>``. For rasters, this value is ignored.
-    * ``csv`` or ``json`` or ``pickle``, if specified, is the output format. ``json`` is the default value.
+Pandarus can match two vector datasets, generating a new vector dataset which includes each possible combination of a spatial unit in the first dataset with a spatial unit in the second dataset. This functionality is used in calculating which characterization factors to apply to an emission in a given region.
 
-For example, if I was matching the raster ``/Users/cmutel/test.raster`` against the shapefile ``/Users/cmutel/test.shp``, which had a unique data column ``name``, and wanted to create the file ``/Users/cmutel/foo.bar``, using the ``csv`` format, I would enter:
+In addition to
 
-.. code-block:: bash
+.. image:: images/map.png
+    :align: center
 
-    pandarus /Users/cmutel/test.raster /Users/cmutel/test.shp --field2=name /Users/cmutel/foo.bar csv
+.. automethod:: pandarus.calculate.Pandarus.intersect
 
-Output formats
-==============
+Calculating the areas of spatial units
+--------------------------------------
 
-The basic output is, for each intersecting spatial unit in the first and second map, a unique ID for each spatial unit and the intersected area, e.g. ``('Switzerland', 'Rhine watershed', 42)``. The are three ways of reformatting the data when written to a file.
+Pandarus can calculate the area of each spatial unit in a vector dataset. This functionality is used for normalization by total area when matching characterization factors to emissions in a given region.
 
-JSON
-----
+.. image:: images/map.png
+    :align: center
 
-`JSON <http://en.wikipedia.org/wiki/JSON>`_ is a data format originally developed for Javascript but now used widely in many programming languages. This is the recommended and default output format for Pandarus. The JSON output format is:
+.. automethod:: pandarus.calculate.Pandarus.areas
 
-.. code-block:: javascript
+Calculating raster statistics against a vector dataset
+------------------------------------------------------
 
-    [
-        [map1 id, map2 id, intersected area],
-    ]
+Pandarus can calculate mask a raster with each feature from a vector dataset, and calculate the min, max, and average values from the intersected raster cells. This functionality is provided by a patched version of `rasterstats <https://github.com/perrygeo/python-rasterstats>`__.
 
-CSV
----
+.. image:: images/map.png
+    :align: center
 
-Pandarus can also export to CSV files. It includes a copy of `unicodecsv <https://pypi.python.org/pypi/unicodecsv/>`_, so that map ids aren't limited to the ASCII character set. CSV files are UTF-8 encoded, and have the following format:
+.. automethod:: pandarus.calculate.Pandarus.rasterstats
 
-.. code-block:: none
+Cleaning and vectorizing raster files
+-------------------------------------
 
-    map1 id, map2 id, intersected area
+Pandarus provides some utility functions to help manage raster files, which are not always provided with rich and correct metadata.
 
-Pickle
-------
+.. autofunction:: pandarus.clean_raster
 
-Pandarus results can also be serialized into Python `pickles <http://docs.python.org/2/library/pickle.html>`_ with the following format:
+.. autofunction:: pandarus.round_raster
 
-.. code-block:: javascript
-
-    [
-        (map1 id, map2 id): intersected area
-    ]
-
-Technical Details
-=================
-
-Computational efficiency
-------------------------
-
-Pandarus is relatively computationally efficient. It uses `R tree <http://en.wikipedia.org/wiki/R-tree>`_ indices to screen out geometries where no intersections are possible, and uses Python `multiprocessing <http://docs.python.org/2/library/multiprocessing.html>`_ to split work across all available CPUs. Given its use case in regionalized LCA, further optimizations didn't seem worthwhile.
-
-Wrapping vector and raster data in a common interface
------------------------------------------------------
-
-The map object provides a common API for both vector and raster data sources. Vector data is loaded using `Fiona <http://toblerity.org/fiona/index.html>`_, and raster data is loaded using the much less pleasant `GDAL <http://www.gdal.org/>`__ library. See the map and raster technical documentation.
-
-.. note:: The common API is not perfect. For example, GDAL raster geometries are given as `WKT <http://en.wikipedia.org/wiki/Well-known_text>`_ strings, but Fiona vector geometries are given as `GeoJSON <http://en.wikipedia.org/wiki/GeoJSON>`_ dictionaries (see ``pandarus.maps.to_shape``).
+.. autofunction:: pandarus.convert_to_vector
 
 Installation
 ============
@@ -128,27 +70,34 @@ Pandarus can be installed directly from `PyPi <https://pypi.python.org/pypi>`_ u
 
     pip install pandarus
 
-Pandarus source code is on `bitbucket <https://bitbucket.org/cmutel/pandarus>`_.
+However, it is easy to run into errors if libraries are compiled against different versions of GDAL. One way to get an installation that is almost guaranteed is to use `Conda <https://conda.io/miniconda.html>`__:
+
+.. code-block:: bash
+
+    conda config --add channels conda-forge cmutel
+    conda create -n pandarus python=3.5
+    source activate pandarus
+    conda install pandarus
+
+Pandarus source code is on `GitHub <https://github.com/cmutel/pandarus>`__.
 
 Requirements
 ------------
 
-    * `docopt <http://docopt.org/>`_
-    * `fiona <http://toblerity.org/fiona/index.html>`_
-    * `progressbar <https://pypi.python.org/pypi/progressbar/2.2>`_
-    * `pyproj <https://code.google.com/p/pyproj/>`_
-    * `Rtree <http://toblerity.org/rtree/>`_
-    * `shapely <https://pypi.python.org/pypi/Shapely>`_
+Pandarus uses the following libraries:
 
-Easier installation using Canopy
---------------------------------
+    * `appdirs <https://pypi.python.org/pypi/appdirs>`__
+    * `docopt <http://docopt.org/>`__
+    * `fiona <http://toblerity.org/fiona/index.html>`__
+    * `pyprind <https://pypi.python.org/pypi/PyPrind>`__
+    * `pyproj <https://code.google.com/p/pyproj/>`__
+    * `Rtree <http://toblerity.org/rtree/>`__
+    * `rasterio <https://github.com/mapbox/rasterio>`__
+    * `rasterstats <https://pypi.python.org/pypi/rasterstats>`__
+    * `shapely <https://pypi.python.org/pypi/Shapely>`__
 
-`Enthought Canopy <https://www.enthought.com/products/canopy/>`_ is an easy way to install the geospatial dependencies, which can be a pain, especially on Windows.
-
-Note that `Rtree` will still have to be manually installed, even when using Canopy. See the `rtree docs <http://toblerity.org/rtree/install.html>`_.
-
-Technical reference
--------------------
+Technical Reference
+===================
 
 .. toctree::
    :maxdepth: 2

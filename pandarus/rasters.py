@@ -35,7 +35,7 @@ def gen_zonal_stats(
     """Zonal statistics of raster values aggregated to vector geometries.
 
     Parameters
-    ----------
+
     vectors: path to an vector source or geo-like python objects
 
     raster: ndarray or path to a GDAL raster source
@@ -122,7 +122,7 @@ def gen_zonal_stats(
         Use with `prefix` to ensure unique and meaningful property names.
 
     Returns
-    -------
+
     generator of dicts (if geojson_out is False)
         Each item corresponds to a single vector feature and
         contains keys for each of the specified stats.

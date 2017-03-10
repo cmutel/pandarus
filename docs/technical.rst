@@ -61,6 +61,3 @@ rasters
 -------
 
 .. automethod:: pandarus.rasters.gen_zonal_stats
-
-.. automethod:: pandarus.rasters.zonal_stats
-
