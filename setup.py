@@ -19,17 +19,10 @@ setup(
         'Topic :: Scientific/Engineering :: Mathematics',
     ],
     package_data={'pandarus': [
-        "tests/data/*.gpkg",
-        "tests/data/*.tif",
+        "tests/data/*.*",
     ]},
-    entry_points = {
-        'console_scripts': [
-            'pandarus = pandarus.cli:main',
-        ]
-    },
     install_requires=[
         "appdirs",
-        "docopt",
         "fiona",
         "pyprind",
         "pyproj",

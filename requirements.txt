@@ -1,5 +1,4 @@
 appdirs
-docopt
 fiona
 pyprind
 pyproj

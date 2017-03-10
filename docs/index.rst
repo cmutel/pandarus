@@ -87,7 +87,6 @@ Requirements
 Pandarus uses the following libraries:
 
     * `appdirs <https://pypi.python.org/pypi/appdirs>`__
-    * `docopt <http://docopt.org/>`__
     * `fiona <http://toblerity.org/fiona/index.html>`__
     * `pyprind <https://pypi.python.org/pypi/PyPrind>`__
     * `pyproj <https://code.google.com/p/pyproj/>`__

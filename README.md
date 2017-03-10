@@ -18,7 +18,6 @@ Pandarus provides the following functionality:
 ## Requirements
 
 * [appdirs](https://pypi.python.org/pypi/appdirs)
-* [docopt](http://docopt.org/)
 * [fiona](https://pypi.python.org/pypi/Fiona)
 * [pyprind](https://pypi.python.org/pypi/PyPrind/)
 * [pyproj](https://pypi.python.org/pypi/pyproj)

@@ -1,4 +1,5 @@
 __pycache__
+TODO.*
 .hg*
 *.pyc
 .coverage
