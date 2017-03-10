@@ -2,10 +2,14 @@
 from __future__ import print_function, unicode_literals
 from eight import *
 
+from affine import Affine
 from fiona import crs as fiona_crs
+from rasterio.crs import CRS
 import fiona
 import itertools
+import numpy as np
 import os
+import rasterio
 
 dirpath = os.path.abspath(os.path.join(os.path.dirname(__file__), "data"))
 
@@ -21,6 +25,28 @@ wgs84 = fiona_crs.from_string("+datum=WGS84 +ellps=WGS84 +no_defs +proj=longlat"
 - MultiPolygon
 
 """
+
+def create_raster(fp, array, nodata=-1, **kwargs):
+    profile = {
+        'count': 1,
+        'nodata': nodata,
+        'dtype': 'float32',
+        'width': array.shape[1],
+        'height': array.shape[0],
+        'affine': Affine(0.4, 0, 0, 0, -0.2, 2),
+        'driver': 'GTiff',
+        'compress': 'lzw',
+        'crs': CRS.from_epsg(4326)
+    }
+    profile.update(kwargs)
+
+    with rasterio.Env():
+        with rasterio.open(fp, 'w', **profile) as dst:
+            dst.write(array, 1)
+
+    return fp
+
+
 def create_schema(geometry='Polygon'):
     return {'geometry': geometry, 'properties': {'name': 'str'}}
 
@@ -123,6 +149,11 @@ def create_test_datasets():
         create_schema("LineString")
     )
 
+    # Test raster for rasterstats
+    array = np.arange(50).reshape((10, 5)).astype(np.float32)
+    array[4, :] = -1
+    array[5, :] = -1
+    create_raster(os.path.join(dirpath, 'range.tif'), array)
 
 
 if __name__ == '__main__':
