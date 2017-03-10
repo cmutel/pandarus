@@ -23,14 +23,16 @@ class Pandarus(object):
         self.from_map = Map(from_filepath, **from_metadata)
         self.metadata = {'first': {
             'sha256': self.from_map.hash,
-            'filename': os.path.basename(from_filepath)
+            'filename': os.path.basename(from_filepath),
+            'path': from_filepath,
         }}
         self.metadata['first'].update(from_metadata)
         if to_filepath is not None:
             self.to_map = Map(to_filepath, **to_metadata)
             self.metadata['second'] = {
                 'sha256': self.to_map.hash,
-                'filename': os.path.basename(to_filepath)
+                'filename': os.path.basename(to_filepath),
+                'path': to_filepath
             }
             self.metadata['second'].update(to_metadata)
 
@@ -63,11 +65,7 @@ class Pandarus(object):
                    for index, row in enumerate(stats_generator)]
 
         metadata = {
-            'vector': {
-                'sha256': self.from_map.hash,
-                'filepath': self.from_map.filepath,
-                'field': self.metadata['first']['field']
-            },
+            'vector': self.metadata['first'],
             'raster': {
                 'sha256': sha256(raster),
                 'filepath': raster,
@@ -78,7 +76,7 @@ class Pandarus(object):
         json_exporter(results, metadata, filepath, compressed)
         return filepath
 
-    def intersect(self, cpus=None, to_meters=True):
+    def intersections(self, cpus=None, to_meters=True):
         if cpus != 0:
             self.data = MatchMaker.intersect(
                 self.from_map.filepath,
@@ -110,20 +108,26 @@ class Pandarus(object):
             }
             yield gj
 
-    def intersection_files(self, filepath=None, cpus=None, pool=True, driver='GeoJSON'):
+    def intersect(self, dirpath=None, cpus=None, driver='GeoJSON', compress=True):
         if not hasattr(self, 'to_map'):
             raise ValueError("Need ``to_map`` for intersection")
-        if not filepath:
+        if not dirpath:
             dirpath = get_appdirs_path("intersections")
-            filepath = os.path.join(
-                dirpath,
-                "{}-{}.".format(*sorted([self.from_map.hash, self.to_map.hash]) + driver.lower())
-            )
 
-        if os.path.exists(filepath):
-            os.remove(filepath)
+        base_filepath = os.path.join(dirpath, "{}.{}.".format(
+            *sorted([self.from_map.hash, self.to_map.hash]))
+        )
 
-        results = self.as_feature(self.intersect(cpus, pool))
+        fiona_fp = base_filepath + "." + driver.lower()
+        data_fp = base_filepath + ".json"
+
+        if os.path.exists(fiona_fp):
+            os.remove(fiona_fp)
+        if os.path.exists(data_fp):
+            os.remove(data_fp)
+
+        self.intersections(cpus)
+        self.export(data_fp, compress)
 
         schema = {
             'properties': {
@@ -142,12 +146,12 @@ class Pandarus(object):
                     driver=driver,
                     schema=schema,
                 ) as sink:
-                for f in results:
+                for f in self.as_feature(self.data):
                     sink.write(f)
 
-        return filepath
+        return fiona_fp, data_fp
 
-    def areas(self, cpus=None, to_meters=True):
+    def calculate_areas(self, cpus=None):
         if cpus != 0:
             self.data = MatchMaker.areas(
                 self.from_map.filepath,
@@ -156,12 +160,21 @@ class Pandarus(object):
             )
         else:
             self.data = areal_calculation(
-                self.from_map.filepath,
-                None,
-                1,
-                to_meters=to_meters,
+                self.from_map.filepath, None, 1
             )
         return self.data
+
+    def areas(self, dirpath=None, cpus=None, compress=True):
+        if not dirpath:
+            dirpath = get_appdirs_path("areas")
+
+        filepath = os.path.join(dirpath, self.from_map.hash + ".json")
+
+        if os.path.exists(filepath):
+            os.remove(filepath)
+
+        self.calculate_areas(cpus)
+        self.export(filepath, compress)
 
     def add_from_map_fieldname(self, fieldname=None):
         """Turn feature integer indices into actual field values using field `fieldname`"""
