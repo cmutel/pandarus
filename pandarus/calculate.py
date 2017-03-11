@@ -24,6 +24,7 @@ class Pandarus(object):
     """Controller for all actions."""
     def __init__(self, from_filepath, to_filepath=None,
             from_metadata={}, to_metadata={}):
+        self.data = None
         self.from_filepath = from_filepath
         self.from_map = Map(from_filepath, **from_metadata)
         self.metadata = {'first': {
@@ -88,7 +89,7 @@ class Pandarus(object):
         return filepath
 
     def intersections(self, cpus=None, to_meters=True):
-        if cpus != 0:
+        if cpus:
             self.data = MatchMaker.intersect(
                 self.from_map.filepath,
                 self.to_map.filepath,
@@ -104,7 +105,7 @@ class Pandarus(object):
             )
         return self.data
 
-    def as_feature(self, dct):
+    def as_features(self, dct):
         mapping_from = self.from_map.get_fieldnames_dictionary(None)
         mapping_to = self.to_map.get_fieldnames_dictionary(None)
         for index, key in enumerate(dct):
@@ -157,13 +158,13 @@ class Pandarus(object):
                     driver=driver,
                     schema=schema,
                 ) as sink:
-                for f in self.as_feature(self.data):
+                for f in self.as_features(self.data):
                     sink.write(f)
 
         return fiona_fp, data_fp
 
     def calculate_areas(self, cpus=None):
-        if cpus != 0:
+        if cpus:
             self.data = MatchMaker.areas(
                 self.from_map.filepath,
                 None,
@@ -215,6 +216,8 @@ class Pandarus(object):
         self.data = {mapping_dict[k]: v for k, v in self.data.items()}
 
     def export(self, filepath, compress=True):
+        if self.data is None:
+            raise ValueError
         if not filepath.endswith("json"):
             filepath += ".json"
         if len(self.data) and isinstance(list(self.data.keys())[0], tuple):
