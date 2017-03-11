@@ -23,6 +23,7 @@ setup(
     ]},
     install_requires=[
         "appdirs",
+        "cligj>=0.4",
         "fiona",
         "pyprind",
         "pyproj",
