@@ -3,8 +3,8 @@ Pandarus
 
 Pandarus is a GIS software toolkit for regionalized life cycle assessment. It is designed to work with `brightway LCA framework <https://brightwaylca.org>`__, `brightway2-regional <https://bitbucket.org/cmutel/brightway2-regional>`__, and `Constructive Geometries <https://bitbucket.org/cmutel/constructive-geometries>`__. A separate library, `pandarus-remote <https://bitbucket.org/cmutel/pandarus_remote>`__, provides a web API to run Pandarus on a server.
 
-Why Pandarus?
--------------
+Why the name Pandarus?
+----------------------
 
 The software matches two different maps against each other, and `Pandarus was a bit of a matchmaker himself <http://en.wikipedia.org/wiki/Pandarus>`_. Plus, ancient names are 200% more science-y.
 
@@ -15,8 +15,18 @@ Because Pandarus was designed for global data sets, the `Mollweide projection <h
 
 .. [1] Usery, E.L., and Seong, J.C., (2000) `A comparison of equal-area map projections for regional and global raster data <http://cegis.usgs.gov/projection/pdf/nmdrs.usery.prn.pdf>`_
 
+Usage example
+-------------
+
+In addition to this documentation, there is also a Jupyter notebook `usage example <https://github.com/cmutel/pandarus/blob/master/docs/usage_example.ipynb>`__.
+
 Capabilities
 ============
+
+Most Pandarus capabilities are managed through the ``Pandarus`` object.
+
+.. autoclass:: pandarus.Pandarus
+    :noindex:
 
 Matching two vector datasets
 ----------------------------
@@ -26,7 +36,8 @@ Pandarus can match two vector datasets, generating a new vector dataset which in
 .. image:: images/map.png
     :align: center
 
-.. automethod:: pandarus.calculate.Pandarus.intersect
+.. automethod:: pandarus.Pandarus.intersect
+    :noindex:
 
 Calculating the areas of spatial units
 --------------------------------------
@@ -37,6 +48,7 @@ Pandarus can calculate the area of each spatial unit in a vector dataset. This f
     :align: center
 
 .. automethod:: pandarus.calculate.Pandarus.areas
+    :noindex:
 
 Calculating raster statistics against a vector dataset
 ------------------------------------------------------
@@ -47,6 +59,7 @@ Pandarus can calculate mask a raster with each feature from a vector dataset, an
     :align: center
 
 .. automethod:: pandarus.calculate.Pandarus.rasterstats
+    :noindex:
 
 Cleaning and vectorizing raster files
 -------------------------------------
@@ -54,10 +67,13 @@ Cleaning and vectorizing raster files
 Pandarus provides some utility functions to help manage raster files, which are not always provided with rich and correct metadata.
 
 .. autofunction:: pandarus.clean_raster
+    :noindex:
 
 .. autofunction:: pandarus.round_raster
+    :noindex:
 
 .. autofunction:: pandarus.convert_to_vector
+    :noindex:
 
 Installation
 ============
