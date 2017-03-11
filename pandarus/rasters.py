@@ -242,20 +242,20 @@ def gen_zonal_stats(
                 if 'max' in stats:
                     feature_stats['max'] = float(masked.max())
                 if 'mean' in stats:
-                    if percent_cover_weighting:
+                    if percent_cover:
                         feature_stats['mean'] = float(
                             np.sum(masked * cover_weights) /
                             np.sum(~masked.mask * cover_weights))
                     else:
                         feature_stats['mean'] = float(masked.mean())
                 if 'count' in stats:
-                    if percent_cover_weighting:
+                    if percent_cover:
                         feature_stats['count'] = float(np.sum(~masked.mask * cover_weights))
                     else:
                         feature_stats['count'] = int(masked.count())
                 # optional
                 if 'sum' in stats:
-                    if percent_cover_weighting:
+                    if percent_cover:
                         feature_stats['sum'] = float(np.sum(masked * cover_weights))
                     else:
                         feature_stats['sum'] = float(masked.sum())
