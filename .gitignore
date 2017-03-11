@@ -4,6 +4,7 @@ TODO.*
 *.pyc
 .coverage
 .cache
+docs/.ipynb*
 docs/_static
 docs/_templates
 docs/_build
