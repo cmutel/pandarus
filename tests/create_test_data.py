@@ -133,8 +133,8 @@ def create_test_datasets():
     create_test_file(
         os.path.join(dirpath, "points.geojson"),
         [
-            create_record("point", (0.5, 0.5), "Point"),
-            create_record("point", (1.5, 1.5), "Point")
+            create_record("point 1", (0.5, 0.5), "Point"),
+            create_record("point 2", (1.5, 1.5), "Point")
         ],
         create_schema("Point")
     )
