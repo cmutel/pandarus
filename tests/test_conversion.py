@@ -11,6 +11,7 @@ dirpath = os.path.abspath(os.path.join(os.path.dirname(__file__), "data"))
 grid = os.path.join(dirpath, "grid.geojson")
 sixty_four = os.path.join(dirpath, "test_raster_cfs.tif")
 cfs = os.path.join(dirpath, "raster_cfs_32bit.tif")
+dem = os.path.join(dirpath, "DEM.tif")
 invalid = os.path.join(dirpath, "invalid.txt")
 
 
@@ -107,6 +108,15 @@ def test_clean_raster():
     assert not profile['tiled']
     assert 'blockysize' not in profile
     assert 'blockxsize' not in profile
+
+def test_clean_raster_null_nodata():
+    out = os.path.join(tempfile.mkdtemp(), "test.tif")
+    result = clean_raster(dem, out)
+
+    with rasterio.open(out) as src:
+        profile = src.profile
+
+    assert profile['nodata'] is None
 
 def test_clean_raster_filepath():
     out = os.path.join(tempfile.mkdtemp(), "test.tif")

@@ -159,7 +159,7 @@ def clean_raster(fp, new_fp=None, band=1, nodata=None):
         warnings.warn("No `nodata` value set, but large negative numbers present. "
               "Please set a valid `nodata` value in raster file.")
         return
-    elif 'nodata' in profile and profile['nodata'] < -1e30:
+    elif profile.get('nodata') and profile['nodata'] < -1e30:
         nodatas = [-1, -99, -999, -9999]
         if nodata is not None:
             nodatas = [nodata] + nodatas
