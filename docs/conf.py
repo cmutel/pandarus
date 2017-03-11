@@ -8,6 +8,19 @@
 # All configuration values have a default; values that are commented out
 # serve to show the default.
 
+
+# conda-forge uses outdated version of cligj, which breaks everything...
+import sys
+from unittest.mock import MagicMock
+
+class Mock(MagicMock):
+    @classmethod
+    def __getattr__(cls, name):
+            return MagicMock()
+
+MOCK_MODULES = ['rasterstats']
+sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
+
 # The short X.Y version.
 version = '1.0'
 # The full version, including alpha/beta/rc tags.
