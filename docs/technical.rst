@@ -56,8 +56,3 @@ projection
 .. automethod:: pandarus.projection.project
 
 .. automethod:: pandarus.projection.wgs84
-
-rasters
--------
-
-.. autofunction:: pandarus.rasters.gen_zonal_stats
