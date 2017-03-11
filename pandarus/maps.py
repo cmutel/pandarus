@@ -54,7 +54,7 @@ class Map(object):
     def get_fieldnames_dictionary(self, fieldname):
         fieldname = fieldname or self.metadata.get('field', None)
         assert fieldname, "No field name given or in metadata"
-        assert fieldname in self.file.next()['properties'], \
+        assert fieldname in next(iter(self.file))['properties'], \
             "Given fieldname not in file"
         fd = {index: obj['properties'].get(fieldname, None) \
             for index, obj in enumerate(self)}
