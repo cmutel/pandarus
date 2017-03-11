@@ -100,53 +100,14 @@ def test_as_features(monkeypatch):
         'geometry': 'Foo',
         'properties': {
             'id': 0,
-            'from_label': 'grid cell 0',
-            'to_label': 'single',
+            'from_label': 1,
+            'to_label': 2,
             'measure': 42
         }
     }
-    dct = {(0, 0): {'measure': 42, 'geom': 'Foo'}}
+    dct = {(1, 2): {'measure': 42, 'geom': 'Foo'}}
     p = Pandarus(grid, square, {'field': 'name'}, {'field': 'name'})
     assert next(p.as_features(dct)) == expected
-
-def test_fieldnames_errors():
-    p = Pandarus(grid, square, {'field': 'name'}, {'field': 'name'})
-    with pytest.raises(ValueError):
-        p.add_from_map_fieldname()
-    with pytest.raises(ValueError):
-        p.add_to_map_fieldname()
-    with pytest.raises(ValueError):
-        p.add_areas_map_fieldname()
-
-def test_export(monkeypatch):
-    class Exporter:
-        def __init__(self, *args, **kwargs):
-            self.args = args
-            self.kwargs = kwargs
-
-    monkeypatch.setattr(
-        'pandarus.calculate.json_exporter',
-        Exporter
-    )
-
-    p = Pandarus(grid, from_metadata={'field': 'name'})
-    with pytest.raises(ValueError):
-        p.export('')
-
-    p.data = {}
-    e = p.export("foo")
-    assert e.args[0] == []
-    assert 'first' in e.args[1]
-    assert e.args[2] == 'foo.json'
-
-def test_unpacking():
-    p = Pandarus(grid, from_metadata={'field': 'name'})
-    p.data = {(1, 2): 3}
-    p.unpack_tuples()
-    assert p.data == [(1, 2, 3)]
-    p.data = {1: 2, 3: 4}
-    p.unpack_dictionary()
-    assert p.data == [(1, 2), (3, 4)]
 
 def test_calculate_mp(monkeypatch):
     class Fake:

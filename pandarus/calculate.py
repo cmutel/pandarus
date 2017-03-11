@@ -21,7 +21,25 @@ MISMATCHED_CRS = """Possible coordinate reference systems (CRS) mismatch. The ra
     Raster: {}"""
 
 class Pandarus(object):
-    """Controller for all actions."""
+    """An object that manages most Pandarus capabilities.
+
+    A ``Pandarus`` class instance is initiated with a vector dataset filepath, and optionally a second vector dataset filepath. For both vector datasets, additional metadata should be provided - at a minimum, you should specify the field name (called ``field``) that uniquely identifies each feature in each dataset. Other metadata, such as a layer name, can also be provided.
+
+    After class instantiation, you can call methods that interact with one or both of the provided vector datasets.
+
+    To instantiate a ``Pandarus`` class with a GeoJSON dataset saved at filepath ``foo.geojson``, with a field named ``bar`` that is unique for each feature, do the following:
+
+    ..code-block:: python
+
+        Pandarus("foo.geojson", from_metadata={"field": "bar"})
+
+    If you wanted to also include a second file, e.g. ``iowa.geojson``, with a unique field named ``county``:
+
+    ..code-block:: python
+
+        Pandarus("foo.geojson", "iowa.geojson", from_metadata={"field": "bar"}, to_metadata={"field": "county"})
+
+    """
     def __init__(self, from_filepath, to_filepath=None,
             from_metadata={}, to_metadata={}):
         self.data = None
@@ -106,21 +124,44 @@ class Pandarus(object):
         return self.data
 
     def as_features(self, dct):
-        mapping_from = self.from_map.get_fieldnames_dictionary(None)
-        mapping_to = self.to_map.get_fieldnames_dictionary(None)
         for index, key in enumerate(dct):
             row = dct[key]
             gj = {
                 'geometry': mapping(row['geom']),
                 'properties': {
                     'id': index,
-                    'from_label': mapping_from[key[0]],
-                    'to_label': mapping_to[key[1]],
+                    'from_label': key[0],
+                    'to_label': key[1],
                     'measure': row['measure']},
             }
             yield gj
 
     def intersect(self, dirpath=None, cpus=None, driver='GeoJSON', compress=True):
+        """Calculate the intersection of two vector spatial datasets.
+
+        The first spatial input file (``from_filepath``) **must** have only one type of geometries, excluding geometry collections. Any of the following are allowed: Point, MultiPoint, LineString, LinearRing, MultiLineString, Polygon, MultiPolygon.
+
+        The second spatial input file (``to_filepath``) **must** have either Polygons or MultiPolygons.
+
+        Input parameters:
+
+            * ``dirpath``: Optional. Directory to save output files.
+            * ``cpus``: Integer, optional. Number of CPU cores to use when calculating.
+            * ``driver``: Fiona driver name to use when writing geospatial output file. Common values are ``GeoJSON`` (default) or ``GPKG``.
+            * ``compress``: Boolean. Compress JSON output file; default is true.
+
+        Returns filepaths for two created files.
+
+        The first is a geospatial file that has the geometry of each possible intersection of spatial units from the two input files. The geometry of this file will depend on the geometry of the first input file, but will always be a multi geometry, i.e. one of MultiPoint, MultiLineString, MultiPolygon. This output file has the following schema:
+
+            * ``id``: Integer. Auto-increment field starting from zero.
+            * ``from_label``: String. The value for the uniquely identifying field from the first input file.
+            * ``to_label``: String. The value for the uniquely identifying field from the second input file.
+            * ``measure``: Float. A measure of the intersected shape. For polygons, this is the area of the feature in square meters. For lines, this is the length in meters. For points, this is the number of points.
+
+        The second file is
+
+        """
         if not hasattr(self, 'to_map'):
             raise ValueError("Need ``to_map`` for intersection")
         if not dirpath:
@@ -130,8 +171,8 @@ class Pandarus(object):
             *sorted([self.from_map.hash, self.to_map.hash]))
         )
 
-        fiona_fp = base_filepath + "." + driver.lower()
-        data_fp = base_filepath + ".json"
+        fiona_fp = base_filepath + driver.lower()
+        data_fp = base_filepath + "json"
 
         if os.path.exists(fiona_fp):
             os.remove(fiona_fp)
@@ -139,7 +180,13 @@ class Pandarus(object):
             os.remove(data_fp)
 
         self.intersections(cpus)
-        self.export(data_fp, compress)
+
+        from_mapping = self.from_map.get_fieldnames_dictionary(None)
+        to_mapping = self.to_map.get_fieldnames_dictionary(None)
+        self.data = {
+            (from_mapping[k[0]], to_mapping[k[1]]): v
+            for k, v in self.data.items()
+        }
 
         schema = {
             'properties': {
@@ -153,13 +200,20 @@ class Pandarus(object):
 
         with fiona.drivers():
             with fiona.open(
-                    filepath, 'w',
+                    fiona_fp, 'w',
                     crs=WGS84,
                     driver=driver,
                     schema=schema,
                 ) as sink:
                 for f in self.as_features(self.data):
                     sink.write(f)
+
+        json_exporter(
+            [(k[0], k[1], v['measure']) for k, v in self.data.items()],
+            self.metadata,
+            data_fp,
+            compressed=compress
+        )
 
         return fiona_fp, data_fp
 
@@ -186,48 +240,18 @@ class Pandarus(object):
             os.remove(filepath)
 
         self.calculate_areas(cpus)
-        self.export(filepath, compress)
 
-    def add_from_map_fieldname(self, fieldname=None):
-        """Turn feature integer indices into actual field values using field `fieldname`"""
-        if not self.data:
-            raise ValueError("Must match maps first")
+        json_exporter(
+            [(k[0], k[1], v['measure']) for k, v in self.data.items()],
+            self.metadata,
+            data_fp,
+            compressed=compress
+        )
+
         mapping_dict = self.from_map.get_fieldnames_dictionary(fieldname)
-        self.data = {
-            (mapping_dict[k[0]], k[1]): v
-            for k, v in self.data.items()
-        }
-
-    def add_to_map_fieldname(self, fieldname=None):
-        """Turn feature integer indices into actual field values using field `fieldname`"""
-        if not self.data:
-            raise ValueError("Must match maps first")
-        mapping_dict = self.to_map.get_fieldnames_dictionary(fieldname)
-        self.data = {
-            (k[0], mapping_dict[k[1]]): v
-            for k, v in self.data.items()
-        }
-
-    def add_areas_map_fieldname(self, fieldname=None):
-        """Turn feature integer indices into actual field values using field `fieldname`"""
-        if not self.data:
-            raise ValueError("Must match maps first")
-        mapping_dict = self.from_map.get_fieldnames_dictionary(fieldname)
-        self.data = {mapping_dict[k]: v for k, v in self.data.items()}
-
-    def export(self, filepath, compress=True):
-        if self.data is None:
-            raise ValueError
-        if not filepath.endswith("json"):
-            filepath += ".json"
-        if len(self.data) and isinstance(list(self.data.keys())[0], tuple):
-            self.unpack_tuples()
-        else:
-            self.unpack_dictionary()
-        return json_exporter(self.data, self.metadata, filepath, compressed=compress)
-
-    def unpack_tuples(self):
-        self.data = [(k[0], k[1], v) for k, v in self.data.items()]
-
-    def unpack_dictionary(self):
-        self.data = [(k, v) for k, v in self.data.items()]
+        json_exporter(
+            [(mapping_dict[k], v) for k, v in self.data.items()],
+            self.metadata['first'],
+            filepath,
+            compressed=compress
+        )
