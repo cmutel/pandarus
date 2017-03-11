@@ -8,6 +8,7 @@ dirpath = os.path.abspath(os.path.join(os.path.dirname(__file__), "data"))
 grid = os.path.join(dirpath, "grid.geojson")
 square = os.path.join(dirpath, "square.geojson")
 range_raster = os.path.join(dirpath, "range.tif")
+dem = os.path.join(dirpath, "DEM.tif")
 
 
 def fake_zonal_stats(vector, *args, **kwargs):
@@ -56,6 +57,18 @@ def test_rasterstats(monkeypatch):
     assert result['metadata']['vector']['field']
     assert result['metadata']['vector']['sha256']
     assert result['data'] == expected
+
+def test_rasterstats_mismatched_crs(monkeypatch):
+    monkeypatch.setattr(
+        'pandarus.calculate.gen_zonal_stats',
+        fake_zonal_stats
+    )
+
+    fp = os.path.join(tempfile.mkdtemp(), "test.json")
+    p = Pandarus(grid, from_metadata={'field': 'name'})
+
+    with pytest.warns(UserWarning):
+        result = p.rasterstats(dem, fp)
 
 def test_export(monkeypatch):
     class Exporter:

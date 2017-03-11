@@ -10,10 +10,15 @@ import datetime
 import fiona
 import json
 import os
+import rasterio
+import warnings
 
 
 WGS84 = from_string("+datum=WGS84 +ellps=WGS84 +no_defs +proj=longlat")
 
+MISMATCHED_CRS = """Possible coordinate reference systems (CRS) mismatch. The raster statistics may be incorrect, please only use this method when both vector and raster have the same CRS.
+    Vector: {}
+    Raster: {}"""
 
 class Pandarus(object):
     """Controller for all actions."""
@@ -48,6 +53,12 @@ class Pandarus(object):
 
         """
         assert check_type(raster) == 'raster'
+
+        with rasterio.open(raster) as r:
+            raster_crs = r.crs.to_string()
+
+        if self.from_map.crs != raster_crs:
+            warnings.warn(MISMATCHED_CRS.format(self.from_map.crs, raster_crs))
 
         if not filepath:
             dirpath = get_appdirs_path("rasterstats")
