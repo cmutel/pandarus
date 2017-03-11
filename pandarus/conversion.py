@@ -39,7 +39,7 @@ def convert_to_vector(filepath, dirpath=None, band=1):
 
     ``band`` should be the integer index of the band; default is 1. Note that band indices start from 1, not 0.
 
-    Because we are using `GDAL polygonize <http://www.gdal.org/gdal__alg_8h.html#a7a789015334d677afcbef67e5a6b4a7c>`__, we can't use 32 bit floats. This function will automatically convert rasters from 64 to 32 bit floats if necessary."""
+    Because we are using `GDAL polygonize <http://www.gdal.org/gdal__alg_8h.html#a7a789015334d677afcbef67e5a6b4a7c>`__, we can't use 64 bit floats. This function will automatically convert rasters from 64 to 32 bit floats if necessary."""
     assert isinstance(band, int), "band must be an integer"
 
     if dirpath is None:

@@ -48,7 +48,7 @@ class Pandarus(object):
         self.metadata = {'first': {
             'sha256': self.from_map.hash,
             'filename': os.path.basename(from_filepath),
-            'path': from_filepath,
+            'path': os.path.abspath(from_filepath),
         }}
         self.metadata['first'].update(from_metadata)
         if to_filepath is not None:
@@ -56,7 +56,7 @@ class Pandarus(object):
             self.metadata['second'] = {
                 'sha256': self.to_map.hash,
                 'filename': os.path.basename(to_filepath),
-                'path': to_filepath
+                'path': os.path.abspath(to_filepath)
             }
             self.metadata['second'].update(to_metadata)
 
@@ -159,7 +159,33 @@ class Pandarus(object):
             * ``to_label``: String. The value for the uniquely identifying field from the second input file.
             * ``measure``: Float. A measure of the intersected shape. For polygons, this is the area of the feature in square meters. For lines, this is the length in meters. For points, this is the number of points.
 
-        The second file is
+        The second file is an extract of some of the feature fields in JSON. This is used by programs that don't want to depend on GIS data reader libraries. The JSON data format is:
+
+        .. code-block:: python
+
+            {
+                'metadata': {
+                    'first': {
+                        'field': 'name of uniquely identifying field',
+                        'path': 'path to first input file',
+                        'filename': 'name of first input file',
+                        'sha256': 'sha256 hash of input file'
+                    },
+                    'second': {
+                        'field': 'name of uniquely identifying field',
+                        'path': 'path to second input file',
+                        'filename': 'name of second input file',
+                        'sha256': 'sha256 hash of input file'
+                    }
+                },
+                'data': [
+                    [
+                        'identifying field for first file',
+                        'identifying field for second file',
+                        'measure value'
+                    ]
+                ]
+            }
 
         """
         if not hasattr(self, 'to_map'):

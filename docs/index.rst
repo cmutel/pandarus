@@ -84,7 +84,7 @@ Pandarus can be installed directly from `PyPi <https://pypi.python.org/pypi>`_ u
 
     pip install pandarus
 
-However, it is easy to run into errors if libraries are compiled against different versions of GDAL. One way to get an installation that is almost guaranteed is to use `Conda <https://conda.io/miniconda.html>`__:
+However, it is easy to run into errors if geospatial libraries like fiona, rasterio, and shapely are compiled against different versions of GDAL. One way to get an installation that is almost guaranteed is to use `Conda <https://conda.io/miniconda.html>`__:
 
 .. code-block:: bash
 

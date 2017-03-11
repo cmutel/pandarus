@@ -60,4 +60,4 @@ projection
 rasters
 -------
 
-.. automethod:: pandarus.rasters.gen_zonal_stats
+.. autofunction:: pandarus.rasters.gen_zonal_stats

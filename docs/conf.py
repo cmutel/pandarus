@@ -9,9 +9,9 @@
 # serve to show the default.
 
 # The short X.Y version.
-version = '0.4'
+version = '1.0'
 # The full version, including alpha/beta/rc tags.
-release = '0.4.1'
+release = '1.0.alpha1'
 
 import sys
 from os.path import abspath, dirname
