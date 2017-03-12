@@ -121,15 +121,8 @@ def get_intersection(obj, kind, collection, indices,
 
     results = {k: v for k, v in results.items() if v['geom']}
 
-    if kind == 'line':
-        for v in results.values():
-            v['measure'] = projection_func(v['geom']).length
-    elif kind == 'polygon':
-        for v in results.values():
-            v['measure'] = projection_func(v['geom']).area
-    else:
-        for v in results.values():
-            v['measure'] = len(v['geom'])
+    for v in results.values():
+        v['measure'] = get_measure(projection_func(v['geom']), kind)
 
     results = normalize_dictionary_values(results)
     if not return_geoms:
@@ -139,17 +132,23 @@ def get_intersection(obj, kind, collection, indices,
     return results
 
 
-def measure_area(geom, to_meters=None):
-    """"""
-    if to_meters is None:
+def get_measure(geom, kind):
+    """Get area, length, or number of points, depending on ``geom`` type"""
+    if kind == 'line':
+        return geom.length
+    elif kind == 'polygon':
         return geom.area
     else:
-        return to_meters(geom).area
+        return len(geom)
 
 
-def measure_line(geom, to_meters=None):
-    """"""
-    if to_meters is None:
-        return geom.length
-    else:
-        return to_meters(geom).length
+def get_remaining(original, kind, geoms, projection=None):
+    """Get the remaining area/length/number from ``original`` after subtracting the union of ``geoms``.
+
+    Returns a float."""
+    if projection is None or kind == 'point':
+        projection = lambda x: x
+    actual = get_measure(projection(original), kind)
+    union_total = get_measure(projection(cascaded_union(geoms)), kind)
+    individ_total = sum(get_measure(projection(geom), kind) for geom in geoms)
+    return (actual - union_total) * (individ_total / union_total)

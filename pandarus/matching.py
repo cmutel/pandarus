@@ -2,8 +2,7 @@
 from .maps import Map
 from .geometry import (
     get_intersection,
-    measure_area,
-    measure_line,
+    get_remaining,
     clean,
 )
 from .projection import project, wgs84, MOLLWEIDE
@@ -17,11 +16,11 @@ import math
 import multiprocessing
 import os
 
-area_mapping = {
-    'point': lambda x, y: 1,
-    'line': measure_line,
-    'polygon': measure_area
-}
+# area_mapping = {
+#     'point': lambda x, y: 1,
+#     'line': measure_line,
+#     'polygon': measure_area
+# }
 
 kind_mapping = {
     'Polygon': 'polygon',
@@ -139,48 +138,48 @@ def intersection_calculation(from_map, from_objs, to_map, worker_id, to_meters=T
     return results
 
 
-def areal_calculation(from_map, from_objs, worker_id, to_meters=True):
-    """Multiprocessing worker for areas of each object in a map"""
-    logging.info("""Starting areal calculation:
-    from map: {}
-    from objs: {} ({} to {})
-    worker id: {}""".format(from_map, len(from_objs or []) or 'all',
-                            min(from_objs or [0]), max(from_objs or [0]),
-                            worker_id))
+# def areal_calculation(from_map, from_objs, worker_id, to_meters=True):
+#     """Multiprocessing worker for areas of each object in a map"""
+#     logging.info("""Starting areal calculation:
+#     from map: {}
+#     from objs: {} ({} to {})
+#     worker id: {}""".format(from_map, len(from_objs or []) or 'all',
+#                             min(from_objs or [0]), max(from_objs or [0]),
+#                             worker_id))
 
-    results = {}
+#     results = {}
 
-    from_map = Map(from_map)
-    try:
-        kind = kind_mapping[from_map.geometry]
-    except KeyError:
-        raise ValueError("No valid geometry type in map {}".format(from_map))
-    logging.info("Worker {}: Loaded from map.".format(worker_id))
+#     from_map = Map(from_map)
+#     try:
+#         kind = kind_mapping[from_map.geometry]
+#     except KeyError:
+#         raise ValueError("No valid geometry type in map {}".format(from_map))
+#     logging.info("Worker {}: Loaded from map.".format(worker_id))
 
-    if from_objs:
-        from_gen = ((index, from_map[index]) for index in from_objs)
-    else:
-        from_gen = enumerate(from_map)
+#     if from_objs:
+#         from_gen = ((index, from_map[index]) for index in from_objs)
+#     else:
+#         from_gen = enumerate(from_map)
 
-    if to_meters:
-        meter_projection = lambda x: project(x, from_map.crs, MOLLWEIDE)
-    else:
-        meter_projection = None
+#     if to_meters:
+#         meter_projection = lambda x: project(x, from_map.crs, MOLLWEIDE)
+#     else:
+#         meter_projection = None
 
-    for from_index, from_obj in from_gen:
-        try:
-            geom = clean(shape(from_obj['geometry']))
+#     for from_index, from_obj in from_gen:
+#         try:
+#             geom = clean(shape(from_obj['geometry']))
 
-            results[from_index] = area_mapping[kind](geom, meter_projection)
+#             results[from_index] = area_mapping[kind](geom, meter_projection)
 
-        except TopologicalError:
-            logging.exception("Skipping topological error.")
-            continue
-        except:
-            logging.exception("Intersection worker failed.")
-            raise
+#         except TopologicalError:
+#             logging.exception("Skipping topological error.")
+#             continue
+#         except:
+#             logging.exception("Intersection worker failed.")
+#             raise
 
-    return results
+#     return results
 
 
 class MatchMaker(object):
@@ -193,65 +192,65 @@ class MatchMaker(object):
         num_jobs = int(math.ceil(map_size / float(chunk_size)))
         return chunk_size, num_jobs
 
-    @classmethod
-    def areas(cls, from_map, from_objs=None, cpus=None, log_dir=None):
-        if from_objs:
-            map_size = len(from_objs)
-            ids = from_objs
-        else:
-            map_size = len(Map(from_map))
-            ids = range(map_size)
+    # @classmethod
+    # def areas(cls, from_map, from_objs=None, cpus=None, log_dir=None):
+    #     if from_objs:
+    #         map_size = len(from_objs)
+    #         ids = from_objs
+    #     else:
+    #         map_size = len(Map(from_map))
+    #         ids = range(map_size)
 
-        chunk_size, num_jobs = cls.get_jobs(map_size)
+    #     chunk_size, num_jobs = cls.get_jobs(map_size)
 
-        queue_listener, logging_queue = logger_init(log_dir)
-        logging.info("""Starting MatchMaker `areas` calculation.
-        Map: {}
-        Map size: {}
-        Chunk size: {}
-        Number of jobs: {}""".format(
-            from_map, map_size, chunk_size, num_jobs
-        ))
-        results = {}
+    #     queue_listener, logging_queue = logger_init(log_dir)
+    #     logging.info("""Starting MatchMaker `areas` calculation.
+    #     Map: {}
+    #     Map size: {}
+    #     Chunk size: {}
+    #     Number of jobs: {}""".format(
+    #         from_map, map_size, chunk_size, num_jobs
+    #     ))
+    #     results = {}
 
-        def callback_func(data):
-            results.update(data)
+    #     def callback_func(data):
+    #         results.update(data)
 
-        with multiprocessing.Pool(
-                    cpus or multiprocessing.cpu_count(),
-                    worker_init,
-                    [logging_queue]
-                ) as pool:
-            arguments = [
-                (from_map, chunk, index)
-                for index, chunk in enumerate(chunker(ids, chunk_size))
-            ]
+    #     with multiprocessing.Pool(
+    #                 cpus or multiprocessing.cpu_count(),
+    #                 worker_init,
+    #                 [logging_queue]
+    #             ) as pool:
+    #         arguments = [
+    #             (from_map, chunk, index)
+    #             for index, chunk in enumerate(chunker(ids, chunk_size))
+    #         ]
 
-            function_results = []
+    #         function_results = []
 
-            for argument_set in arguments:
-                function_results.append(pool.apply_async(
-                    areal_calculation,
-                    argument_set,
-                    callback=callback_func
-                ))
-            for fr in function_results:
-                fr.wait()
+    #         for argument_set in arguments:
+    #             function_results.append(pool.apply_async(
+    #                 areal_calculation,
+    #                 argument_set,
+    #                 callback=callback_func
+    #             ))
+    #         for fr in function_results:
+    #             fr.wait()
 
-            if any(not fr.successful() for fr in function_results):
-                raise ValueError("Couldn't complete Pandarus task")
+    #         if any(not fr.successful() for fr in function_results):
+    #             raise ValueError("Couldn't complete Pandarus task")
 
-        queue_listener.stop()
+    #     queue_listener.stop()
 
-        logging.info("""Finished MatchMaker `areas` calculation.
-        Map: {}
-        Map size: {}
-        Chunk size: {}
-        Number of jobs: {}""".format(
-            from_map, map_size, chunk_size, num_jobs
-        ))
+    #     logging.info("""Finished MatchMaker `areas` calculation.
+    #     Map: {}
+    #     Map size: {}
+    #     Chunk size: {}
+    #     Number of jobs: {}""".format(
+    #         from_map, map_size, chunk_size, num_jobs
+    #     ))
 
-        return results
+    #     return results
 
 
     @classmethod

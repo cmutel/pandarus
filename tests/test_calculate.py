@@ -1,4 +1,5 @@
-from pandarus import Pandarus, Map
+from pandarus import Map, raster_statistics, intersect
+from pandarus.calculate import as_features, get_intersections
 import json
 import os
 import pytest
@@ -12,12 +13,12 @@ dem = os.path.join(dirpath, "DEM.tif")
 
 
 def fake_zonal_stats(vector, *args, **kwargs):
-    for i, f in enumerate(Map(vector)):
+    for i, f in enumerate(Map(vector, 'name')):
         yield i
 
 def test_rasterstats_invalid():
     with pytest.raises(AssertionError):
-        result = Pandarus(grid).rasterstats(square)
+        raster_statistics(grid, 'name', square)
 
 def test_rasterstats_new_path(monkeypatch):
     monkeypatch.setattr(
@@ -25,8 +26,7 @@ def test_rasterstats_new_path(monkeypatch):
         fake_zonal_stats
     )
 
-    fp = Pandarus(grid, from_metadata={'field': 'name'}).rasterstats(
-        range_raster, compressed=False)
+    fp = raster_statistics(grid, 'name', range_raster, compressed=False)
     assert 'rasterstats' in fp
     assert '.json' in fp
     assert os.path.isfile(fp)
@@ -39,8 +39,7 @@ def test_rasterstats(monkeypatch):
     )
 
     fp = os.path.join(tempfile.mkdtemp(), "test.json")
-    result = Pandarus(grid, from_metadata={'field': 'name'}).rasterstats(
-        range_raster, fp, compressed=False)
+    result = raster_statistics(grid, 'name', range_raster, output=fp, compressed=False)
     assert result == fp
 
     result = json.load(open(fp))
@@ -54,8 +53,10 @@ def test_rasterstats(monkeypatch):
     ]
 
     assert 'metadata' in result
-    assert result['metadata']['vector']['field']
-    assert result['metadata']['vector']['sha256']
+    for field in ('sha256', 'filename', 'field', 'path'):
+        assert field in result['metadata']['vector']
+    for field in ('sha256', 'filename', 'band', 'path'):
+        assert field in result['metadata']['raster']
     assert result['data'] == expected
 
 def test_rasterstats_overwrite_existing(monkeypatch):
@@ -69,8 +70,7 @@ def test_rasterstats_overwrite_existing(monkeypatch):
     with open(fp, "w") as f:
         f.write("Original content")
 
-    result = Pandarus(grid, from_metadata={'field': 'name'}).rasterstats(
-        range_raster, fp, compressed=False)
+    result = raster_statistics(grid, 'name', range_raster, output=fp, compressed=False)
 
     assert result == fp
 
@@ -85,10 +85,8 @@ def test_rasterstats_mismatched_crs(monkeypatch):
     )
 
     fp = os.path.join(tempfile.mkdtemp(), "test.json")
-    p = Pandarus(grid, from_metadata={'field': 'name'})
-
     with pytest.warns(UserWarning):
-        result = p.rasterstats(dem, fp)
+        raster_statistics(grid, 'name', dem, output=fp)
 
 def test_as_features(monkeypatch):
     monkeypatch.setattr(
@@ -106,24 +104,17 @@ def test_as_features(monkeypatch):
         }
     }
     dct = {(1, 2): {'measure': 42, 'geom': 'Foo'}}
-    p = Pandarus(grid, square, {'field': 'name'}, {'field': 'name'})
-    assert next(p.as_features(dct)) == expected
+    assert next(as_features(dct)) == expected
 
-def test_calculate_mp(monkeypatch):
+def test_mp_intersections(monkeypatch):
     class Fake:
         @staticmethod
         def intersect(*arg, **kwargs):
             return "Called intersect"
-
-        @staticmethod
-        def areas(*arg, **kwargs):
-            return "Called areas"
 
     monkeypatch.setattr(
         'pandarus.calculate.MatchMaker',
         Fake
     )
 
-    p = Pandarus(grid, square, {'field': 'name'}, {'field': 'name'})
-    assert p.intersections(cpus=1) == 'Called intersect'
-    assert p.calculate_areas(cpus=1) == 'Called areas'
+    assert get_intersections(grid, square, cpus=1) == 'Called intersect'

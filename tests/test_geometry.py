@@ -1,10 +1,8 @@
-from pandarus import Pandarus, Map
+from pandarus import Map
 from pandarus.projection import project, WGS84, MOLLWEIDE
 from pandarus.geometry import (
     clean,
     get_intersection as _get_intersection,
-    measure_area,
-    measure_line,
     recursive_geom_finder,
 )
 from shapely.geometry import (
@@ -42,7 +40,7 @@ def test_no_return_geoms():
         0: {'measure': 0.5},
         1: {'measure': 0.5}
     }
-    assert get_intersection(mp, 'point', Map(grid), (0, 1, 2, 3), return_geoms=False) == expected
+    assert get_intersection(mp, 'point', Map(grid, 'name'), (0, 1, 2, 3), return_geoms=False) == expected
 
 def test_recurse_geometry_collection():
     mp = MultiPoint([(0.5, 0.5), (0.5, 1), (1, 1), (1.5, 1.5)])
@@ -59,10 +57,10 @@ def test_recurse_geometry_collection():
 def test_single_point():
     mp = Point((0.5, 1))
     expected = {0: {'geom': {'type': 'MultiPoint', 'coordinates': ((0.5, 1.0),)}, 'measure': 0.5}, 1: {'geom': {'type': 'MultiPoint', 'coordinates': ((0.5, 1.0),)}, 'measure': 0.5}}
-    assert get_intersection(mp, 'point', Map(grid), (0, 1, 2, 3)) == expected
+    assert get_intersection(mp, 'point', Map(grid, 'name'), (0, 1, 2, 3)) == expected
 
     expected = {0: {'geom': {'type': 'MultiPoint', 'coordinates': ((0.5, 1.0),)}, 'measure': 1}}
-    assert get_intersection(mp, 'point', Map(grid), (0, 2)) == expected
+    assert get_intersection(mp, 'point', Map(grid, 'name'), (0, 2)) == expected
 
 def test_multi_point():
     mp = MultiPoint([(0.5, 0.5), (0.5, 1), (1, 1), (1.5, 1.5)])
@@ -80,7 +78,7 @@ def test_multi_point():
             'geom': {'coordinates': ((1.0, 1.0), (1.5, 1.5)), 'type': 'MultiPoint'},
             'measure': 2/8}
     }
-    assert get_intersection(mp, 'point', Map(grid), (0, 1, 2, 3)) == expected
+    assert get_intersection(mp, 'point', Map(grid, 'name'), (0, 1, 2, 3)) == expected
 
 def test_point_geometry_collection():
     mp = GeometryCollection([MultiPoint([(0.5, 0.5), (0.5, 1), (1, 1), (1.5, 1.5)])])
@@ -98,11 +96,11 @@ def test_point_geometry_collection():
             'geom': {'coordinates': ((1.0, 1.0), (1.5, 1.5)), 'type': 'MultiPoint'},
             'measure': 2/8}
     }
-    assert get_intersection(mp, 'point', Map(grid), (0, 1, 2, 3)) == expected
+    assert get_intersection(mp, 'point', Map(grid, 'name'), (0, 1, 2, 3)) == expected
 
 def test_point_wrong_geometry():
     ls = LineString([(0.5, 0.5), (1.5, 0.5)])
-    assert get_intersection(ls, 'point', Map(grid), (0, 1, 2, 3)) == {}
+    assert get_intersection(ls, 'point', Map(grid, 'name'), (0, 1, 2, 3)) == {}
 
 # Lines
 
@@ -116,13 +114,13 @@ def test_line_string():
             'measure': 0.5,
             'geom': {'coordinates': (((1.0, 0.5), (1.5, 0.5)),), 'type': 'MultiLineString'}}
     }
-    assert get_intersection(ls, 'line', Map(grid), (0, 1, 2, 3)) == expected
+    assert get_intersection(ls, 'line', Map(grid, 'name'), (0, 1, 2, 3)) == expected
 
     expected = {0: {
         'geom': {'type': 'MultiLineString', 'coordinates': (((0.5, 0.5), (1.0, 0.5)),)},
         'measure': 1.0
     }}
-    assert get_intersection(ls, 'line', Map(grid), (0, 1)) == expected
+    assert get_intersection(ls, 'line', Map(grid, 'name'), (0, 1)) == expected
 
 def test_multi_line_string():
     ls = MultiLineString([[(0.5, 0.5), (1.5, 0.5)]])
@@ -134,13 +132,13 @@ def test_multi_line_string():
             'measure': 0.5,
             'geom': {'type': 'MultiLineString', 'coordinates': (((1.0, 0.5), (1.5, 0.5)),)}}
     }
-    assert get_intersection(ls, 'line', Map(grid), (0, 1, 2, 3)) == expected
+    assert get_intersection(ls, 'line', Map(grid, 'name'), (0, 1, 2, 3)) == expected
 
     expected = {0: {
         'measure': 1.0,
         'geom': {'coordinates': (((0.5, 0.5), (1.0, 0.5)),), 'type': 'MultiLineString'}
     }}
-    assert get_intersection(ls, 'line', Map(grid), (0, 1)) == expected
+    assert get_intersection(ls, 'line', Map(grid, 'name'), (0, 1)) == expected
 
 def test_linear_ring():
     ls = LinearRing([(0.5, 0.5), (1.5, 0.5), (1.5, 1.5), (0.5, 1.5), (0.5, 0.5)])
@@ -158,7 +156,7 @@ def test_linear_ring():
             'measure': 0.25,
             'geom': {'type': 'MultiLineString', 'coordinates': (((1.5, 1.0), (1.5, 1.5), (1.0, 1.5)),)}}
     }
-    assert get_intersection(ls, 'line', Map(grid), (0, 1, 2, 3)) == expected
+    assert get_intersection(ls, 'line', Map(grid, 'name'), (0, 1, 2, 3)) == expected
 
     expected = {
         0: {
@@ -168,7 +166,7 @@ def test_linear_ring():
             'measure': 0.5,
             'geom': {'type': 'MultiLineString', 'coordinates': (((1.0, 1.5), (0.5, 1.5), (0.5, 1.0)),)}}
     }
-    assert get_intersection(ls, 'line', Map(grid), (0, 1)) == expected
+    assert get_intersection(ls, 'line', Map(grid, 'name'), (0, 1)) == expected
 
 def test_line_geometry_collection():
     ls = GeometryCollection([LineString([(0.5, 0.5), (1.5, 0.5)])])
@@ -180,18 +178,18 @@ def test_line_geometry_collection():
             'geom': {'coordinates': (((1.0, 0.5), (1.5, 0.5)),), 'type': 'MultiLineString'},
             'measure': 0.5}
     }
-    assert get_intersection(ls, 'line', Map(grid), (0, 1, 2, 3)) == expected
+    assert get_intersection(ls, 'line', Map(grid, 'name'), (0, 1, 2, 3)) == expected
 
     expected = {
         0: {
             'measure': 1.0,
             'geom': {'type': 'MultiLineString', 'coordinates': (((0.5, 0.5), (1.0, 0.5)),)}}
     }
-    assert get_intersection(ls, 'line', Map(grid), (0, 1)) == expected
+    assert get_intersection(ls, 'line', Map(grid, 'name'), (0, 1)) == expected
 
 def test_line_wrong_geometry():
     mp = Point((0.5, 1))
-    assert get_intersection(mp, 'line', Map(grid), (0, 1, 2, 3)) == {}
+    assert get_intersection(mp, 'line', Map(grid, 'name'), (0, 1, 2, 3)) == {}
 
 # Polygons
 
@@ -211,7 +209,7 @@ def test_polygon():
             'measure': 0.25,
             'geom': {'coordinates': [(((1.0, 1.5), (1.5, 1.5), (1.5, 1.0), (1.0, 1.0), (1.0, 1.5)),)], 'type': 'MultiPolygon'}}
     }
-    assert get_intersection(pg, 'polygon', Map(grid), (0, 1, 2, 3)) == expected
+    assert get_intersection(pg, 'polygon', Map(grid, 'name'), (0, 1, 2, 3)) == expected
 
     expected = {
         0: {
@@ -221,7 +219,7 @@ def test_polygon():
             'measure': 0.5,
             'geom': {'coordinates': [(((0.5, 1.0), (0.5, 1.5), (1.0, 1.5), (1.0, 1.0), (0.5, 1.0)),)], 'type': 'MultiPolygon'}}
     }
-    assert get_intersection(pg, 'polygon', Map(grid), (0, 1)) == expected
+    assert get_intersection(pg, 'polygon', Map(grid, 'name'), (0, 1)) == expected
 
 def test_multi_polygon():
     pg = MultiPolygon([[
@@ -240,7 +238,7 @@ def test_multi_polygon():
             'geom': {'type': 'MultiPolygon', 'coordinates': [(((1.0, 1.5), (1.5, 1.5), (1.5, 1.0), (1.0, 1.0), (1.0, 1.5)),)]},
             'measure': 0.25}
     }
-    assert get_intersection(pg, 'polygon', Map(grid), (0, 1, 2, 3)) == expected
+    assert get_intersection(pg, 'polygon', Map(grid, 'name'), (0, 1, 2, 3)) == expected
 
     expected = {
         0: {
@@ -250,7 +248,7 @@ def test_multi_polygon():
             'measure': 0.5,
             'geom': {'coordinates': [(((0.5, 1.0), (0.5, 1.5), (1.0, 1.5), (1.0, 1.0), (0.5, 1.0)),)], 'type': 'MultiPolygon'}}
     }
-    assert get_intersection(pg, 'polygon', Map(grid), (0, 1)) == expected
+    assert get_intersection(pg, 'polygon', Map(grid, 'name'), (0, 1)) == expected
 
 def test_polygon_geometry_collection():
     pg = GeometryCollection([Polygon([(0.5, 0.5), (1.5, 0.5), (1.5, 1.5), (0.5, 1.5), (0.5, 0.5)])])
@@ -268,7 +266,7 @@ def test_polygon_geometry_collection():
             'geom': {'coordinates': [(((1.0, 1.5), (1.5, 1.5), (1.5, 1.0), (1.0, 1.0), (1.0, 1.5)),)], 'type': 'MultiPolygon'},
             'measure': 0.25}
     }
-    assert get_intersection(pg, 'polygon', Map(grid), (0, 1, 2, 3)) == expected
+    assert get_intersection(pg, 'polygon', Map(grid, 'name'), (0, 1, 2, 3)) == expected
 
     expected = {
         0: {
@@ -277,11 +275,11 @@ def test_polygon_geometry_collection():
         1: {'geom': {'type': 'MultiPolygon', 'coordinates': [(((0.5, 1.0), (0.5, 1.5), (1.0, 1.5), (1.0, 1.0), (0.5, 1.0)),)]},
             'measure': 0.5}
     }
-    assert get_intersection(pg, 'polygon', Map(grid), (0, 1)) == expected
+    assert get_intersection(pg, 'polygon', Map(grid, 'name'), (0, 1)) == expected
 
 def test_polygon_wrong_geometry():
     mp = Point((0.5, 1))
-    assert get_intersection(mp, 'polygon', Map(grid), (0, 1, 2, 3)) == {}
+    assert get_intersection(mp, 'polygon', Map(grid, 'name'), (0, 1, 2, 3)) == {}
 
 # Clean
 
@@ -294,12 +292,12 @@ def test_clean():
 
 # Measuring
 
-def test_measure_area():
-    pg = Polygon([(0, 0), (0, 1), (1, 1), (1, 0), (0, 0)])
-    assert measure_area(pg) == 1
-    assert measure_area(pg, to_mollweide) > 1e6
+# def test_measure_area():
+#     pg = Polygon([(0, 0), (0, 1), (1, 1), (1, 0), (0, 0)])
+#     assert measure_area(pg) == 1
+#     assert measure_area(pg, to_mollweide) > 1e6
 
-def test_measure_line():
-    ls = LineString([(0, 0), (0, 1)])
-    assert measure_line(ls) == 1
-    assert measure_line(ls, to_mollweide) > 1e4
+# def test_measure_line():
+#     ls = LineString([(0, 0), (0, 1)])
+#     assert measure_line(ls) == 1
+#     assert measure_line(ls, to_mollweide) > 1e4

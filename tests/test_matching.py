@@ -1,4 +1,4 @@
-from pandarus import Pandarus, Map
+from pandarus import Map
 import os
 
 dirpath = os.path.abspath(os.path.join(os.path.dirname(__file__), "data"))

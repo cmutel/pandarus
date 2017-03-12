@@ -25,10 +25,11 @@ class Map(object):
     .. warning:: The Fiona field ``id`` is not used, as there are no real constraints on these values or values types (see `Fiona manual <http://toblerity.org/fiona/manual.html#record-id>`_), and real world data is often dirty and inconsistent. Instead, we use ``enumerate`` and integer indices.
 
     """
-    def __init__(self, filepath, **kwargs):
+    def __init__(self, filepath, identifying_field, **kwargs):
         assert os.path.exists(filepath), "No file at given path"
 
         self.filepath = filepath
+        self.fieldname = identifying_field
         self.metadata = kwargs
 
         kind = check_type(filepath)
@@ -38,7 +39,7 @@ class Map(object):
         with fiona.drivers():
             self.file = fiona.open(
                 self.filepath,
-                encoding=self.metadata.get('encoding', None)
+                **kwargs
             )
 
     def create_rtree_index(self):
@@ -51,9 +52,9 @@ class Map(object):
             )
         return self.rtree_index
 
-    def get_fieldnames_dictionary(self, fieldname):
-        fieldname = fieldname or self.metadata.get('field', None)
-        assert fieldname, "No field name given or in metadata"
+    def get_fieldnames_dictionary(self, fieldname=None):
+        fieldname = fieldname or self.fieldname
+        assert fieldname, "No valid identifying field name"
         assert fieldname in next(iter(self.file))['properties'], \
             "Given fieldname not in file"
         fd = {index: obj['properties'].get(fieldname, None) \
