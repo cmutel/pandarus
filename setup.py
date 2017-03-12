@@ -1,4 +1,16 @@
 from setuptools import setup
+import os
+
+requirements = [
+    "appdirs",
+    "fiona",
+    "pyprind",
+    "pyproj",
+    "Rtree",
+    "rasterio",
+    "rasterstats",
+    "shapely",
+]
 
 setup(
     version="1.0.alpha1",
@@ -21,16 +33,7 @@ setup(
     package_data={'pandarus': [
         "tests/data/*.*",
     ]},
-    install_requires=[
-        "appdirs",
-        "fiona",
-        "pyprind",
-        "pyproj",
-        "Rtree",
-        "rasterio",
-        "rasterstats",
-        "shapely",
-    ],
+    install_requires=[] if os.environ.get('READTHEDOCS') else requirements,
     license=open('LICENSE.txt').read(),
     long_description=open('README.md').read(),
     name='pandarus',
