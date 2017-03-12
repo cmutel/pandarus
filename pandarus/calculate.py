@@ -267,17 +267,13 @@ class Pandarus(object):
 
         self.calculate_areas(cpus)
 
-        json_exporter(
-            [(k[0], k[1], v['measure']) for k, v in self.data.items()],
-            self.metadata,
-            data_fp,
-            compressed=compress
-        )
+        mapping_dict = self.from_map.get_fieldnames_dictionary(None)
 
-        mapping_dict = self.from_map.get_fieldnames_dictionary(fieldname)
         json_exporter(
             [(mapping_dict[k], v) for k, v in self.data.items()],
             self.metadata['first'],
             filepath,
             compressed=compress
         )
+
+        return filepath
