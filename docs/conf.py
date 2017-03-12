@@ -18,7 +18,18 @@ class Mock(MagicMock):
     def __getattr__(cls, name):
             return MagicMock()
 
-MOCK_MODULES = ["appdirs","fiona","pyprind","pyproj","Rtree","rasterio","rasterstats","shapely"]
+MOCK_MODULES = [
+  "appdirs",
+  "fiona",
+  "pyprind",
+  "pyproj",
+  "Rtree",
+  "rasterio",
+  "rasterstats",
+  "rasterio.rio.helpers",
+  "rasterio.crs",
+  "shapely",
+]
 sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
 
 # The short X.Y version.
