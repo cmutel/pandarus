@@ -19,16 +19,24 @@ class Mock(MagicMock):
             return MagicMock()
 
 MOCK_MODULES = [
+  "affine",
   "appdirs",
   "fiona",
+  "fiona.crs",
+  "numpy",
   "pyprind",
   "pyproj",
   "Rtree",
   "rasterio",
   "rasterstats",
+  "rasterstats.io",
+  "rasterstats.utils",
   "rasterio.rio.helpers",
   "rasterio.crs",
   "shapely",
+  "shapely.geometry",
+  "shapely.geos",
+  "shapely.ops",
 ]
 sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
 

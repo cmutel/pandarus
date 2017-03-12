@@ -4,6 +4,7 @@ import os
 requirements = [
     "appdirs",
     "fiona",
+    "numpy",
     "pyprind",
     "pyproj",
     "Rtree",
