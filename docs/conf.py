@@ -8,18 +8,8 @@
 # All configuration values have a default; values that are commented out
 # serve to show the default.
 
-
 # conda-forge uses outdated version of cligj, which breaks everything...
-import sys
-from unittest.mock import MagicMock
-
-class Mock(MagicMock):
-    @classmethod
-    def __getattr__(cls, name):
-            return MagicMock()
-
-MOCK_MODULES = ['rasterstats']
-sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
+autodoc_mock_imports = ["appdirs","fiona","pyprind","pyproj","Rtree","rasterio","rasterstats","shapely"]
 
 # The short X.Y version.
 version = '1.0'
@@ -41,10 +31,7 @@ sys.path.insert(1, abspath(dirname(dirname(__file__))))
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
 extensions = ['sphinx.ext.autodoc', 'sphinx.ext.mathjax']
 
-# Load mathjax through https so it works on RTD/Chrome. See: # http://sphinx-doc.org/ext/math.html
-# http://docs.mathjax.org/en/latest/start.html#secure-access-to-the-cdn
-# https://github.com/rtfd/readthedocs.org/issues/283
-mathjax_path = "https://c328740.ssl.cf1.rackcdn.com/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"
+mathjax_path = "https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-MML-AM_CHTML"
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
