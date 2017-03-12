@@ -26,7 +26,7 @@ MOCK_MODULES = [
   "numpy",
   "pyprind",
   "pyproj",
-  "Rtree",
+  "rtree",
   "rasterio",
   "rasterio.rio.helpers",
   "rasterio.crs",
