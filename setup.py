@@ -5,7 +5,6 @@ requirements = [
     "appdirs",
     "fiona",
     "numpy",
-    "pyprind",
     "pyproj",
     "Rtree",
     "rasterio",

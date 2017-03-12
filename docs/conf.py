@@ -24,7 +24,6 @@ MOCK_MODULES = [
   "fiona",
   "fiona.crs",
   "numpy",
-  "pyprind",
   "pyproj",
   "rtree",
   "rasterio",

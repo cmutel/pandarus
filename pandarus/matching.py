@@ -16,7 +16,6 @@ import logging
 import math
 import multiprocessing
 import os
-import pyprind
 
 area_mapping = {
     'point': lambda x, y: 1,
@@ -33,23 +32,6 @@ kind_mapping = {
     'Point': 'point',
     'MultiPoint': 'point',
 }
-
-
-class BetterBar(pyprind.ProgBar):
-    def finish(self):
-        if self.cnt == self.max_iter:
-            return
-        else:
-            self.cnt = self.max_iter
-            self._finish()
-
-    def update(self, index=None):
-        if index is None:
-            super(pyprind.ProgBar, self).update()
-        else:
-            self.cnt = index
-            self._print()
-            self._finish()
 
 
 def chunker(iterable, chunk_size):
@@ -209,7 +191,7 @@ class MatchMaker(object):
         # Both numbers picked more or less at random...
         chunk_size = int(max(20, map_size / 200))
         num_jobs = int(math.ceil(map_size / float(chunk_size)))
-        return chunk_size, num_jobs, BetterBar(map_size)
+        return chunk_size, num_jobs
 
     @classmethod
     def areas(cls, from_map, from_objs=None, cpus=None, log_dir=None):
@@ -220,7 +202,7 @@ class MatchMaker(object):
             map_size = len(Map(from_map))
             ids = range(map_size)
 
-        chunk_size, num_jobs, bar = cls.get_jobs(map_size)
+        chunk_size, num_jobs = cls.get_jobs(map_size)
 
         queue_listener, logging_queue = logger_init(log_dir)
         logging.info("""Starting MatchMaker `areas` calculation.
@@ -234,7 +216,6 @@ class MatchMaker(object):
 
         def callback_func(data):
             results.update(data)
-            bar.update(len(results))
 
         with multiprocessing.Pool(
                     cpus or multiprocessing.cpu_count(),
@@ -261,7 +242,6 @@ class MatchMaker(object):
                 raise ValueError("Couldn't complete Pandarus task")
 
         queue_listener.stop()
-        bar.finish()
 
         logging.info("""Finished MatchMaker `areas` calculation.
         Map: {}
@@ -283,7 +263,7 @@ class MatchMaker(object):
             map_size = len(Map(from_map))
             ids = range(map_size)
 
-        chunk_size, num_jobs, bar = cls.get_jobs(map_size)
+        chunk_size, num_jobs = cls.get_jobs(map_size)
 
         queue_listener, logging_queue = logger_init(log_dir)
         logging.info("""Starting MatchMaker `intersect` calculation.
@@ -299,7 +279,6 @@ class MatchMaker(object):
 
         def callback_func(data):
             results.update(data)
-            bar.update(len({key[0] for key in results}))
 
         with multiprocessing.Pool(
                     cpus or multiprocessing.cpu_count(),
@@ -326,7 +305,6 @@ class MatchMaker(object):
                 raise ValueError("Couldn't complete Pandarus task")
 
         queue_listener.stop()
-        bar.finish()
 
         logging.info("""Finished MatchMaker `intersect` calculation.
         From map: {}

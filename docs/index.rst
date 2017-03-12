@@ -102,7 +102,6 @@ Pandarus uses the following libraries:
 
     * `appdirs <https://pypi.python.org/pypi/appdirs>`__
     * `fiona <http://toblerity.org/fiona/index.html>`__
-    * `pyprind <https://pypi.python.org/pypi/PyPrind>`__
     * `pyproj <https://code.google.com/p/pyproj/>`__
     * `Rtree <http://toblerity.org/rtree/>`__
     * `rasterio <https://github.com/mapbox/rasterio>`__
