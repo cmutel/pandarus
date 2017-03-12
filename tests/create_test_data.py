@@ -106,6 +106,16 @@ def create_test_datasets():
         [create_record(name, coords) for name, coords in zip(names, cells)]
     )
 
+    names = ["grid cell {}".format(i * 2 + j)
+        for i in range(cols)
+        for j in range(rows)
+    ]
+    cells = create_grid(0, 7, cols, rows)
+    create_test_file(
+        os.path.join(dirpath, "big-grid.geojson"),
+        [create_record(name, coords) for name, coords in zip(names, cells)]
+    )
+
     # Duplicate names
     names = itertools.repeat("foo")
     cells = create_grid(x, y, cols, rows)
