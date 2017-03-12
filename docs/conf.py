@@ -9,15 +9,22 @@
 # serve to show the default.
 
 # conda-forge uses outdated version of cligj, which breaks everything...
-autodoc_mock_imports = ["appdirs","fiona","pyprind","pyproj","Rtree","rasterio","rasterstats","shapely"]
+import sys
+from unittest.mock import MagicMock
+from os.path import abspath, dirname
+
+class Mock(MagicMock):
+    @classmethod
+    def __getattr__(cls, name):
+            return MagicMock()
+
+MOCK_MODULES = ["appdirs","fiona","pyprind","pyproj","Rtree","rasterio","rasterstats","shapely"]
+sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
 
 # The short X.Y version.
 version = '1.0'
 # The full version, including alpha/beta/rc tags.
 release = '1.0.alpha1'
-
-import sys
-from os.path import abspath, dirname
 
 # Make sure we use this copy of Pandarus
 sys.path.insert(1, abspath(dirname(dirname(__file__))))
