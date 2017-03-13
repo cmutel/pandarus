@@ -1,5 +1,6 @@
-from pandarus import Map, raster_statistics, intersect
+from pandarus import Map, raster_statistics, intersect, calculate_remaining
 from pandarus.calculate import as_features, get_intersections
+import fiona
 import json
 import os
 import pytest
@@ -15,6 +16,10 @@ dem = os.path.join(dirpath, "DEM.tif")
 def fake_zonal_stats(vector, *args, **kwargs):
     for i, f in enumerate(Map(vector, 'name')):
         yield i
+
+def fake_intersection(first, indices, second, worker=None):
+    _, geom = next(Map(second).iter_latlong())
+    return {(0, 0): {'measure': 42, 'geom': geom}}
 
 def test_rasterstats_invalid():
     with pytest.raises(AssertionError):
@@ -52,11 +57,9 @@ def test_rasterstats(monkeypatch):
         ['grid cell 3', 3],
     ]
 
-    assert 'metadata' in result
-    for field in ('sha256', 'filename', 'field', 'path'):
-        assert field in result['metadata']['vector']
-    for field in ('sha256', 'filename', 'band', 'path'):
-        assert field in result['metadata']['raster']
+    assert result['metadata'].keys() == {'vector', 'raster', 'when'}
+    assert result['metadata']['vector'].keys() == {'field', 'filename', 'path', 'sha256'}
+    assert result['metadata']['raster'].keys() == {'band', 'filename', 'path', 'sha256'}
     assert result['data'] == expected
 
 def test_rasterstats_overwrite_existing(monkeypatch):
@@ -107,14 +110,59 @@ def test_as_features(monkeypatch):
     assert next(as_features(dct)) == expected
 
 def test_mp_intersections(monkeypatch):
-    class Fake:
-        @staticmethod
-        def intersect(*arg, **kwargs):
-            return "Called intersect"
+    def fake_intersect(*arg, **kwargs):
+        return "Called intersect"
 
     monkeypatch.setattr(
-        'pandarus.calculate.MatchMaker',
-        Fake
+        'pandarus.calculate.mp_intersect',
+        fake_intersect
     )
 
     assert get_intersections(grid, square, cpus=1) == 'Called intersect'
+
+def test_intersect(monkeypatch):
+    monkeypatch.setattr(
+        'pandarus.calculate.intersection_calculation',
+        fake_intersection
+    )
+
+    dirpath = tempfile.mkdtemp()
+    vector_fp, data_fp = intersect(grid, 'name', square, 'name', dirpath=dirpath, compress=False)
+
+    data = json.load(open(data_fp))
+    assert data['data'] == [['grid cell 0', 'single', 42]]
+    assert data['metadata'].keys() == {'first', 'second', 'when'}
+    assert data['metadata']['first'].keys() == {'field', 'filename', 'path', 'sha256'}
+    assert data['metadata']['second'].keys() == {'field', 'filename', 'path', 'sha256'}
+
+    expected = {
+        'id': '0',
+        'type': 'Feature',
+        'geometry': {
+            'coordinates': [[(0.5, 0.5), (0.5, 1.5), (1.5, 1.5), (1.5, 0.5), (0.5, 0.5)]],
+            'type': 'Polygon'
+        },
+        'properties': dict([('id', 0), ('to_label', 'single'), ('from_label', 'grid cell 0'), ('measure', 42.0)])
+    }
+    assert next(iter(fiona.open(vector_fp))) == expected
+
+def test_intersect_overwrite_existing(monkeypatch):
+    monkeypatch.setattr(
+        'pandarus.calculate.intersection_calculation',
+        fake_intersection
+    )
+
+    dirpath = tempfile.mkdtemp()
+    vector_fp, data_fp = intersect(grid, 'name', square, 'name', dirpath=dirpath, compress=False)
+
+    with open(vector_fp, "w") as f:
+        f.write("Weeeee!")
+    with open(data_fp, "w") as f:
+        f.write("Wooooo!")
+
+    vector_fp, data_fp = intersect(grid, 'name', square, 'name', dirpath=dirpath, compress=False)
+
+    data = json.load(open(data_fp))
+    assert data['data'] == [['grid cell 0', 'single', 42]]
+
+    assert len(fiona.open(vector_fp)) == 1

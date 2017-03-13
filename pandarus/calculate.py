@@ -2,7 +2,7 @@
 from .conversion import check_type
 from .filesystem import json_exporter, get_appdirs_path, sha256
 from .maps import Map
-from .matching import MatchMaker, intersection_calculation
+from .matching import intersect as mp_intersect, intersection_calculation
 from .geometry import get_remaining
 from .projection import project
 from .rasters import gen_zonal_stats
@@ -87,7 +87,7 @@ def raster_statistics(vector_fp, identifying_field, raster, output=None,
 
 def get_intersections(first, second, cpus=None):
     if cpus:
-        return MatchMaker.intersect(first, second, cpus=cpus)
+        return mp_intersect(first, second, cpus=cpus)
     else:
         return intersection_calculation(first, None, second)
 

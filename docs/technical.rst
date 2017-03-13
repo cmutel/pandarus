@@ -47,8 +47,9 @@ map
 matching
 --------
 
-.. autoclass:: pandarus.matching.MatchMaker
-    :members:
+.. autofunction:: pandarus.matching.intersect
+
+.. autofunction:: pandarus.matching.intersection_calculation
 
 projection
 ----------
