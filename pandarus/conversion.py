@@ -189,10 +189,8 @@ def clean_raster(fp, new_fp=None, band=1, nodata=None):
             print("Not converting to 32 bit float; out of range values present.")
 
     profile['tiled'] = False
-    if 'blockysize' in profile:
-        del profile['blockysize']
-    if 'blockxsize' in profile:
-        del profile['blockxsize']
+    profile.pop('blockysize', None)
+    profile.pop('blockxsize', None)
 
     if new_fp is None:
         new_fp = os.path.join(tempfile.mkdtemp(), os.path.basename(fp))
