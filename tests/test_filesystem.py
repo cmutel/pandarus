@@ -11,17 +11,17 @@ def test_hashing():
 
 
 def test_json_exporting():
-    new_fp = os.path.join(tempfile.mkdtemp(), 'testfile')
-    fp = json_exporter([1,2,3], {'foo': 'bar'}, new_fp, False)
-    assert fp
-    assert not fp.endswith(".bz2")
-    assert os.path.isfile(fp)
+    with tempfile.TemporaryDirectory() as dirpath:
+        new_fp = os.path.join(dirpath, 'testfile')
+        fp = json_exporter([1,2,3], {'foo': 'bar'}, new_fp, False)
+        assert fp
+        assert not fp.endswith(".bz2")
+        assert os.path.isfile(fp)
 
-    fp = json_exporter([1,2,3], {'foo': 'bar'}, new_fp, True)
-    assert fp
-    assert fp.endswith(".bz2")
-    assert os.path.isfile(fp)
-
+        fp = json_exporter([1,2,3], {'foo': 'bar'}, new_fp, True)
+        assert fp
+        assert fp.endswith(".bz2")
+        assert os.path.isfile(fp)
 
 def test_appdirs_path():
     dp = get_appdirs_path("test-dir")

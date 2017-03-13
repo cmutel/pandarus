@@ -15,7 +15,7 @@ dem = os.path.join(dirpath, "DEM.tif")
 invalid = os.path.join(dirpath, "invalid.txt")
 
 
-def create_raster(name, array, nodata=-1, **kwargs):
+def create_raster(name, array, dirpath, nodata=-1, **kwargs):
     profile = {
         'count': 1,
         'nodata': nodata,
@@ -28,8 +28,7 @@ def create_raster(name, array, nodata=-1, **kwargs):
         'crs': CRS.from_epsg(4326)
     }
     profile.update(kwargs)
-
-    fp = os.path.join(tempfile.mkdtemp(), name)
+    fp = os.path.join(dirpath, name)
 
     with rasterio.Env():
         with rasterio.open(fp, 'w', **profile) as dst:
@@ -38,16 +37,17 @@ def create_raster(name, array, nodata=-1, **kwargs):
     return fp
 
 def test_create_raster():
-    fp = create_raster(
-        'foo.tif',
-        np.random.random(size=(10,10)).astype(np.float32)
-    )
-    assert os.path.isfile(fp)
-    assert check_type(fp) == 'raster'
-    with rasterio.open(fp) as f:
-        assert f.read(1).shape == (10, 10)
-        assert f.read(1).dtype == np.float32
-    os.remove(fp)
+    with tempfile.TemporaryDirectory() as dirpath:
+        fp = create_raster(
+            'foo.tif',
+            np.random.random(size=(10,10)).astype(np.float32),
+            dirpath
+        )
+        assert os.path.isfile(fp)
+        assert check_type(fp) == 'raster'
+        with rasterio.open(fp) as f:
+            assert f.read(1).shape == (10, 10)
+            assert f.read(1).dtype == np.float32
 
 def test_check_type():
     assert check_type(grid) == 'vector'
@@ -59,13 +59,13 @@ def test_convert_to_vector():
     with pytest.raises(AssertionError):
         convert_to_vector(cfs, band='1')
 
-    dirpath = tempfile.mkdtemp()
-    out = convert_to_vector(cfs, dirpath)
-    assert check_type(out) == 'vector'
+    with tempfile.TemporaryDirectory() as dirpath:
+        out = convert_to_vector(cfs, dirpath)
+        assert check_type(out) == 'vector'
 
-    # Second time should be a no-op
-    out = convert_to_vector(cfs, dirpath)
-    assert check_type(out) == 'vector'
+        # Second time should be a no-op
+        out = convert_to_vector(cfs, dirpath)
+        assert check_type(out) == 'vector'
 
     out = convert_to_vector(cfs)
     assert check_type(out) == 'vector'
@@ -78,13 +78,14 @@ def test_rounding():
         assert x == y
 
 def test_round_raster():
-    out = os.path.join(tempfile.mkdtemp(), "test.tif")
+    with tempfile.TemporaryDirectory() as dirpath:
+        out = os.path.join(dirpath, "test.tif")
 
-    assert round_raster(cfs, out) == out
+        assert round_raster(cfs, out) == out
 
-    with rasterio.open(out) as src:
-        array = src.read(1)
-        profile = src.profile
+        with rasterio.open(out) as src:
+            array = src.read(1)
+            profile = src.profile
 
     assert profile['driver'] == 'GTiff'
     assert profile['compress'] == 'lzw'
@@ -108,76 +109,83 @@ def test_clean_raster():
     assert not profile['tiled']
     assert 'blockysize' not in profile
     assert 'blockxsize' not in profile
+    os.remove(out)
 
 def test_clean_raster_null_nodata():
-    out = os.path.join(tempfile.mkdtemp(), "test.tif")
-    result = clean_raster(dem, out)
+    with tempfile.TemporaryDirectory() as dirpath:
+        out = os.path.join(dirpath, "test.tif")
+        result = clean_raster(dem, out)
 
-    with rasterio.open(out) as src:
-        profile = src.profile
+        with rasterio.open(out) as src:
+            profile = src.profile
 
     assert profile['nodata'] is None
 
 def test_clean_raster_filepath():
-    out = os.path.join(tempfile.mkdtemp(), "test.tif")
-    result = clean_raster(sixty_four, out)
-    assert result == out
-    os.remove(out)
+    with tempfile.TemporaryDirectory() as dirpath:
+        out = os.path.join(dirpath, "test.tif")
+        result = clean_raster(sixty_four, out)
+        assert result == out
 
 def test_clean_raster_64bit():
     array = np.array([[0, -1, 1e100]])
 
-    fp = create_raster('foo.tif', array, dtype='float64', nodata=42)
+    with tempfile.TemporaryDirectory() as dirpath:
+        fp = create_raster('foo.tif', array, dirpath, dtype='float64', nodata=42)
 
-    with rasterio.open(fp) as f:
-        assert f.profile['nodata'] == 42
-        assert f.read(1).dtype == np.float64
+        with rasterio.open(fp) as f:
+            assert f.profile['nodata'] == 42
+            assert f.read(1).dtype == np.float64
 
-    out = clean_raster(fp)
+        out_fp = os.path.join(dirpath, 'clean.tif')
+        out = clean_raster(fp, out_fp)
 
-    with rasterio.open(fp) as f:
-        assert f.read(1).dtype == np.float64
-
-    os.remove(fp)
+        with rasterio.open(fp) as f:
+            assert f.read(1).dtype == np.float64
 
 def test_clean_raster_out_of_bounds():
     array = np.array([[0, 1.5, 42, -1e50]])
-    fp = create_raster('foo.tif', array, dtype='float64', nodata=None)
-    out = clean_raster(fp)
-    assert out is None
-    os.remove(fp)
+    with tempfile.TemporaryDirectory() as dirpath:
+        fp = create_raster('foo.tif', array, dirpath, dtype='float64', nodata=None)
+        out = clean_raster(fp)
+        assert out is None
 
 def test_clean_raster_dont_change():
     array = np.array([[0, 1.5, 42, -1e7]])
-    fp = create_raster('foo.tif', array, dtype='float64', nodata=-1e7)
-    out = clean_raster(fp)
-    with rasterio.open(out) as f:
-        assert f.profile['nodata'] == -1e7
-    os.remove(fp)
+    with tempfile.TemporaryDirectory() as dirpath:
+        fp = create_raster('foo.tif', array, dirpath, dtype='float64', nodata=-1e7)
+        out = clean_raster(fp)
+        with rasterio.open(out) as f:
+            assert f.profile['nodata'] == -1e7
+    os.remove(out)
 
 def test_clean_raster_nodata():
     array = np.array([[0, 1.5, 42, -1e50]])
-    fp = create_raster('foo.tif', array, dtype='float64', nodata=-1e50)
-    out = clean_raster(fp)
-    with rasterio.open(out) as f:
-        assert f.profile['nodata'] == -1
-    os.remove(fp)
+    with tempfile.TemporaryDirectory() as dirpath:
+        fp = create_raster('foo.tif', array, dirpath, dtype='float64', nodata=-1e50)
+        out = clean_raster(fp)
+        with rasterio.open(out) as f:
+            assert f.profile['nodata'] == -1
+    os.remove(out)
 
     array = np.array([[0, -1., -99., 6/7]])
-    fp = create_raster('foo.tif', array, dtype='float64', nodata=-1e50)
-    out = clean_raster(fp)
+    with tempfile.TemporaryDirectory() as dirpath:
+        fp = create_raster('foo.tif', array, dirpath, dtype='float64', nodata=-1e50)
+        out = clean_raster(fp)
     with rasterio.open(out) as f:
         assert f.profile['nodata'] == -999
-    os.remove(fp)
+    os.remove(out)
 
     array = np.array([[0, -1., -99., -999., -9999.]])
-    fp = create_raster('foo.tif', array, dtype='float64', nodata=-1e50)
-    assert clean_raster(fp) is None
+    with tempfile.TemporaryDirectory() as dirpath:
+        fp = create_raster('foo.tif', array, dirpath, dtype='float64', nodata=-1e50)
+        assert clean_raster(fp) is None
 
 def test_clean_raster_try_given_nodata():
     array = np.array([[0, -1., -99., -999., -9999]])
-    fp = create_raster('foo.tif', array, dtype='float64', nodata=-1e50)
-    out = clean_raster(fp, nodata=42)
-    with rasterio.open(out) as f:
-        assert f.profile['nodata'] == 42
-    os.remove(fp)
+    with tempfile.TemporaryDirectory() as dirpath:
+        fp = create_raster('foo.tif', array, dirpath, dtype='float64', nodata=-1e50)
+        out = clean_raster(fp, nodata=42)
+        with rasterio.open(out) as f:
+            assert f.profile['nodata'] == 42
+    os.remove(out)

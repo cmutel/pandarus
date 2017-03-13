@@ -130,6 +130,10 @@ def create_test_datasets():
         [create_record("single", create_box(0.5, 0.5, 1, 1))]
     )
 
+    create_test_file(
+        os.path.join(dirpath, "outside.geojson"),
+        [create_record("by-myself", create_box(0.5, 1.5, 1, 1))]
+    )
     # Create multipolygon
 
     # Create point

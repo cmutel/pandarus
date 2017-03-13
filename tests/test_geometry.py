@@ -421,3 +421,15 @@ def test_remaining_lines_no_geoms():
     assert get_remaining(geom, [], False) == 2
 
 # Points
+
+def test_remaining_points():
+    pass
+
+def test_remaining_points_overlap():
+    pass
+
+def test_remaining_points_projection():
+    pass
+
+def test_remaining_points_no_geoms():
+    pass
