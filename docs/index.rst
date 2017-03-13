@@ -3,10 +3,7 @@ Pandarus
 
 Pandarus is a GIS software toolkit for regionalized life cycle assessment. It is designed to work with `brightway LCA framework <https://brightwaylca.org>`__, `brightway2-regional <https://bitbucket.org/cmutel/brightway2-regional>`__, and `Constructive Geometries <https://bitbucket.org/cmutel/constructive-geometries>`__. A separate library, `pandarus-remote <https://bitbucket.org/cmutel/pandarus_remote>`__, provides a web API to run Pandarus on a server.
 
-Why the name Pandarus?
-----------------------
-
-The software matches two different maps against each other, and `Pandarus was a bit of a matchmaker himself <http://en.wikipedia.org/wiki/Pandarus>`_. Plus, ancient names are 200% more science-y.
+.. contents::
 
 Calculating areas
 -----------------
@@ -20,35 +17,43 @@ Usage example
 
 In addition to this documentation, there is also a Jupyter notebook `usage example <https://github.com/cmutel/pandarus/blob/master/docs/usage_example.ipynb>`__.
 
-Capabilities
-============
-
 Intersecting two vector datasets
---------------------------------
+================================
 
-Pandarus can intersect two vector datasets, generating a new vector dataset which includes each possible intersection of a spatial unit in the first dataset with a spatial unit in the second dataset. This functionality is used in calculating which characterization factors to apply to an emission in a given region.
+The main capability of the Pandarus library is to efficiently and correctly intersect the set of spatial features from one vector dataset with the spatial features from another vector dataset. In regionalized life cycle assessment, the first dataset would be inventory locations (polygons, lines, or points), and the second dataset would be regions with site-dependent characterization factors.
 
 .. image:: images/two-vectors.png
     :align: center
 
-.. automethod:: pandarus.intersect
+.. autofunction:: pandarus.intersect
     :noindex:
 
+Projections through the calculation chain
+-----------------------------------------
+
+Lines and points that intersect two vectors
+-------------------------------------------
+
+Calculating area outside of intersections
+-----------------------------------------
+
 Calculating raster statistics against a vector dataset
-------------------------------------------------------
+======================================================
 
 Pandarus can calculate mask a raster with each feature from a vector dataset, and calculate the min, max, and average values from the intersected raster cells. This functionality is provided by a patched version of `rasterstats <https://github.com/perrygeo/python-rasterstats>`__.
+
+The vector and raster file should have the same coordinate reference system. No automatic projection is done by this function.
 
 .. image:: images/rasterstats.png
     :align: center
 
-.. automethod:: pandarus.raster_statistics
+.. autofunction:: pandarus.raster_statistics
     :noindex:
 
-Cleaning and vectorizing raster files
--------------------------------------
+Manipulating raster files
+=========================
 
-Pandarus provides some utility functions to help manage raster files, which are not always provided with rich and correct metadata.
+Pandarus provides some utility functions to help manage and manipulate raster files. Raster files are often provided with incorrect or missing metadata, and the main pandarus capabilities only work on vector files.
 
 .. autofunction:: pandarus.clean_raster
     :noindex:
@@ -58,6 +63,14 @@ Pandarus provides some utility functions to help manage raster files, which are 
 
 .. autofunction:: pandarus.convert_to_vector
     :noindex:
+
+FAQ
+===
+
+Why the name Pandarus?
+----------------------
+
+The software matches two different maps against each other, and `Pandarus was a bit of a matchmaker himself <http://en.wikipedia.org/wiki/Pandarus>`_. Plus, ancient names are 200% more science-y.
 
 Installation
 ============

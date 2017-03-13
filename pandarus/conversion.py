@@ -39,6 +39,8 @@ def convert_to_vector(filepath, dirpath=None, band=1):
 
     ``band`` should be the integer index of the band; default is 1. Note that band indices start from 1, not 0.
 
+    The generated vector file will be in GeoJSON, and have the WGS84 CRS.
+
     Because we are using `GDAL polygonize <http://www.gdal.org/gdal__alg_8h.html#a7a789015334d677afcbef67e5a6b4a7c>`__, we can't use 64 bit floats. This function will automatically convert rasters from 64 to 32 bit floats if necessary."""
     assert isinstance(band, int), "band must be an integer"
 
@@ -136,13 +138,19 @@ def _shapes(in_fp, out_fp, bidx):
 
 def clean_raster(fp, new_fp=None, band=1, nodata=None):
     """Clean raster data and metadata:
-        * Delete invalid block sizes
+        * Delete invalid block sizes, and remove tiling
         * Set nodata to a reasonable value, if possible
-        * Convert to 32 bits, if currently float64 and such conversion is possible
+        * Convert to 32 bit floats, if currently 64 bit floats and such conversion is possible
 
-    Returns the filepath of the new or current file.
+    ``fp``: String. Filepath of the input raster file.
 
-    """
+    ``new_fp``: String, optional. Filepath of the raster to create. If not provided, the new raster will have the same name as the existing file, but will be created in a temporary directory.
+
+    ``band``: Integer, default is ``1``. Raster band to clean and create in new file. Each band of a multiband raster would have to be cleaned separately.
+
+    ``nodata``: Float, optional. Additional value to try when changing ``nodata`` value; must not be present in existing raster data.
+
+    Returns the filepath of the new file as a compressed GeoTIFF. Can also return ``None`` if no new raster was written due to failing preconditions."""
     with rasterio.Env():
         with rasterio.open(fp) as src:
             profile = src.profile
@@ -211,7 +219,25 @@ def round_to_x_significant_digits(array, sf=3):
     return array
 
 
-def round_raster(in_fp, out_fp, band=1, sig_digits=3):
+def round_raster(in_fp, out_fp=None, band=1, sig_digits=3):
+    """Round raster cell values to a certain number of significant digits in new raster file. For example, π rounded to 4 significant digits is 3.142.
+
+        * ``in_fp``: String. Filepath of raster input file.
+        * ``out_fp``: String, optional. Filepath of new raster to be created. Should not currently exist. If not provided, the new raster will have the same name as the existing file, but will be created in a temporary directory.
+        * ``band``: Int, default is 1. Band to round. Band indices start at 1.
+        * ``sig_digits``: Int, default is 3. Number of significant digits to round to.
+
+    The created raster file will have the same ``dtype``, shape, and CRS as the input file. It will be a compressed GeoTIFF.
+
+    Returns ``out_fp``, the filepath of the created file.
+
+    """
+    if out_fp is None:
+        out_fp = os.path.join(
+            tempfile.mkdtemp(),
+            os.path.basename(in_fp)
+        )
+
     with rasterio.Env():
         with rasterio.open(in_fp) as src:
             array = src.read(band)
