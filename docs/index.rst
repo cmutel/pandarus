@@ -34,17 +34,6 @@ Pandarus can intersect two vector datasets, generating a new vector dataset whic
 .. automethod:: pandarus.intersect
     :noindex:
 
-Calculating the areas of spatial units
---------------------------------------
-
-Pandarus can calculate the area of each spatial unit in a vector dataset. This functionality is used for normalization by total area when matching characterization factors to emissions in a given region.
-
-.. image:: images/areas.png
-    :align: center
-
-.. automethod:: pandarus.calculate.Pandarus.areas
-    :noindex:
-
 Calculating raster statistics against a vector dataset
 ------------------------------------------------------
 
@@ -53,7 +42,7 @@ Pandarus can calculate mask a raster with each feature from a vector dataset, an
 .. image:: images/rasterstats.png
     :align: center
 
-.. automethod:: pandarus.calculate.Pandarus.rasterstats
+.. automethod:: pandarus.raster_statistics
     :noindex:
 
 Cleaning and vectorizing raster files

@@ -6,37 +6,44 @@ Technical Reference
 calculate
 ---------
 
-.. autoclass:: pandarus.calculate.Pandarus
-    :members:
+.. autofunction:: pandarus.calculate.raster_statistics
+
+.. autofunction:: pandarus.calculate.intersect
+
+.. autofunction:: pandarus.calculate.calculate_remaining
 
 conversion
 ----------
 
-.. automethod:: pandarus.conversion.check_type
+.. autofunction:: pandarus.conversion.check_type
 
-.. automethod:: pandarus.conversion.convert_to_vector
+.. autofunction:: pandarus.conversion.convert_to_vector
+
+.. autofunction:: pandarus.conversion.clean_raster
+
+.. autofunction:: pandarus.conversion.round_raster
 
 filesystem
 ----------
 
-.. automethod:: pandarus.filesystem.get_appdirs_path
+.. autofunction:: pandarus.filesystem.get_appdirs_path
 
-.. automethod:: pandarus.filesystem.sha256
+.. autofunction:: pandarus.filesystem.sha256
+
+.. autofunction:: pandarus.filesystem.json_exporter
 
 geometry
 --------
 
-.. automethod:: pandarus.geometry.clean
+.. autofunction:: pandarus.geometry.clean
 
-.. automethod:: pandarus.geometry.measure_area
+.. autofunction:: pandarus.geometry.recursive_geom_finder
 
-.. automethod:: pandarus.geometry.measure_line
+.. autofunction:: pandarus.geometry.get_intersection
 
-.. automethod:: pandarus.geometry.get_intersection
+.. autofunction:: pandarus.geometry.get_measure
 
-.. automethod:: pandarus.geometry.normalize_dictionary_values
-
-.. automethod:: pandarus.geometry.recursive_geom_finder
+.. autofunction:: pandarus.geometry.get_remaining
 
 map
 ---
@@ -44,10 +51,10 @@ map
 .. autoclass:: pandarus.maps.Map
     :members:
 
-matching
---------
+intersections
+-------------
 
-.. autofunction:: pandarus.intersections.intersect
+.. autofunction:: pandarus.intersections.intersection_dispatcher
 
 .. autofunction:: pandarus.intersections.intersection_worker
 
