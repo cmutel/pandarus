@@ -47,9 +47,9 @@ map
 matching
 --------
 
-.. autofunction:: pandarus.matching.intersect
+.. autofunction:: pandarus.intersections.intersect
 
-.. autofunction:: pandarus.matching.intersection_calculation
+.. autofunction:: pandarus.intersections.intersection_worker
 
 projection
 ----------

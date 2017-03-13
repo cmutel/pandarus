@@ -2,7 +2,7 @@
 from .conversion import check_type
 from .filesystem import json_exporter, get_appdirs_path, sha256
 from .maps import Map
-from .matching import intersect as mp_intersect, intersection_calculation
+from .intersections import intersection_dispatcher
 from .geometry import get_remaining
 from .projection import project
 from .rasters import gen_zonal_stats
@@ -86,13 +86,6 @@ def raster_statistics(vector_fp, identifying_field, raster, output=None,
     }
     json_exporter(results, metadata, output, compressed)
     return output
-
-
-def get_intersections(first, second, cpus=None):
-    if cpus:
-        return mp_intersect(first, second, cpus=cpus)
-    else:
-        return intersection_calculation(first, None, second)
 
 
 def as_features(dct):
@@ -187,7 +180,7 @@ def intersect(first_fp, first_field, second_fp, second_field,
     if os.path.exists(data_fp):
         os.remove(data_fp)
 
-    data = get_intersections(first_fp, second_fp, cpus)
+    data = intersection_dispatcher(first_fp, second_fp, cpus)
 
     first_mapping = first.get_fieldnames_dictionary()
     second_mapping = second.get_fieldnames_dictionary()

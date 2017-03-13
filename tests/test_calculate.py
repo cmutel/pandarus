@@ -1,5 +1,5 @@
 from pandarus import Map, raster_statistics, intersect, calculate_remaining
-from pandarus.calculate import as_features, get_intersections
+from pandarus.calculate import as_features
 import fiona
 import json
 import os
@@ -20,7 +20,7 @@ def fake_zonal_stats(vector, *args, **kwargs):
     for i, f in enumerate(Map(vector, 'name')):
         yield i
 
-def fake_intersection(first, indices, second, worker=None):
+def fake_intersection(first, second, indices, cpus=None):
     _, geom = next(Map(second).iter_latlong())
     return {(0, 0): {'measure': 42, 'geom': geom}}
 
@@ -113,31 +113,9 @@ def test_as_features(monkeypatch):
     dct = {(1, 2): {'measure': 42, 'geom': 'Foo'}}
     assert next(as_features(dct)) == expected
 
-def test_get_intersections_mp(monkeypatch):
-    def fake_intersect(*arg, **kwargs):
-        return "Called intersect"
-
-    monkeypatch.setattr(
-        'pandarus.calculate.mp_intersect',
-        fake_intersect
-    )
-
-    assert get_intersections(grid, square, cpus=1) == 'Called intersect'
-
-def test_get_intersections_single(monkeypatch):
-    def fake_intersect(*arg, **kwargs):
-        return "Called intersect"
-
-    monkeypatch.setattr(
-        'pandarus.calculate.intersection_calculation',
-        fake_intersect
-    )
-
-    assert get_intersections(grid, square) == 'Called intersect'
-
 def test_intersect(monkeypatch):
     monkeypatch.setattr(
-        'pandarus.calculate.intersection_calculation',
+        'pandarus.calculate.intersection_dispatcher',
         fake_intersection
     )
 
@@ -163,7 +141,7 @@ def test_intersect(monkeypatch):
 
 def test_intersect_default_path(monkeypatch):
     monkeypatch.setattr(
-        'pandarus.calculate.intersection_calculation',
+        'pandarus.calculate.intersection_dispatcher',
         fake_intersection
     )
 
@@ -179,7 +157,7 @@ def test_intersect_default_path(monkeypatch):
 
 def test_intersect_overwrite_existing(monkeypatch):
     monkeypatch.setattr(
-        'pandarus.calculate.intersection_calculation',
+        'pandarus.calculate.intersection_dispatcher',
         fake_intersection
     )
 

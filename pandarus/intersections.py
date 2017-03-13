@@ -68,9 +68,9 @@ def get_jobs(map_size):
     return chunk_size, num_jobs
 
 
-def intersection_calculation(from_map, from_objs, to_map, worker_id=1):
+def intersection_worker(from_map, from_objs, to_map, worker_id=1):
     """Multiprocessing worker for map matching"""
-    logging.info("""Starting intersection_calculation:
+    logging.info("""Starting intersection_worker:
     from map: {}
     from objs: {} ({} to {})
     to map: {}
@@ -125,7 +125,10 @@ def intersection_calculation(from_map, from_objs, to_map, worker_id=1):
     return results
 
 
-def intersect(from_map, to_map, from_objs=None, cpus=None, log_dir=None):
+def intersection_dispatcher(from_map, to_map, from_objs=None, cpus=None, log_dir=None):
+    if not cpus:
+        return intersection_worker(from_map, None, to_map)
+
     if from_objs:
         map_size = len(from_objs)
         ids = from_objs
@@ -164,7 +167,7 @@ def intersect(from_map, to_map, from_objs=None, cpus=None, log_dir=None):
 
         for argument_set in arguments:
             function_results.append(pool.apply_async(
-                intersection_calculation,
+                intersection_worker,
                 argument_set,
                 callback=callback_func
             ))
