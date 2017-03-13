@@ -1,5 +1,12 @@
 from pandarus import Map
+from pandarus.intersections import (
+    chunker,
+    get_jobs,
+    logger_init,
+    worker_init,
+)
 import os
+import tempfile
 
 dirpath = os.path.abspath(os.path.join(os.path.dirname(__file__), "data"))
 grid = os.path.join(dirpath, "grid.geojson")
@@ -11,9 +18,26 @@ countries = os.path.join(dirpath, "test_countries.gpkg")
 provinces = os.path.join(dirpath, "test_provinces.gpkg")
 
 
-def test_rasterstats():
-    pass
+def test_chunker():
+    numbers = list(range(10))
+    expected = [
+        [0, 1, 2, 3],
+        [4, 5, 6, 7],
+        [8, 9]
+    ]
+    assert list(chunker(numbers, 4)) == expected
 
+def test_worker_init():
+    with tempfile.TemporaryDirectory() as dirpath:
+        ql, lq = logger_init(dirpath)
+        worker_init(lq)
+        assert os.listdir(dirpath)
+
+def test_get_jobs():
+    assert get_jobs(10) == (20, 1)
+    assert get_jobs(100) == (20, 5)
+    assert get_jobs(110) == (20, 6)
+    assert get_jobs(10000) == (50, 200)
 
 # def test_data_available():
 #     for fn in (grid, square, point, points, lines, countries, provinces):
