@@ -215,7 +215,12 @@ def test_calculate_remaining():
     assert data['metadata']['intersections'].keys() == {'field', 'filename', 'path', 'sha256'}
     assert data['metadata']['source'].keys() == {'field', 'filename', 'path', 'sha256'}
 
-def test_calculate_remaining_copmressed_fp(monkeypatch):
+def test_calculate_remaining_copmressed_fp():
     with tempfile.TemporaryDirectory() as dirpath:
         data_fp = calculate_remaining(outside, 'name', remain_result, dirpath=dirpath, compress=False)
         assert os.path.isfile(data_fp)
+
+def test_calculate_remaining_default_path():
+    data_fp = calculate_remaining(outside, 'name', remain_result, compress=False)
+    assert 'intersections' in data_fp
+    os.remove(data_fp)
