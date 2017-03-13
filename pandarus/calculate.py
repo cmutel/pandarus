@@ -11,6 +11,7 @@ from functools import partial
 from shapely.geometry import mapping, asShape
 import datetime
 import fiona
+import multiprocessing
 import json
 import os
 import rasterio
@@ -22,6 +23,8 @@ WGS84 = from_string("+datum=WGS84 +ellps=WGS84 +no_defs +proj=longlat")
 MISMATCHED_CRS = """Possible coordinate reference systems (CRS) mismatch. The raster statistics may be incorrect, please only use this method when both vector and raster have the same CRS.
     Vector: {}
     Raster: {}"""
+
+CPU_COUNT = multiprocessing.cpu_count()
 
 
 def get_map(fp, field, kwargs):
@@ -107,7 +110,7 @@ def as_features(dct):
 
 
 def intersect(first_fp, first_field, second_fp, second_field,
-        first_kwargs={}, second_kwargs={}, dirpath=None, cpus=None,
+        first_kwargs={}, second_kwargs={}, dirpath=None, cpus=CPU_COUNT,
         driver='GeoJSON', compress=True):
     """Calculate the intersection of two vector spatial datasets.
 
