@@ -3,16 +3,13 @@ from .maps import Map
 from .geometry import (
     clean,
     get_intersection,
-    get_remaining,
     kind_mapping,
 )
-from .projection import project, wgs84, MOLLWEIDE
+from .projection import project, wgs84
 from logging.handlers import QueueHandler, QueueListener
-from pyproj import Proj
 from shapely.geometry import asShape
 from shapely.geos import TopologicalError
 import datetime
-from functools import partial
 import logging
 import math
 import multiprocessing

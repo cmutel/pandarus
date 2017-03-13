@@ -8,7 +8,6 @@ from shapely.geometry import (
     MultiPolygon,
     Point,
     Polygon,
-    asShape,
 )
 from shapely.ops import cascaded_union
 

@@ -12,7 +12,6 @@ from shapely.geometry import mapping, asShape
 import datetime
 import fiona
 import multiprocessing
-import json
 import os
 import rasterio
 import warnings
