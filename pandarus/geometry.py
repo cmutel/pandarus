@@ -1,3 +1,4 @@
+from .projection import project
 from shapely.geometry import (
     GeometryCollection,
     LinearRing,
@@ -7,19 +8,25 @@ from shapely.geometry import (
     MultiPolygon,
     Point,
     Polygon,
-    shape,
+    asShape,
 )
 from shapely.ops import cascaded_union
 
 
-def normalize_dictionary_values(dct, total=1):
-    """In a dictionary ``dct`` with numeric values, normalize these values to sum to ``total``.
+kind_mapping = {
+    'Polygon': 'polygon',
+    'MultiPolygon': 'polygon',
+    'LineString': 'line',
+    'MultiLineString': 'line',
+    'LinearRing': 'line',
+    'Point': 'point',
+    'MultiPoint': 'point',
+}
 
-    Returns a dictionary."""
-    n = total / (sum(v['measure'] for v in dct.values()) or 1)
-    for v in dct.values():
-        v['measure'] *= n
-    return dct
+
+class IncompatibleTypes(Exception):
+    """Geometry comparison across geometry types is meaningless"""
+    pass
 
 
 def clean(geom):
@@ -74,13 +81,13 @@ def recursive_geom_finder(geom, kind):
 
 
 def get_intersection(obj, kind, collection, indices,
-                     projection_func=None,
+                     to_meters=True,
                      return_geoms=True):
     """Return a dictionary describing the intersection of ``obj`` with ``collection[indices]``.
 
     ``obj`` is a Shapely geometry.
     ``kind`` is one of ``("line", "point", "polygon")`` - the kind of object to be returned.
-    ``collection`` is a Fiona datasource.
+    ``collection`` is a ``Map``.
     ``indices`` is an iterator of integers; indices into ``collection``.
     ``projection_func`` is a function to project the results to a new CRS before taking area, etc. If falsey, no projection will take place.
     ``return_geoms``: Return intersected geometries in addition to area, etc.
@@ -103,52 +110,69 @@ def get_intersection(obj, kind, collection, indices,
     """
     assert kind in ("line", "point", "polygon"), "Invalid ``kind``"
 
-    if projection_func is None:
-        projection_func = lambda x: x
-
+    proj_func = project if to_meters else lambda x: x
     obj = clean(obj)
 
-    results = {
-        index: {
-            'geom': recursive_geom_finder(
-                clean(obj.intersection(shape(collection[index]['geometry']))),
-                kind
-            )
-        } for index in indices
-        if collection[index]
-        and shape(collection[index]['geometry']).intersects(obj)
-    }
+    results = {}
 
-    results = {k: v for k, v in results.items() if v['geom']}
-
-    for v in results.values():
-        v['measure'] = get_measure(projection_func(v['geom']), kind)
-
-    results = normalize_dictionary_values(results)
-    if not return_geoms:
-        for v in results.values():
-            del v['geom']
+    for index, geom in collection.iter_latlong(indices):
+        if not geom.intersects(obj):
+            continue
+        g = recursive_geom_finder(
+            clean(obj.intersection(geom)),
+            kind
+        )
+        if not g:
+            continue
+        results[index] = {'measure': get_measure(proj_func(g), kind)}
+        if return_geoms:
+            results[index]['geom'] = g
 
     return results
 
 
-def get_measure(geom, kind):
+def get_measure(geom, kind=None):
     """Get area, length, or number of points, depending on ``geom`` type"""
-    if kind == 'line':
-        return geom.length
-    elif kind == 'polygon':
+    if kind is None:
+        kind = kind_mapping.get(geom.geom_type)
+
+    if kind == 'polygon':
         return geom.area
-    else:
-        return len(geom)
+    elif kind == 'line':
+        return geom.length
+    elif kind == 'point':
+        if geom.geom_type == 'MultiPoint':
+            return len(geom)
+        elif geom.geom_type == 'Point':
+            return 1
+    raise ValueError(
+        "No applicable measure for geom: {}".format(geom)
+    )
 
 
-def get_remaining(original, kind, geoms, projection=None):
+def get_remaining(original, geoms, to_meters=True):
     """Get the remaining area/length/number from ``original`` after subtracting the union of ``geoms``.
 
     Returns a float."""
-    if projection is None or kind == 'point':
-        projection = lambda x: x
-    actual = get_measure(projection(original), kind)
-    union_total = get_measure(projection(cascaded_union(geoms)), kind)
-    individ_total = sum(get_measure(projection(geom), kind) for geom in geoms)
-    return (actual - union_total) * (individ_total / union_total)
+    try:
+        kind = kind_mapping[original.geom_type]
+    except KeyError:
+        raise ValueError(
+            "Can't use this geometry type: {}".format(original.geom_type)
+        )
+
+    if not to_meters or kind == 'point':
+        proj_func = lambda x: x
+    else:
+        proj_func = project
+
+    if geoms and {kind_mapping[g.geom_type] for g in geoms} != {kind}:
+        raise IncompatibleTypes
+
+    actual = get_measure(proj_func(original))
+    if geoms:
+        union_total = get_measure(proj_func(cascaded_union(geoms)), kind)
+        individ_total = sum(get_measure(proj_func(geom), kind) for geom in geoms)
+        return (actual - union_total) * (individ_total / union_total)
+    else:
+        return actual

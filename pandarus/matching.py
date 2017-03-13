@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
 from .maps import Map
 from .geometry import (
+    clean,
     get_intersection,
     get_remaining,
-    clean,
+    kind_mapping,
 )
 from .projection import project, wgs84, MOLLWEIDE
 from logging.handlers import QueueHandler, QueueListener
@@ -11,26 +12,11 @@ from pyproj import Proj
 from shapely.geometry import shape
 from shapely.geos import TopologicalError
 import datetime
+from functools import partial
 import logging
 import math
 import multiprocessing
 import os
-
-# area_mapping = {
-#     'point': lambda x, y: 1,
-#     'line': measure_line,
-#     'polygon': measure_area
-# }
-
-kind_mapping = {
-    'Polygon': 'polygon',
-    'MultiPolygon': 'polygon',
-    'LineString': 'line',
-    'MultiLineString': 'line',
-    'LinearRing': 'line',
-    'Point': 'point',
-    'MultiPoint': 'point',
-}
 
 
 def chunker(iterable, chunk_size):
@@ -73,7 +59,7 @@ def worker_init(logging_queue):
     logger.addHandler(queue_handler)
 
 
-def intersection_calculation(from_map, from_objs, to_map, worker_id, to_meters=True):
+def intersection_calculation(from_map, from_objs, to_map, worker_id=1):
     """Multiprocessing worker for map matching"""
     logging.info("""Starting intersection_calculation:
     from map: {}
@@ -89,6 +75,7 @@ def intersection_calculation(from_map, from_objs, to_map, worker_id, to_meters=T
     if to_map.geometry not in ('Polygon', 'MultiPolygon'):
         raise ValueError("`to_map` geometry must be polygons")
     rtree_index = to_map.create_rtree_index()
+
     logging.info("Worker {}: Loaded `to` map.".format(worker_id))
 
     from_map = Map(from_map)
@@ -96,35 +83,26 @@ def intersection_calculation(from_map, from_objs, to_map, worker_id, to_meters=T
         kind = kind_mapping[from_map.geometry]
     except KeyError:
         raise ValueError("No valid geometry type in map {}".format(from_map))
+
     logging.info("Worker {}: Loaded `from` map.".format(worker_id))
 
-    skip_projection = (from_map.crs == to_map.crs) or \
-        (Proj(wgs84(from_map.crs)).is_latlong() and \
-         Proj(wgs84(to_map.crs)).is_latlong())
+    to_shape = lambda x: project(asShape(x['geometry']), from_map.crs, '')
 
     if from_objs:
         from_gen = ((index, from_map[index]) for index in from_objs)
     else:
         from_gen = enumerate(from_map)
 
-    if to_meters:
-        meter_projection = lambda x: project(x, to_map.crs, MOLLWEIDE)
-    else:
-        meter_projection = None
-
     for from_index, from_obj in from_gen:
         try:
-            geom = clean(shape(from_obj['geometry']))
-
-            if not skip_projection:
-                geom = project(geom, from_map.crs, to_map.crs)
+            geom = clean(to_shape(from_obj))
 
             for k, v in get_intersection(
                 geom,
                 kind,
                 to_map,
                 rtree_index.intersection(geom.bounds),
-                meter_projection
+                project
             ).items():
                 results[(from_index, k)] = v
 

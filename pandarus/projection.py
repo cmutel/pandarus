@@ -14,9 +14,7 @@ def wgs84(s):
     """Fix no CRS or fiona giving abbreviated wgs84 definition.
 
     Returns WGS84 if ``s`` is falsey."""
-    if not s:
-        return WGS84
-    elif s == "+no_defs":
+    if s == "+no_defs" or not s:
         return WGS84
     else:
         return s
@@ -43,12 +41,11 @@ Returns:
     else:
         to_proj = wgs84(to_proj)
 
-    if to_proj == from_proj:
+    to_proj, from_proj = pyproj.Proj(to_proj), pyproj.Proj(from_proj)
+
+    if ((to_proj == from_proj) or
+        (to_proj.is_latlong() and from_proj.is_latlong())):
         return geom
 
-    projection_func = partial(
-        pyproj.transform,
-        pyproj.Proj(from_proj),
-        pyproj.Proj(to_proj)
-    )
+    projection_func = partial(pyproj.transform, from_proj, to_proj)
     return transform(projection_func, geom)

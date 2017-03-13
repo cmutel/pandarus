@@ -19,15 +19,9 @@ def test_init():
     assert m.file
 
 
-def test_raster_conversion(monkeypatch):
-    monkeypatch.setattr(
-        pandarus.maps,
-        'convert_to_vector',
-        lambda x: grid
-    )
-    m = Map(raster, None)
-    assert m.filepath == grid
-
+def test_raster_error(monkeypatch):
+    with pytest.raises(AssertionError):
+        m = Map(raster, None)
 
 def test_metadata(monkeypatch):
     m = Map(grid, 'name')

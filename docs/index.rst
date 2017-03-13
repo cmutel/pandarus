@@ -23,20 +23,15 @@ In addition to this documentation, there is also a Jupyter notebook `usage examp
 Capabilities
 ============
 
-Most Pandarus capabilities are managed through the ``Pandarus`` object.
+Intersecting two vector datasets
+--------------------------------
 
-.. autoclass:: pandarus.Pandarus
-    :noindex:
-
-Matching two vector datasets
-----------------------------
-
-Pandarus can match two vector datasets, generating a new vector dataset which includes each possible combination of a spatial unit in the first dataset with a spatial unit in the second dataset. This functionality is used in calculating which characterization factors to apply to an emission in a given region.
+Pandarus can intersect two vector datasets, generating a new vector dataset which includes each possible intersection of a spatial unit in the first dataset with a spatial unit in the second dataset. This functionality is used in calculating which characterization factors to apply to an emission in a given region.
 
 .. image:: images/two-vectors.png
     :align: center
 
-.. automethod:: pandarus.Pandarus.intersect
+.. automethod:: pandarus.intersect
     :noindex:
 
 Calculating the areas of spatial units

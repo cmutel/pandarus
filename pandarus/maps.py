@@ -1,11 +1,13 @@
 # -*- coding: utf-8 -*-
-from .conversion import check_type, convert_to_vector
+from .conversion import check_type
 from .filesystem import sha256
+from .projection import project
 from fiona import crs as fiona_crs
-from shapely.geometry import shape
+from functools import partial
+from shapely.geometry import asShape
 import fiona
-import rtree
 import os
+import rtree
 
 
 class DuplicateFieldID(Exception):
@@ -20,21 +22,19 @@ class Map(object):
 
     Additional metadata can be provided in `kwargs`:
         * `layer` specifies the shapefile layer
-        * `band` specifies the raster band
 
     .. warning:: The Fiona field ``id`` is not used, as there are no real constraints on these values or values types (see `Fiona manual <http://toblerity.org/fiona/manual.html#record-id>`_), and real world data is often dirty and inconsistent. Instead, we use ``enumerate`` and integer indices.
 
     """
-    def __init__(self, filepath, identifying_field, **kwargs):
+    def __init__(self, filepath, identifying_field=None, **kwargs):
         assert os.path.exists(filepath), "No file at given path"
 
         self.filepath = filepath
         self.fieldname = identifying_field
         self.metadata = kwargs
 
-        kind = check_type(filepath)
-        if kind == 'raster':
-            self.filepath = convert_to_vector(filepath)
+        assert check_type(filepath) == 'vector', \
+            "Must give a vector dataset"
 
         with fiona.drivers():
             self.file = fiona.open(
@@ -42,14 +42,23 @@ class Map(object):
                 **kwargs
             )
 
+    def iter_latlong(self, indices=None):
+        """Iterate over dataset as Shapely geometries in WGS 84 CRS."""
+        _ = partial(project, from_proj=self.crs, to_proj='')
+        if indices is None:
+            for index, feature in enumerate(self):
+                yield (index, _(asShape(feature['geometry'])))
+        else:
+            for index in indices:
+                yield (index, _(asShape(self[index]['geometry'])))
+
     def create_rtree_index(self):
-        """Create `rtree <http://toblerity.org/rtree/>`_ index for efficient spatial querying."""
+        """Create `rtree <http://toblerity.org/rtree/>`_ index for efficient spatial querying.
+
+        **Note**: Bounds are given in lat/long, not in the native CRS"""
         self.rtree_index = rtree.Rtree()
-        for index, record in enumerate(self):
-            self.rtree_index.add(
-                index,
-                shape(record['geometry']).bounds
-            )
+        for index, geom in self.iter_latlong():
+            self.rtree_index.add(index, geom.bounds)
         return self.rtree_index
 
     def get_fieldnames_dictionary(self, fieldname=None):
