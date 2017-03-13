@@ -29,7 +29,7 @@ class IncompatibleTypes(Exception):
 
 
 def clean(geom):
-    """Clean invalid geometries using buffer trick.
+    """Clean invalid geometries using ``buffer(0)`` trick.
 
     ``geom`` is a shapely geometry; returns a shapely geometry."""
     if not geom.is_valid:
@@ -187,7 +187,6 @@ def get_remaining(original, geoms, to_meters=True):
     if geoms:
         union_total = get_measure(proj_func(cascaded_union(geoms)), kind)
         individ_total = sum(get_measure(proj_func(geom), kind) for geom in geoms)
-        print(actual, union_total, individ_total)
         return (actual - union_total) * (individ_total / union_total)
     else:
         return actual
