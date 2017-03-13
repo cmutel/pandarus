@@ -131,7 +131,16 @@ def get_intersection(obj, kind, collection, indices,
 
 
 def get_measure(geom, kind=None):
-    """Get area, length, or number of points, depending on ``geom`` type"""
+    """Get area, length, or number of points in ``geom``.
+
+    * ``geom``: A shapely geom.
+    * ``kind``: Geometry type, optional. One of `polygon`, `line`, or `point`.
+
+    Kind will be guessed based on type of ``geom`` if not otherwise provided.
+
+    If ``kind`` is not one of the allowed types, raises ``ValueError``.
+
+    Returns a float."""
     if kind is None:
         kind = kind_mapping.get(geom.geom_type)
 
@@ -141,9 +150,9 @@ def get_measure(geom, kind=None):
         return geom.length
     elif kind == 'point':
         if geom.geom_type == 'MultiPoint':
-            return len(geom)
+            return float(len(geom))
         elif geom.geom_type == 'Point':
-            return 1
+            return 1.
     raise ValueError(
         "No applicable measure for geom: {}".format(geom)
     )
@@ -151,6 +160,12 @@ def get_measure(geom, kind=None):
 
 def get_remaining(original, geoms, to_meters=True):
     """Get the remaining area/length/number from ``original`` after subtracting the union of ``geoms``.
+
+    * ``original``: Shapely geom in WGS84 CRS.
+    * ``geoms``: List of shapely geoms in WGS84 CRS.
+    * ``to_meters``: Boolean. Return value calculated in Mollweide projection.
+
+    ``original`` and ``geoms`` should have the same geometry type, and ``geoms`` are components of ``original``.
 
     Returns a float."""
     try:
@@ -172,6 +187,7 @@ def get_remaining(original, geoms, to_meters=True):
     if geoms:
         union_total = get_measure(proj_func(cascaded_union(geoms)), kind)
         individ_total = sum(get_measure(proj_func(geom), kind) for geom in geoms)
+        print(actual, union_total, individ_total)
         return (actual - union_total) * (individ_total / union_total)
     else:
         return actual

@@ -19,6 +19,7 @@ from shapely.geometry import (
     Polygon,
     mapping,
 )
+import numpy as np
 import os
 import pytest
 
@@ -394,7 +395,10 @@ def test_remaining_polygons():
     assert get_remaining(geom, [half, second], False) == 0
 
 def test_remaining_polygons_projection():
-    pass
+    area = 1/2 * (4e7 / 360) ** 2
+    geom = Polygon([(0, 0), (0, 1), (1, 1), (1, 0), (0, 0)])
+    half = Polygon([(0, 0), (0, .5), (1, .5), (1, 0), (0, 0)])
+    assert np.allclose(get_remaining(geom, [half]), area, 1e-2)
 
 def test_remaining_polygons_no_geoms():
     geom = Polygon([(0, 0), (0, 1), (1, 1), (1, 0), (0, 0)])
@@ -411,10 +415,17 @@ def test_remaining_lines():
     assert get_remaining(geom, [half, second], False) == 0
 
 def test_remaining_lines_overlap():
-    pass
+    geom = LineString([(0, 0), (0, 1), (1, 1)])
+    half = LineString([(0, 0), (0, 1)])
+    quarter = LineString([(0, 0.5), (0, 1)])
+    result = get_remaining(geom, [half, quarter], False)
+    assert result == (2 - 1) * (1.5/1)
 
 def test_remaining_lines_projection():
-    pass
+    length = 4e7 / 360
+    geom = LineString([(0, 0), (0, 1), (1, 1)])
+    half = LineString([(0, 0), (0, 1)])
+    assert np.allclose(get_remaining(geom, [half]), 1e5, 1e-2)
 
 def test_remaining_lines_no_geoms():
     geom = LineString([(0, 0), (0, 1), (1, 1)])
@@ -423,13 +434,22 @@ def test_remaining_lines_no_geoms():
 # Points
 
 def test_remaining_points():
-    pass
+    geom = MultiPoint([(0, 0), (0, 1)])
+    half = Point((0, 0))
+    assert get_remaining(geom, [half], False) == 1
 
 def test_remaining_points_overlap():
-    pass
+    geom = MultiPoint([(0, 0), (0, 1)])
+    first = Point((0, 0))
+    second = Point((0, 0))
+    result = get_remaining(geom, [first, second], False)
+    assert result == (2 - 1) * (2 / 1)
 
 def test_remaining_points_projection():
-    pass
+    geom = MultiPoint([(0, 0), (0, 1)])
+    half = Point((0, 0))
+    assert get_remaining(geom, [half]) == 1
 
 def test_remaining_points_no_geoms():
-    pass
+    geom = MultiPoint([(0, 0), (0, 1)])
+    assert get_remaining(geom, [], False) == 2
