@@ -103,7 +103,7 @@ def as_features(dct):
 
 def intersect(first_fp, first_field, second_fp, second_field,
         first_kwargs={}, second_kwargs={}, dirpath=None, cpus=CPU_COUNT,
-        driver='GeoJSON', compress=True):
+        driver='GeoJSON', compress=True, log_dir=None):
     """Calculate the intersection of two vector spatial datasets.
 
     The first spatial input file **must** have only one type of geometry, i.e. points, lines, or polygons, and excluding geometry collections. Any of the following are allowed: Point, MultiPoint, LineString, LinearRing, MultiLineString, Polygon, MultiPolygon.
@@ -119,9 +119,10 @@ def intersect(first_fp, first_field, second_fp, second_field,
         * ``first_kwargs``: Dictionary, optional. Additional arguments, such as layer name, passed to fiona when opening the first spatial dataset.
         * ``second_kwargs``: Dictionary, optional. Additional arguments, such as layer name, passed to fiona when opening the second spatial dataset.
         * ``dirpath``: String, optional. Directory to save output files.
-        * ``cpus``: Integer, optional. Number of CPU cores to use when calculating. Use ``cpus=0`` to avoid starting a multiprocessing pool.
-        * ``driver``: Fiona driver name to use when writing geospatial output file. Common values are ``GeoJSON`` (default) or ``GPKG``.
-        * ``compress``: Boolean. Compress JSON output file; default is true.
+        * ``cpus``: Integer, default is ``multiprocessing.cpu_count()``. Number of CPU cores to use when calculating. Use ``cpus=0`` to avoid starting a multiprocessing pool.
+        * ``driver``: String, default is ``GeoJSON``. Fiona driver name to use when writing geospatial output file. Common values are ``GeoJSON`` or ``GPKG``.
+        * ``compress``: Boolean, default is True. Compress JSON output file.
+        * ``log_dir``: String, optional.
 
     Returns filepaths for two created files.
 
@@ -179,7 +180,7 @@ def intersect(first_fp, first_field, second_fp, second_field,
     if os.path.exists(data_fp):
         os.remove(data_fp)
 
-    data = intersection_dispatcher(first_fp, second_fp, cpus)
+    data = intersection_dispatcher(first_fp, second_fp, cpus=cpus, log_dir=log_dir)
 
     first_mapping = first.get_fieldnames_dictionary()
     second_mapping = second.get_fieldnames_dictionary()
