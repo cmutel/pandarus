@@ -47,7 +47,7 @@ def test_intersection_worker_indices():
     key, value = list(result.keys())[0], list(result.values())[0]
     expected = 'MULTIPOLYGON (((0.5 1, 1 1, 1 0.5, 0.5 0.5, 0.5 1)))'
     assert value['geom'].wkt == expected
-    assert np.allclose(value['measure'], area, rtol=1e-2)
+    assert np.isclose(value['measure'], area, rtol=1e-2)
 
 def test_intersection_worker_no_indices():
     result = intersection_worker(grid, None, square)

@@ -188,7 +188,7 @@ def test_calculate_remaining():
         data = json.load(open(data_fp))
 
     assert data['data'][0][0] == 'by-myself'
-    assert np.allclose(area, data['data'][0][1], rtol=1e-2)
+    assert np.isclose(area, data['data'][0][1], rtol=1e-2)
     assert data['metadata'].keys() == {'intersections', 'source', 'when'}
     assert data['metadata']['intersections'].keys() == {'field', 'filename', 'path', 'sha256'}
     assert data['metadata']['source'].keys() == {'field', 'filename', 'path', 'sha256'}

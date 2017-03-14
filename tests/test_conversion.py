@@ -92,7 +92,7 @@ def test_round_raster():
     assert profile['count'] == 1
     assert profile['height'] == 16
     assert np.unique(array[:3, :3]).shape == (1,)
-    assert np.allclose(array[0, 0], 1.47e-7)
+    assert np.isclose(array[0, 0], 1.47e-7)
 
 def test_clean_raster():
     out = clean_raster(sixty_four)

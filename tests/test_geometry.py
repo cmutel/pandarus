@@ -398,7 +398,7 @@ def test_remaining_polygons_projection():
     area = 1/2 * (4e7 / 360) ** 2
     geom = Polygon([(0, 0), (0, 1), (1, 1), (1, 0), (0, 0)])
     half = Polygon([(0, 0), (0, .5), (1, .5), (1, 0), (0, 0)])
-    assert np.allclose(get_remaining(geom, [half]), area, 1e-2)
+    assert np.isclose(get_remaining(geom, [half]), area, 1e-2)
 
 def test_remaining_polygons_no_geoms():
     geom = Polygon([(0, 0), (0, 1), (1, 1), (1, 0), (0, 0)])
@@ -425,7 +425,7 @@ def test_remaining_lines_projection():
     length = 4e7 / 360
     geom = LineString([(0, 0), (0, 1), (1, 1)])
     half = LineString([(0, 0), (0, 1)])
-    assert np.allclose(get_remaining(geom, [half]), 1e5, 1e-2)
+    assert np.isclose(get_remaining(geom, [half]), 1e5, 1e-2)
 
 def test_remaining_lines_no_geoms():
     geom = LineString([(0, 0), (0, 1), (1, 1)])
