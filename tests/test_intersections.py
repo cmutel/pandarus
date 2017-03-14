@@ -3,6 +3,7 @@ from pandarus.intersections import (
     chunker,
     get_jobs,
     intersection_worker,
+    intersection_dispatcher,
     logger_init,
     worker_init,
 )
@@ -48,6 +49,10 @@ def test_intersection_worker_indices():
     assert value['geom'].wkt == expected
     assert np.allclose(value['measure'], area, rtol=1e-2)
 
+def test_intersection_worker_no_indices():
+    result = intersection_worker(grid, None, square)
+    assert len(result) == 4
+
 def test_intersection_worker_wrong_from_type():
     with pytest.raises(ValueError):
         intersection_worker(gc, None, square)
@@ -55,3 +60,12 @@ def test_intersection_worker_wrong_from_type():
 def test_intersection_worker_wrong_to_type():
     with pytest.raises(ValueError):
         intersection_worker(grid, [0], point)
+
+def test_intersection_dispatcher_zero_cpus():
+    result = intersection_dispatcher(grid, square)
+    assert len(result) == 4
+
+def test_intersection_dispatcher_indices():
+    with tempfile.TemporaryDirectory() as dirpath:
+        result = intersection_dispatcher(grid, square, [0, 1], 1, dirpath)
+        assert len(result) == 2
