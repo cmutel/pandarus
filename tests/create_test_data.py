@@ -1,7 +1,4 @@
 # -*- coding: utf-8 -*-
-from __future__ import print_function, unicode_literals
-from eight import *
-
 from affine import Affine
 from fiona import crs as fiona_crs
 from rasterio.crs import CRS
@@ -10,6 +7,8 @@ import itertools
 import numpy as np
 import os
 import rasterio
+from shapely.geometry import GeometryCollection, MultiPolygon, mapping
+
 
 dirpath = os.path.abspath(os.path.join(os.path.dirname(__file__), "data"))
 
@@ -161,6 +160,21 @@ def create_test_datasets():
             create_record("B", [(1, 1), (1.5, 0.5)], "LineString")
         ],
         create_schema("LineString")
+    )
+
+    # Create geometry collection
+    pg = MultiPolygon([[
+        [(0.5, 0.5), (1.5, 0.5), (1.5, 1.5), (0.5, 1.5), (0.5, 0.5)], []
+    ]])
+    gc = GeometryCollection([pg])
+    print(mapping(gc))
+    create_test_file(
+        os.path.join(dirpath, "gc.geojson"),
+        [{
+        '   geometry': mapping(gc),
+            'properties': {'name': 'complicated'}
+        }],
+        create_schema("GeometryCollection")
     )
 
     # Test raster for rasterstats
