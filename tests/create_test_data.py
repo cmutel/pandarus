@@ -4,10 +4,10 @@ from fiona import crs as fiona_crs
 from rasterio.crs import CRS
 import fiona
 import itertools
+import json
 import numpy as np
 import os
 import rasterio
-from shapely.geometry import GeometryCollection, MultiPolygon, mapping
 
 
 dirpath = os.path.abspath(os.path.join(os.path.dirname(__file__), "data"))
@@ -163,19 +163,24 @@ def create_test_datasets():
     )
 
     # Create geometry collection
-    pg = MultiPolygon([[
-        [(0.5, 0.5), (1.5, 0.5), (1.5, 1.5), (0.5, 1.5), (0.5, 0.5)], []
-    ]])
-    gc = GeometryCollection([pg])
-    print(mapping(gc))
-    create_test_file(
-        os.path.join(dirpath, "gc.geojson"),
-        [{
-        '   geometry': mapping(gc),
-            'properties': {'name': 'complicated'}
-        }],
-        create_schema("GeometryCollection")
-    )
+    gc_data = {
+        "type": "FeatureCollection",
+        "crs": {"type": "name", "properties": {"name": "urn:ogc:def:crs:OGC:1.3:CRS84"}
+        },
+        "features": [{
+            "type": "Feature",
+            "geometry": {
+                "type": "GeometryCollection",
+                "geometries": [{
+                    "type": "Polygon",
+                    "coordinates": [(0.5, 0.5), (1.5, 0.5), (1.5, 1.5), (0.5, 1.5), (0.5, 0.5)]
+                }]
+            },
+            "properties": {"name": "complicated"}
+        }]
+    }
+    with open("data/gc.geojson", "w") as f:
+        json.dump(gc_data, f)
 
     # Test raster for rasterstats
     array = np.arange(50).reshape((10, 5)).astype(np.float32)
