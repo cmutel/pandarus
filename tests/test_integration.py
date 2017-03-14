@@ -24,7 +24,8 @@ def test_intersection_polygon():
             grid,
             'name',
             dirpath=dirpath,
-            compress=False
+            compress=False,
+            log_dir=dirpath
         )
         data = json.load(open(data_fp))
 

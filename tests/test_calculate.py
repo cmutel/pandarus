@@ -20,7 +20,7 @@ def fake_zonal_stats(vector, *args, **kwargs):
     for i, f in enumerate(Map(vector, 'name')):
         yield i
 
-def fake_intersection(first, second, indices, cpus=None):
+def fake_intersection(first, second, indices=None, cpus=None, log_dir=None):
     _, geom = next(Map(second).iter_latlong())
     return {(0, 0): {'measure': 42, 'geom': geom}}
 
