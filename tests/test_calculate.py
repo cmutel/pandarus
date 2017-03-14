@@ -34,7 +34,7 @@ def test_rasterstats_new_path(monkeypatch):
         fake_zonal_stats
     )
 
-    fp = raster_statistics(grid, 'name', range_raster, compressed=False)
+    fp = raster_statistics(grid, 'name', range_raster, compress=False)
     assert 'rasterstats' in fp
     assert '.json' in fp
     assert os.path.isfile(fp)
@@ -48,7 +48,7 @@ def test_rasterstats(monkeypatch):
 
     with tempfile.TemporaryDirectory() as dirpath:
         fp = os.path.join(dirpath, "test.json")
-        result = raster_statistics(grid, 'name', range_raster, output=fp, compressed=False)
+        result = raster_statistics(grid, 'name', range_raster, output=fp, compress=False)
         assert result == fp
 
         result = json.load(open(fp))
@@ -77,7 +77,7 @@ def test_rasterstats_overwrite_existing(monkeypatch):
         with open(fp, "w") as f:
             f.write("Original content")
 
-        result = raster_statistics(grid, 'name', range_raster, output=fp, compressed=False)
+        result = raster_statistics(grid, 'name', range_raster, output=fp, compress=False)
 
         assert result == fp
 

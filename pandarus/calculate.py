@@ -38,13 +38,13 @@ def get_map(fp, field, kwargs):
 
 
 def raster_statistics(vector_fp, identifying_field, raster, output=None,
-        band=1, compressed=True, fiona_kwargs={}, **kwargs):
+        band=1, compress=True, fiona_kwargs={}, **kwargs):
     """Create statistics by matching ``raster`` against each spatial unit in ``self.from_map``.
 
     * ``raster``: str. Filepath of the raster used for calculations.
     * ``filepath``: str. Path of the results file to be created. Can be auto-generated.
     * ``band``: int. Raster band used for calculations. Default is 1.
-    * ``compressed``: bool. Compress JSON results file.
+    * ``compress``: bool. Compress JSON results file.
 
     Any additional ``kwargs`` are passed to ``gen_zonal_stats``.
 
@@ -83,7 +83,7 @@ def raster_statistics(vector_fp, identifying_field, raster, output=None,
         },
         'when': datetime.datetime.now().isoformat()
     }
-    json_exporter(results, metadata, output, compressed)
+    json_exporter(results, metadata, output, compress)
     return output
 
 
@@ -216,7 +216,7 @@ def intersect(first_fp, first_field, second_fp, second_field,
             'when': datetime.datetime.now().isoformat(),
         },
         data_fp,
-        compressed=compress
+        compress=compress
     )
 
     return fiona_fp, data_fp

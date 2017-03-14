@@ -21,8 +21,8 @@ def sha256(filepath, blocksize=65536):
     return hasher.hexdigest()
 
 
-def json_exporter(data, metadata, filepath, compressed=True):
-    if compressed:
+def json_exporter(data, metadata, filepath, compress=True):
+    if compress:
         filepath += ".bz2"
         with bz2.BZ2File(filepath, "w") as f:
             f.write(json.dumps({'data': data, 'metadata': metadata},
