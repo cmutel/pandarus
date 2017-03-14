@@ -8,7 +8,7 @@ from .projection import project
 from .rasters import gen_zonal_stats
 from fiona.crs import from_string
 from functools import partial
-from shapely.geometry import mapping, asShape
+from shapely.geometry import mapping, shape
 import datetime
 import fiona
 import multiprocessing
@@ -246,7 +246,7 @@ def calculate_remaining(source_fp, source_field, intersection_fp,
 
     def get_geoms(feat):
         return [
-            asShape(x['geometry'])
+            shape(x['geometry'])
             for x in intersections
             if (x['properties']['from_label'] ==
                 feat['properties'][source_field])
@@ -254,7 +254,7 @@ def calculate_remaining(source_fp, source_field, intersection_fp,
 
     data = [(
             feat['properties'][source_field],
-            get_remaining(_(asShape(feat['geometry'])), get_geoms(feat))
+            get_remaining(_(shape(feat['geometry'])), get_geoms(feat))
         ) for feat in source
     ]
 

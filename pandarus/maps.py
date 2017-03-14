@@ -4,7 +4,7 @@ from .filesystem import sha256
 from .projection import project
 from fiona import crs as fiona_crs
 from functools import partial
-from shapely.geometry import asShape
+from shapely.geometry import shape
 import fiona
 import os
 import rtree
@@ -47,10 +47,10 @@ class Map(object):
         _ = partial(project, from_proj=self.crs, to_proj='')
         if indices is None:
             for index, feature in enumerate(self):
-                yield (index, _(asShape(feature['geometry'])))
+                yield (index, _(shape(feature['geometry'])))
         else:
             for index in indices:
-                yield (index, _(asShape(self[index]['geometry'])))
+                yield (index, _(shape(self[index]['geometry'])))
 
     def create_rtree_index(self):
         """Create `rtree <http://toblerity.org/rtree/>`_ index for efficient spatial querying.

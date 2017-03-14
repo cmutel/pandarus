@@ -7,7 +7,7 @@ from .geometry import (
 )
 from .projection import project, wgs84
 from logging.handlers import QueueHandler, QueueListener
-from shapely.geometry import asShape
+from shapely.geometry import shape
 from shapely.geos import TopologicalError
 import datetime
 import logging
@@ -92,7 +92,7 @@ def intersection_worker(from_map, from_objs, to_map, worker_id=1):
 
     logging.info("Worker {}: Loaded `from` map.".format(worker_id))
 
-    to_shape = lambda x: project(asShape(x['geometry']), from_map.crs, '')
+    to_shape = lambda x: project(shape(x['geometry']), from_map.crs, '')
 
     if from_objs:
         from_gen = ((index, from_map[index]) for index in from_objs)
