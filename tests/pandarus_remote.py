@@ -33,6 +33,7 @@ def sha256(filepath, blocksize=65536):
     return hasher.hexdigest()
 
 url = 'http://127.0.0.1:5000'
+# url = 'https://pandarus.brightwaylca.org'
 
 print("Ping!")
 print(requests.get(url).text)
@@ -111,21 +112,19 @@ print('Catalog:')
 pprint.pprint(requests.get(url + '/catalog').json())
 
 print("Retrieving data")
-os.mkdir("dump")
-os.chdir("dump")
 
 print("Raster stats")
 data = {
-    'raster': sha256('../range.tif'),
-    'vector': sha256('../grid.geojson')
+    'raster': sha256('range.tif'),
+    'vector': sha256('grid.geojson')
 }
 resp = requests.post(url + "/rasterstats", data=data)
 assert resp.status_code == 200
 
 print("Intersection")
 data = {
-    'first': sha256('../square.geojson'),
-    'second': sha256('../grid.geojson')
+    'first': sha256('square.geojson'),
+    'second': sha256('grid.geojson')
 }
 resp = requests.post(url + "/intersection", data=data)
 assert resp.status_code == 200
