@@ -5,7 +5,7 @@ from .geometry import (
     get_intersection,
     kind_mapping,
 )
-from .projection import project, wgs84
+from .projection import project
 from logging.handlers import QueueHandler, QueueListener
 from shapely.geometry import shape
 from shapely.geos import TopologicalError
