@@ -1,6 +1,7 @@
 from pandarus.conversion import *
 from affine import Affine
 from rasterio.crs import CRS
+import fiona
 import numpy as np
 import os
 import pytest
@@ -66,6 +67,13 @@ def test_convert_to_vector():
         # Second time should be a no-op
         out = convert_to_vector(cfs, dirpath)
         assert check_type(out) == 'vector'
+
+        with fiona.open(out) as src:
+            meta = src.meta
+
+            assert meta['crs'] == {'init': 'epsg:4326'}
+            assert meta['schema']['properties'].keys() == {'filename', 'id', 'val'}
+            assert meta['schema']['geometry'] in ('Polygon', 'MultiPolygon')
 
     out = convert_to_vector(cfs)
     assert check_type(out) == 'vector'

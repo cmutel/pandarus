@@ -123,7 +123,9 @@ def _shapes(in_fp, out_fp, bidx):
                         'type': 'Feature',
                         'id': str(i),
                         'properties': {
-                            'val': val, 'filename': src_basename
+                            'val': val,
+                            'filename': src_basename,
+                            'id': i
                         },
                         'bbox': [min(xs), min(ys), max(xs), max(ys)],
                         'geometry': g
