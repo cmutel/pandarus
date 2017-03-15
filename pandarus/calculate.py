@@ -83,8 +83,7 @@ def raster_statistics(vector_fp, identifying_field, raster, output=None,
         },
         'when': datetime.datetime.now().isoformat()
     }
-    json_exporter(results, metadata, output, compress)
-    return output
+    return json_exporter(results, metadata, output, compress)
 
 
 def as_features(dct):
