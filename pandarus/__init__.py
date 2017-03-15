@@ -1,4 +1,4 @@
-__version__ = (1, 0, "alpha1")
+__version__ = (1, 0, "RC1")
 
 __all__ = (
     "Map",
