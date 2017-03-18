@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from .conversion import check_type
-from .filesystem import json_exporter, get_appdirs_path, sha256
+from .filesystem import json_exporter, get_appdirs_path, sha256, json_importer
 from .maps import Map
 from .intersections import intersection_dispatcher
 from .geometry import get_remaining
@@ -265,3 +265,56 @@ def calculate_remaining(source_fp, source_field, intersection_fp,
 
     output = json_exporter(data, metadata, output, compress)
     return output
+
+
+def intersections_from_intersection(fp, metadata=None):
+    """Process an intersections spatial dataset to create two intersections data files.
+
+    ``fp`` is the file path of a vector dataset created by the ``intersect`` function. The intersection of two spatial scales (A, B) is a third spatial scale (C); this function creates intersection data files for (A, C) and (B, C).
+
+    As the intersections data file includes metadata on the input files, this function must have access to the intersections data file created at the same time as intersections spatial dataset. If the ``metadata`` filepath is not provided, the metadata file is looked for in the same directory as ``fp``.
+
+    Returns the file paths of the two new intersections data files.
+    """
+    assert os.path.isfile(fp)
+
+    if metadata:
+        assert os.path.isfile(metadata)
+    else:
+        metadata_fp = ".".join(fp.split(".")[:-1]) + ".json"
+        if not os.path.isfile(metadata_fp):
+            metadata_fp += ".bz2"
+            if not os.path.isfile(metadata_fp):
+                raise ValueError("Can't find metadata file")
+
+    metadata = json_importer(metadata_fp)['metadata']
+
+    with fiona.open(fp) as source:
+        for key in ('id', 'from_label', 'to_label', 'measure'):
+            assert key in source.schema['properties']
+        data = [feat['properties'] for feat in source]
+
+    this = {
+        'field': 'id',
+        'path': fp,
+        'filename': os.path.basename(fp),
+        'sha256': sha256(fp)
+    }
+
+    first_dataset = {
+        'data': [(o['id'], o['from_label'], o['measure']) for o in data],
+        'metadata': {
+            'first': this,
+            'second': metadata['first'],
+            'when', datetime.datetime.now().isoformat()
+        }
+    }
+    second_dataset = {
+        'data': [(o['id'], o['to_label'], o['measure']) for o in data],
+        'metadata': {
+            'first': this,
+            'second': metadata['second'],
+            'when', datetime.datetime.now().isoformat()
+        }
+    }
+    return json_exporter(first_dataset), json_exporter(second_dataset)

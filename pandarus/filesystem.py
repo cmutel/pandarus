@@ -22,6 +22,9 @@ def sha256(filepath, blocksize=65536):
 
 
 def json_exporter(data, metadata, filepath, compress=True):
+    """Export a file to JSON. Compressed with ``bz2`` is ``compress``.
+
+    Returns the filepath of the JSON file. Returned filepath is not necessarily ``filepath``, if ``compress`` is ``True``."""
     if compress:
         filepath += ".bz2"
         with bz2.BZ2File(filepath, "w") as f:
@@ -31,6 +34,19 @@ def json_exporter(data, metadata, filepath, compress=True):
         with codecs.open(filepath, "w", encoding="utf-8") as f:
             json.dump({'data': data, 'metadata': metadata}, f, ensure_ascii=False)
     return filepath
+
+
+def json_importer(fp):
+    """Load a JSON file. Can be compressed with ``bz2`` - if so, it should have the extension ``.bz2``.
+
+    Returns the data in the JSON file."""
+    if fp.endswith(".bz2"):
+        with gzip.open(fp, "rb") as f:
+            data = json.loads(f.read().decode("utf-8"))
+    else:
+        with open(fp, "r") as f:
+            data = json.load(f)
+    return data
 
 
 def get_appdirs_path(subdir):
