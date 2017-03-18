@@ -292,6 +292,12 @@ def test_intersections_from_intersection_not_filepath():
     with pytest.raises(AssertionError):
         intersections_from_intersection('')
 
+    with tempfile.TemporaryDirectory() as dirpath:
+        shutil.copy(inter_res, dirpath)
+        new_fp = os.path.join(dirpath, "intersection_result.geojson")
+        with pytest.raises(ValueError):
+            intersections_from_intersection(new_fp, dirpath=dirpath)
+
 def test_intersections_from_intersection_find_metadata():
     with tempfile.TemporaryDirectory() as dirpath:
         shutil.copy(inter_res, dirpath)
