@@ -83,7 +83,7 @@ def raster_statistics(vector_fp, identifying_field, raster, output=None,
         },
         'when': datetime.datetime.now().isoformat()
     }
-    return json_exporter(results, metadata, output, compress)
+    return json_exporter({'data': results, 'metadata': metadata}, output, compress)
 
 
 def as_features(dct):
@@ -209,11 +209,14 @@ def intersect(first_fp, first_field, second_fp, second_field,
                 sink.write(f)
 
     data_fp = json_exporter(
-        [(k[0], k[1], v['measure']) for k, v in data.items()],
         {
-            'first': first_metadata,
-            'second': second_metadata,
-            'when': datetime.datetime.now().isoformat(),
+            'data': [(k[0], k[1], v['measure']) for k, v in data.items()],
+            'metadata':
+                {
+                    'first': first_metadata,
+                    'second': second_metadata,
+                    'when': datetime.datetime.now().isoformat(),
+                }
         },
         data_fp,
         compress=compress
@@ -263,7 +266,7 @@ def calculate_remaining(source_fp, source_field, intersection_fp,
         'when': datetime.datetime.now().isoformat(),
     }
 
-    output = json_exporter(data, metadata, output, compress)
+    output = json_exporter({'data': data, 'metadata': metadata}, output, compress)
     return output
 
 
@@ -306,7 +309,7 @@ def intersections_from_intersection(fp, metadata=None):
         'metadata': {
             'first': this,
             'second': metadata['first'],
-            'when', datetime.datetime.now().isoformat()
+            'when': datetime.datetime.now().isoformat()
         }
     }
     second_dataset = {
@@ -314,7 +317,14 @@ def intersections_from_intersection(fp, metadata=None):
         'metadata': {
             'first': this,
             'second': metadata['second'],
-            'when', datetime.datetime.now().isoformat()
+            'when': datetime.datetime.now().isoformat()
         }
     }
-    return json_exporter(first_dataset), json_exporter(second_dataset)
+
+    first_fp = "{}.{}.json".format(this['sha256'], metadata['first']['sha256'])
+    second_fp = "{}.{}.json".format(this['sha256'], metadata['second']['sha256'])
+
+    return (
+        json_exporter(first_dataset, first_fp),
+        json_exporter(second_dataset, second_fp)
+    )

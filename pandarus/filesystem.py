@@ -21,18 +21,17 @@ def sha256(filepath, blocksize=65536):
     return hasher.hexdigest()
 
 
-def json_exporter(data, metadata, filepath, compress=True):
+def json_exporter(data, filepath, compress=True):
     """Export a file to JSON. Compressed with ``bz2`` is ``compress``.
 
     Returns the filepath of the JSON file. Returned filepath is not necessarily ``filepath``, if ``compress`` is ``True``."""
     if compress:
         filepath += ".bz2"
         with bz2.BZ2File(filepath, "w") as f:
-            f.write(json.dumps({'data': data, 'metadata': metadata},
-                ensure_ascii=False).encode('utf-8'))
+            f.write(json.dumps(data, ensure_ascii=False).encode('utf-8'))
     else:
         with codecs.open(filepath, "w", encoding="utf-8") as f:
-            json.dump({'data': data, 'metadata': metadata}, f, ensure_ascii=False)
+            json.dump(data, f, ensure_ascii=False)
     return filepath
 
 
@@ -41,7 +40,7 @@ def json_importer(fp):
 
     Returns the data in the JSON file."""
     if fp.endswith(".bz2"):
-        with gzip.open(fp, "rb") as f:
+        with bz2.open(fp, "rb") as f:
             data = json.loads(f.read().decode("utf-8"))
     else:
         with open(fp, "r") as f:
