@@ -1,10 +1,18 @@
-from pandarus import Map, raster_statistics, intersect, calculate_remaining
+from pandarus import (
+    calculate_remaining,
+    intersect,
+    intersections_from_intersection,
+    Map,
+    raster_statistics,
+)
+from pandarus.filesystem import json_importer
 from pandarus.calculate import as_features
 import fiona
 import json
-import os
 import numpy as np
+import os
 import pytest
+import shutil
 import tempfile
 
 dirpath = os.path.abspath(os.path.join(os.path.dirname(__file__), "data"))
@@ -14,6 +22,9 @@ range_raster = os.path.join(dirpath, "range.tif")
 dem = os.path.join(dirpath, "DEM.tif")
 outside = os.path.join(dirpath, "outside.geojson")
 remain_result = os.path.join(dirpath, "remaining.geojson")
+inter_res = os.path.join(dirpath, "intersection_result.geojson")
+inter_res_md = os.path.join(dirpath, "intersection_result.json.bz2")
+inter_res_decompressed = os.path.join(dirpath, "i_result.json")
 
 
 def fake_zonal_stats(vector, *args, **kwargs):
@@ -202,3 +213,119 @@ def test_calculate_remaining_default_path():
     data_fp = calculate_remaining(outside, 'name', remain_result, compress=False)
     assert 'intersections' in data_fp
     os.remove(data_fp)
+
+def test_intersections_from_intersection():
+    with tempfile.TemporaryDirectory() as dirpath:
+        fp1, fp2 = intersections_from_intersection(inter_res, dirpath=dirpath)
+        data = json_importer(fp1)
+        result = [
+            # Order from geojson file
+            [0, 'grid cell 3', 3097248058.207057],
+            [1, 'grid cell 2', 3097719886.041353],
+            [2, 'grid cell 0', 3097719886.0413523],
+            [3, 'grid cell 1', 3097248058.207055],
+        ]
+        assert data['data'] == result
+        assert data['metadata'].keys() == {'first', 'second', 'when'}
+        assert data['metadata']['first'].keys() == {'field', 'filename', 'path', 'sha256'}
+        assert data['metadata']['second'].keys() == {'field', 'filename', 'path', 'sha256'}
+
+        data = json_importer(fp2)
+        result = [
+            [0, 'single', 3097248058.207057],
+            [1, 'single', 3097719886.041353],
+            [2, 'single', 3097719886.0413523],
+            [3, 'single', 3097248058.207055],
+        ]
+        assert data['data'] == result
+        assert data['metadata'].keys() == {'first', 'second', 'when'}
+        assert data['metadata']['first'].keys() == {'field', 'filename', 'path', 'sha256'}
+        assert data['metadata']['second'].keys() == {'field', 'filename', 'path', 'sha256'}
+
+def test_intersections_from_intersection_default_path():
+    f1, f2 = intersections_from_intersection(inter_res)
+    assert 'intersections' in f1
+    os.remove(f1)
+    os.remove(f2)
+
+def test_intersections_from_intersection_specify_md():
+    with tempfile.TemporaryDirectory() as dirpath:
+        fp1, _ = intersections_from_intersection(inter_res, inter_res_md, dirpath=dirpath)
+        data = json_importer(fp1)
+        result = [
+            # Order from geojson file
+            [0, 'grid cell 3', 3097248058.207057],
+            [1, 'grid cell 2', 3097719886.041353],
+            [2, 'grid cell 0', 3097719886.0413523],
+            [3, 'grid cell 1', 3097248058.207055],
+        ]
+        assert data['data'] == result
+
+    with tempfile.TemporaryDirectory() as dirpath:
+        fp1, _ = intersections_from_intersection(inter_res, inter_res_decompressed, dirpath=dirpath)
+        data = json_importer(fp1)
+        result = [
+            # Order from geojson file
+            [0, 'grid cell 3', 3097248058.207057],
+            [1, 'grid cell 2', 3097719886.041353],
+            [2, 'grid cell 0', 3097719886.0413523],
+            [3, 'grid cell 1', 3097248058.207055],
+        ]
+        assert data['data'] == result
+
+    with tempfile.TemporaryDirectory() as dirpath:
+        shutil.copy(inter_res, dirpath)
+        new_fp = os.path.join(dirpath, "intersection_result.geojson")
+
+        fp1, _ = intersections_from_intersection(new_fp, inter_res_decompressed, dirpath=dirpath)
+        data = json_importer(fp1)
+        result = [
+            # Order from geojson file
+            [0, 'grid cell 3', 3097248058.207057],
+            [1, 'grid cell 2', 3097719886.041353],
+            [2, 'grid cell 0', 3097719886.0413523],
+            [3, 'grid cell 1', 3097248058.207055],
+        ]
+        assert data['data'] == result
+
+def test_intersections_from_intersection_not_filepath():
+    with pytest.raises(AssertionError):
+        intersections_from_intersection('')
+
+def test_intersections_from_intersection_find_metadata():
+    with tempfile.TemporaryDirectory() as dirpath:
+        shutil.copy(inter_res, dirpath)
+        new_fp = os.path.join(dirpath, "intersection_result.geojson")
+
+        shutil.copy(inter_res_md, dirpath)
+
+        fp1, _ = intersections_from_intersection(new_fp, dirpath=dirpath)
+        data = json_importer(fp1)
+        result = [
+            # Order from geojson file
+            [0, 'grid cell 3', 3097248058.207057],
+            [1, 'grid cell 2', 3097719886.041353],
+            [2, 'grid cell 0', 3097719886.0413523],
+            [3, 'grid cell 1', 3097248058.207055],
+        ]
+        assert data['data'] == result
+
+    with tempfile.TemporaryDirectory() as dirpath:
+        shutil.copy(inter_res, dirpath)
+        new_fp = os.path.join(dirpath, "intersection_result.geojson")
+
+        shutil.copy(
+            inter_res_decompressed,
+            os.path.join(dirpath, 'intersection_result.json')
+        )
+
+        fp1, _ = intersections_from_intersection(new_fp, dirpath=dirpath)
+        data = json_importer(fp1)
+        result = [
+            # Order from geojson file
+            [0, 'grid cell 3', 3097248058.207057],
+            [1, 'grid cell 2', 3097719886.041353],
+            [2, 'grid cell 0', 3097719886.0413523],
+            [3, 'grid cell 1', 3097248058.207055],
+        ]
+        assert data['data'] == result

@@ -6,10 +6,16 @@ __all__ = (
     'convert_to_vector',
     'calculate_remaining',
     'intersect',
+    'intersections_from_intersection',
     'raster_statistics',
     'round_raster',
 )
 
-from .calculate import raster_statistics, intersect, calculate_remaining
+from .calculate import (
+    calculate_remaining,
+    intersect,
+    intersections_from_intersection,
+    raster_statistics,
+)
 from .maps import Map
 from .conversion import convert_to_vector, clean_raster, round_raster

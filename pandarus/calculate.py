@@ -266,11 +266,10 @@ def calculate_remaining(source_fp, source_field, intersection_fp,
         'when': datetime.datetime.now().isoformat(),
     }
 
-    output = json_exporter({'data': data, 'metadata': metadata}, output, compress)
-    return output
+    return json_exporter({'data': data, 'metadata': metadata}, output, compress)
 
 
-def intersections_from_intersection(fp, metadata=None):
+def intersections_from_intersection(fp, metadata=None, dirpath=None):
     """Process an intersections spatial dataset to create two intersections data files.
 
     ``fp`` is the file path of a vector dataset created by the ``intersect`` function. The intersection of two spatial scales (A, B) is a third spatial scale (C); this function creates intersection data files for (A, C) and (B, C).
@@ -284,13 +283,13 @@ def intersections_from_intersection(fp, metadata=None):
     if metadata:
         assert os.path.isfile(metadata)
     else:
-        metadata_fp = ".".join(fp.split(".")[:-1]) + ".json"
-        if not os.path.isfile(metadata_fp):
-            metadata_fp += ".bz2"
-            if not os.path.isfile(metadata_fp):
+        metadata = ".".join(fp.split(".")[:-1]) + ".json"
+        if not os.path.isfile(metadata):
+            metadata += ".bz2"
+            if not os.path.isfile(metadata):
                 raise ValueError("Can't find metadata file")
 
-    metadata = json_importer(metadata_fp)['metadata']
+    metadata = json_importer(metadata)['metadata']
 
     with fiona.open(fp) as source:
         for key in ('id', 'from_label', 'to_label', 'measure'):
@@ -321,8 +320,17 @@ def intersections_from_intersection(fp, metadata=None):
         }
     }
 
-    first_fp = "{}.{}.json".format(this['sha256'], metadata['first']['sha256'])
-    second_fp = "{}.{}.json".format(this['sha256'], metadata['second']['sha256'])
+    if not dirpath:
+        dirpath = get_appdirs_path("intersections")
+
+    first_fp = os.path.join(
+        dirpath,
+        "{}.{}.json".format(this['sha256'], metadata['first']['sha256'])
+    )
+    second_fp = os.path.join(
+        dirpath,
+        "{}.{}.json".format(this['sha256'], metadata['second']['sha256'])
+    )
 
     return (
         json_exporter(first_dataset, first_fp),
