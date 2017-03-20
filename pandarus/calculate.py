@@ -191,8 +191,8 @@ def intersect(first_fp, first_field, second_fp, second_field,
     schema = {
         'properties': {
             'id': 'int',
-            'from_label': 'str',
-            'to_label': 'str',
+            'from_label': first.file.meta['schema']['properties'][first_field],
+            'to_label': second.file.meta['schema']['properties'][second_field],
             'measure': 'float',
         },
         'geometry': 'MultiPolygon',
@@ -231,12 +231,10 @@ def calculate_remaining(source_fp, source_field, intersection_fp,
     source, source_metadata = get_map(source_fp, source_field, source_kwargs)
     intersections, inter_metadata = get_map(intersection_fp, 'id', {})
 
-    assert intersections.file.schema['properties'] == {
-        'id': 'int',
-        'from_label': 'str',
-        'to_label': 'str',
-        'measure': 'float',
-    }
+    assert intersections.file.schema['properties'].keys() == \
+        {'id', 'from_label', 'to_label', 'measure'}
+    assert intersections.file.schema['properties']['id'] == 'int'
+    assert intersections.file.schema['properties']['measure'] == 'float'
 
     if not dirpath:
         dirpath = get_appdirs_path("intersections")

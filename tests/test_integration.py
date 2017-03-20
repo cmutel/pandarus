@@ -110,7 +110,7 @@ def test_intersection_polygon_integer_indices():
                     ('measure', 'float'),
                     ('from_label', 'str'),
                     ('id', 'int'),
-                    ('to_label', 'str')
+                    ('to_label', 'int')
                 ])
             }
             assert meta['crs'] == {'init': 'epsg:4326'}
