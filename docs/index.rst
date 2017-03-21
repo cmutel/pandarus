@@ -5,13 +5,6 @@ Pandarus is a GIS software toolkit for regionalized life cycle assessment. It is
 
 .. contents::
 
-Calculating areas
------------------
-
-Because Pandarus was designed for global data sets, the `Mollweide projection <http://en.wikipedia.org/wiki/Mollweide_projection>`_ is used as the default equal-area projection for calculating areas (in square meters). Although no projection is perfect, the Mollweide has been found to be a reasonable compromise [1]_.
-
-.. [1] Usery, E.L., and Seong, J.C., (2000) `A comparison of equal-area map projections for regional and global raster data <http://cegis.usgs.gov/projection/pdf/nmdrs.usery.prn.pdf>`_
-
 Usage example
 -------------
 
@@ -28,14 +21,39 @@ The main capability of the Pandarus library is to efficiently and correctly inte
 .. autofunction:: pandarus.intersect
     :noindex:
 
+Calculating areas
+-----------------
+
+Because Pandarus was designed for global data sets, the `Mollweide projection <http://en.wikipedia.org/wiki/Mollweide_projection>`_ is used as the default equal-area projection for calculating areas (in square meters). Although no projection is perfect, the Mollweide has been found to be a reasonable compromise [1]_.
+
+.. [1] Usery, E.L., and Seong, J.C., (2000) `A comparison of equal-area map projections for regional and global raster data <http://cegis.usgs.gov/projection/pdf/nmdrs.usery.prn.pdf>`_
+
 Projections through the calculation chain
 -----------------------------------------
 
-Lines and points that intersect two vectors
--------------------------------------------
+The function ``intersect`` calls ``intersection_dispatcher``, which in turns calls ``intersection_worker``, which itself calls ``get_intersection``.
+
+In both ``intersect`` and ``intersection_dispatcher``, spatial units from both the first and second datasets are unprojected. Inside the function ``intersection_worker``, spatial units from the first dataset are projected to WGS 84. ``get_intersection`` calls ``Map.iter_latlong`` on the second dataset, which returns spatial units projected in WGS 84. Area and linear calculations are done on the intersection of spatial units from both the first and second spatial datasets, and are projected to the Mollweide CRS. This projection is done at the time of areal or length calculations.
+
+Lines that intersect two vector features
+----------------------------------------
+
+Points that intersect two vector features
+-----------------------------------------
 
 Calculating area outside of intersections
 -----------------------------------------
+
+For many regionalized methodologies, it is important to know how much area/length from one spatial dataset lies outside a second spatial dataset entirely. The function ``calculate_remaining`` calculates these remaining areas.
+
+.. autofunction:: pandarus.calculate_remaining
+    :noindex:
+
+Using intersections spatial dataset as a new spatial scale
+----------------------------------------------------------
+
+.. autofunction:: pandarus.intersections_from_intersection
+    :noindex:
 
 Calculating raster statistics against a vector dataset
 ======================================================
@@ -53,7 +71,7 @@ The vector and raster file should have the same coordinate reference system. No 
 Manipulating raster files
 =========================
 
-Pandarus provides some utility functions to help manage and manipulate raster files. Raster files are often provided with incorrect or missing metadata, and the main pandarus capabilities only work on vector files.
+Pandarus provides some utility functions to help manage and manipulate raster files. Raster files are often provided with incorrect or missing metadata, and the main pandarus capabilities only work on vector files. Unfortunately, however, many raster files require manual fixes outside of these functions.
 
 .. autofunction:: pandarus.clean_raster
     :noindex:

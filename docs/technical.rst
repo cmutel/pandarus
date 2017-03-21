@@ -10,6 +10,8 @@ calculate
 
 .. autofunction:: pandarus.calculate.intersect
 
+.. autofunction:: pandarus.calculate.intersections_from_intersection
+
 .. autofunction:: pandarus.calculate.calculate_remaining
 
 conversion
@@ -31,6 +33,8 @@ filesystem
 .. autofunction:: pandarus.filesystem.sha256
 
 .. autofunction:: pandarus.filesystem.json_exporter
+
+.. autofunction:: pandarus.filesystem.json_importer
 
 geometry
 --------
