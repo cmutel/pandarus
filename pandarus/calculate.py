@@ -54,6 +54,7 @@ def raster_statistics(vector_fp, identifying_field, raster, output=None,
 
     with rasterio.open(raster) as r:
         raster_crs = r.crs.to_string()
+        meta = r.meta
 
     if vector.crs != raster_crs:
         warnings.warn(MISMATCHED_CRS.format(vector.crs, raster_crs))
@@ -68,7 +69,9 @@ def raster_statistics(vector_fp, identifying_field, raster, output=None,
     if os.path.exists(output):
         os.remove(output)
 
-    stats_generator = gen_zonal_stats(vector_fp, raster, band=band, **kwargs)
+    pcw = meta['height'] < 5000 and meta['width'] < 10000
+
+    stats_generator = gen_zonal_stats(vector_fp, raster, band=band, percent_cover_weighting=pcw, **kwargs)
     mapping_dict = vector.get_fieldnames_dictionary()
     results = [(mapping_dict[index], row)
                for index, row in enumerate(stats_generator)]
