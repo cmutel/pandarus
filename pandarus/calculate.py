@@ -242,6 +242,8 @@ def calculate_remaining(source_fp, source_field, intersection_fp,
         * ``dirpath``: String, optional. Directory where the output file will be saved.
         * ``compress``: Boolean. Whether or not to compress the output file.
 
+    .. warning:: ``source_fp`` must be the first file provided to the ``intersect`` function, **not** the second!
+
     Returns the filepath of the output file. The output file JSON format is:
 
     .. code-block:: python
