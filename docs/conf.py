@@ -44,7 +44,7 @@ sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
 # The short X.Y version.
 version = '1.0'
 # The full version, including alpha/beta/rc tags.
-release = '1.0.RC1'
+release = '1.0'
 
 # Make sure we use this copy of Pandarus
 sys.path.insert(1, abspath(dirname(dirname(__file__))))

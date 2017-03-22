@@ -13,7 +13,7 @@ requirements = [
 ]
 
 setup(
-    version="1.0.RC1",
+    version="1.0",
     author="Chris Mutel",
     author_email="cmutel@gmail.com",
     classifiers=[
