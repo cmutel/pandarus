@@ -35,14 +35,33 @@ The function ``intersect`` calls ``intersection_dispatcher``, which in turns cal
 
 In both ``intersect`` and ``intersection_dispatcher``, spatial units from both the first and second datasets are unprojected. Inside the function ``intersection_worker``, spatial units from the first dataset are projected to WGS 84. ``get_intersection`` calls ``Map.iter_latlong`` on the second dataset, which returns spatial units projected in WGS 84. Area and linear calculations are done on the intersection of spatial units from both the first and second spatial datasets, and are projected to the Mollweide CRS. This projection is done at the time of areal or length calculations.
 
-Lines that intersect two vector features
-----------------------------------------
+Lines and points that intersect two vector features
+---------------------------------------------------
 
-Points that intersect two vector features
------------------------------------------
+.. image:: images/remaining-lines.png
+    :align: center
+
+When calculating the lengths of lines (or number of points) remaining outside a intersected areas, we have the problem that lines can lie along the edge of two vector features, and hence the section of the line would be counted twice. If therefore need to adjust our formula for calculating the lengths (or number of points) outside an intersected area. The key insight is that we don't want the *actual* remaining area, but the right *relative* remaining area - these value are all normalized to one anyway.
+
+The formula for allocating lengths is therefore:
+
+.. math::
+
+    ( total\_actual\_length - total\_intersected\_length ) \cdot \frac{\sum individual\_intersected\_lengths}{total\_intersected\_length}
+
+In the example above, the formula would give the answer 1.5:
+
+.. math::
+
+    1.5 = ( 3 - 2 ) \cdot \frac{2 + 1}{2}
+
+The same procedure is followed for multipoints (geometries that have more than one point), except that instead of calculating lengths you just count the number of points.
 
 Calculating area outside of intersections
 -----------------------------------------
+
+.. image:: images/outside.png
+    :align: center
 
 For many regionalized methodologies, it is important to know how much area/length from one spatial dataset lies outside a second spatial dataset entirely. The function ``calculate_remaining`` calculates these remaining areas.
 
