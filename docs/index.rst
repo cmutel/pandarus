@@ -1,7 +1,19 @@
 Pandarus
 ========
 
-Pandarus is a GIS software toolkit for regionalized life cycle assessment. It is designed to work with `brightway LCA framework <https://brightwaylca.org>`__, `brightway2-regional <https://bitbucket.org/cmutel/brightway2-regional>`__, and `Constructive Geometries <https://bitbucket.org/cmutel/constructive-geometries>`__. A separate library, `pandarus-remote <https://github.com/cmutel/pandarus_remote>`__, provides a web API to run Pandarus on a server.
+Pandarus is a GIS software toolkit for regionalized life cycle assessment (LCA). It is designed to work with `brightway LCA framework <https://brightwaylca.org>`__, `brightway2-regional <https://bitbucket.org/cmutel/brightway2-regional>`__, and `Constructive Geometries <https://bitbucket.org/cmutel/constructive-geometries>`__. A separate library, `pandarus-remote <https://github.com/cmutel/pandarus_remote>`__, provides a web API to run Pandarus on a server.
+
+In the context of life cycle assessment, regionalization means the introduction of detailed spatial information for inventory activities and impact assessment characterization maps. As these will have different spatial scales, GIS functionality is required to match these two maps. Pandarus can do the following:
+
+* Match two vector datasets, calculating the areas of each combination of features using the Mollweide projection.
+* Calculate the areas left out (present in one input file but not the other) from the aforementioned intersections calculation.
+* Calculate statistics such as min, mean, and max when overlaying a raster dataset with a vector dataset.
+* Normalize raster datasets, including use of compatible `nodata` values
+* Vectorization of raster datasets
+
+The outputs from Pandarus can be used in LCA software which does not include a GIS framework, thus speeding the integration of regionalization into the broader LCA community. There is also a `conference presentation video introducing Pandarus and its integration into LCA software <http://www.video.ethz.ch/events/lca/2017/spring/64th/c0cc90b4-6365-46e1-adf1-eae381376be9.html>`__.
+
+Pandarus is open source under the BSD 3-clause license.
 
 .. contents::
 
@@ -107,7 +119,7 @@ FAQ
 Why the name Pandarus?
 ----------------------
 
-The software matches two different maps against each other, and `Pandarus was a bit of a matchmaker himself <http://en.wikipedia.org/wiki/Pandarus>`_. Plus, ancient names are 200% more science-y.
+The software matches two different maps against each other, and `Pandarus was a bit of a matchmaker himself <http://en.wikipedia.org/wiki/Pandarus>`_. Plus, ancient names are 172% more science-y.
 
 Installation
 ============
@@ -122,10 +134,9 @@ However, it is easy to run into errors if geospatial libraries like fiona, raste
 
 .. code-block:: bash
 
-    conda config --add channels conda-forge cmutel
-    conda create -n pandarus python=3.5
-    source activate pandarus
-    conda install pandarus
+    conda create -n pandarus python=3.6
+    activate pandarus  # Could also be source activate pandarus
+    conda install -c conda-forge -c cmutel pandarus
 
 Pandarus source code is on `GitHub <https://github.com/cmutel/pandarus>`__.
 
@@ -141,6 +152,11 @@ Pandarus uses the following libraries:
     * `rasterio <https://github.com/mapbox/rasterio>`__
     * `rasterstats <https://pypi.python.org/pypi/rasterstats>`__
     * `shapely <https://pypi.python.org/pypi/Shapely>`__
+
+Contributing
+============
+
+Contributions are welcome via pull requests and issues on Github. Please ensure that pull requests include tests and documentation. Pandarus follows the `Contributor Covenant code of conduct <http://contributor-covenant.org/>`__.
 
 Technical Reference
 ===================

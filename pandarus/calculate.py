@@ -41,12 +41,57 @@ def raster_statistics(vector_fp, identifying_field, raster, output=None,
         band=1, compress=True, fiona_kwargs={}, **kwargs):
     """Create statistics by matching ``raster`` against each spatial unit in ``self.from_map``.
 
-    * ``raster``: str. Filepath of the raster used for calculations.
-    * ``filepath``: str. Path of the results file to be created. Can be auto-generated.
-    * ``band``: int. Raster band used for calculations. Default is 1.
-    * ``compress``: bool. Compress JSON results file.
+    For each spatial unit in ``self.from_map``, calculates the following statistics for values from ``raster``: min, mean, max, and count. Count is the number of raster cells intersecting the vector spatial unit. No data values in the raster are not including in the generated statistics.
+
+    This function uses a fork of the ``rasterstats`` library that break each raster cell into 100 smaller cells, as a compromise approach to handle the fact that some raster cells are completely with a vector geometry, while others only have a small fraction of their cell area within the vector geometry. Each of the 100 small raster cells is weighted equally, and each is tested to make sure it intersects the vector geometry.
+
+    This function assumes that each smaller raster cell has the same area. This may change in the future.
+
+    Input parameters:
+
+        * ``vector_fp``: str. Filepath of the vector dataset.
+        * ``identifying_field``: str. Name of the field in ``vector_fp`` that uniquely identifies each feature.
+        * ``raster``: str. Filepath of the raster dataset.
+        * ``output``: str, optional. Filepath of the output file. Will be deleted if it exists already.
+        * ``band``: int, optional. Raster band used for calculations. Default is ``1``.
+        * ``compress``: bool, optional. Compress JSON results file. Default is ``True``.
+        * ``fiona_kwargs``: dict, optional. Additional arguments to pass to fiona when opening ``vector_fp``.
 
     Any additional ``kwargs`` are passed to ``gen_zonal_stats``.
+
+    Output format:
+
+    Output is a (maybe compressed) JSON file with the following schema:
+
+     .. code-block:: python
+
+        {
+            'metadata': {
+                'vector': {
+                    'field': 'name of uniquely identifying field',
+                    'path': 'path to vector input file',
+                    'sha256': 'sha256 hash of input file'
+                },
+                'raster': {
+                    'band': 'band used to calculate raster stats',
+                    'path': 'path to raster input file',
+                    'filename': 'name of raster file',
+                    'sha256': 'sha256 hash of input file'
+                },
+                'when': 'datetime this calculation finished, ISO format'
+            },
+            'data': [
+                [
+                    'vector `identifying_field` value',
+                    {
+                        'count': 'number of raster cells included. float because consider fractional intersections',
+                        'min': 'minimum raster value in this vector feature',
+                        'mean': 'average raster value in this vector feature',
+                        'max': 'maximum raster value in this vector feature',
+                    }
+                ]
+            ]
+        }
 
     """
     vector, v_metadata = get_map(vector_fp, identifying_field, fiona_kwargs)
