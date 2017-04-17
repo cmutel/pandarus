@@ -13,7 +13,7 @@ requirements = [
 ]
 
 setup(
-    version="1.0.1",
+    version="1.0.2",
     author="Chris Mutel",
     author_email="cmutel@gmail.com",
     classifiers=[
@@ -34,7 +34,7 @@ setup(
         "tests/data/*.*",
     ]},
     install_requires=[] if os.environ.get('READTHEDOCS') else requirements,
-    license=open('LICENSE.txt', encoding='utf-8').read(),
+    license=open('LICENSE', encoding='utf-8').read(),
     long_description=open('README.md', encoding='utf-8').read(),
     name='pandarus',
     packages=["pandarus"],
