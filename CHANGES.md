@@ -49,7 +49,7 @@ Major rewrite of most functionality to support lines and points, not just polygo
 
 - Move script from ``pandarus-cli.py`` to ``pandarus``.
 
-###0.3.1 (2014-08-15)
+### 0.3.1 (2014-08-15)
 
 - Raise ValueError if Map can't load any data
 
