@@ -17,7 +17,7 @@ setup(
     author="Chris Mutel",
     author_email="cmutel@gmail.com",
     classifiers=[
-        'Development Status :: 3 - Alpha',
+        'Development Status :: 5 - Production/Stabl',
         'Intended Audience :: End Users/Desktop',
         'Intended Audience :: Developers',
         'Intended Audience :: Science/Research',
