@@ -5,14 +5,14 @@
 
 Pandarus is a GIS software toolkit for regionalized life cycle assessment. It is designed to work with [brightway LCA framework](https://brightwaylca.org), [brightway2-regional](https://bitbucket.org/cmutel/brightway2-regional), and [Constructive Geometries](https://bitbucket.org/cmutel/constructive-geometries).
 
-For more information, see the [online documentation](https://pandarus.readthedocs.io/).
+For more information, including installation instructions, see the [online documentation](https://pandarus.readthedocs.io/), including a [usage example](https://github.com/cmutel/pandarus/blob/master/docs/usage_example.ipynb). Pandarus is only compatible with >= Python 3.5.
 
 Pandarus provides the following functionality:
 
-* Match two vector datasets, calculating the areas of each combination of features using the Mollweide projection.
-* Calculate the areas left out (present in one input file but not the other) from the aforementioned intersections calculation.
-* Calculate statistics such as min, mean, and max when overlaying a raster dataset with a vector dataset.
-* Normalize raster datasets, including use of compatible `nodata` values
+* [Overlay two vector datasets](https://pandarus.readthedocs.io/#intersecting-two-vector-datasets), calculating the areas of each combination of features using the Mollweide projection.
+* Calculate the [area of the geometric difference](https://pandarus.readthedocs.io/#calculating-area-outside-of-intersections) (the areas present in one input file but not in the other) of one vector dataset with another vector dataset.
+* [Calculate statistics](https://pandarus.readthedocs.io/#calculating-raster-statistics-against-a-vector-dataset) such as min, mean, and max when overlaying a raster dataset with a vector dataset.
+* [Normalize raster datasets](https://pandarus.readthedocs.io/#manipulating-raster-files), including use of compatible `nodata` values
 * Vectorization of raster datasets
 
 ## Requirements
