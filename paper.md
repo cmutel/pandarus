@@ -21,8 +21,8 @@ Pandarus is a GIS toolkit for regionalized life cycle assessment (LCA). It is de
 
 In the context of life cycle assessment, regionalization means the introduction of detailed spatial information for inventory activities and impact assessment characterization maps. As these will have different spatial scales, GIS functionality is required to match these two maps. Pandarus can do the following:
 
-* Match two vector datasets, calculating the areas of each combination of features using the Mollweide projection.
-* Calculate the areas left out (present in one input file but not the other) from the aforementioned intersections calculation.
+* Overlay two vector datasets, calculating the areas of each combination of features using the Mollweide projection.
+* Calculate the area of the geometric difference (the areas present in one input file but not in the other) of one vector dataset with another vector dataset.
 * Calculate statistics such as min, mean, and max when overlaying a raster dataset with a vector dataset.
 * Normalize raster datasets, including use of compatible `nodata` values
 * Vectorization of raster datasets
