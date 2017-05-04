@@ -1,5 +1,9 @@
 # Changes
 
+### 1.0.3 (2017-05-04)
+
+- Small doc changes for peer review from JOSS
+
 ### 1.0.2 (2017-04-17)
 
 - Fix license text
