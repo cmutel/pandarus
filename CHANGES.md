@@ -1,5 +1,9 @@
 # Changes
 
+### 1.0.4 (2017-05-04)
+
+- Include LICENSE file in manifest
+
 ### 1.0.3 (2017-05-04)
 
 - Small doc changes for peer review from JOSS
