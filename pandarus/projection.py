@@ -44,7 +44,7 @@ Returns:
     to_proj, from_proj = pyproj.Proj(to_proj), pyproj.Proj(from_proj)
 
     if ((to_proj == from_proj) or
-            (to_proj.is_latlong() and from_proj.is_latlong())):
+            (to_proj.crs.is_geographic and from_proj.crs.is_geographic)):
         return geom
 
     projection_func = partial(pyproj.transform, from_proj, to_proj)
