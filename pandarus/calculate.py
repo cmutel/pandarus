@@ -247,7 +247,7 @@ def intersect(first_fp, first_field, second_fp, second_field,
         'geometry': 'MultiPolygon',
     }
 
-    with fiona.drivers():
+    with fiona.Env():
         with fiona.open(
                 fiona_fp, 'w',
                 crs=WGS84,

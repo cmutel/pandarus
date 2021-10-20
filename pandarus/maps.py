@@ -36,7 +36,7 @@ class Map(object):
         assert check_type(filepath) == 'vector', \
             "Must give a vector dataset"
 
-        with fiona.drivers():
+        with fiona.Env():
             self.file = fiona.open(
                 self.filepath,
                 **kwargs

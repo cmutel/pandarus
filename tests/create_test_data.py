@@ -62,7 +62,7 @@ def create_test_file(filepath, records, schema=None, driver='GeoJSON', crs=wgs84
         os.remove(filepath)
     if schema is None:
         schema = create_schema()
-    with fiona.drivers():
+    with fiona.Env():
         with fiona.open(filepath, 'w', driver=driver, crs=crs, schema=schema) as outfile:
             for record in records:
                 outfile.write(record)
