@@ -19,3 +19,4 @@ Icon*
 .cache
 tests/data/test-data.qgs
 *.log
+.pytest_cache

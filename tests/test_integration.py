@@ -1,5 +1,4 @@
 from pandarus import intersect
-from pandarus.intersections import intersection_worker
 from pandarus.conversion import round_to_x_significant_digits
 from math import sqrt
 import fiona
