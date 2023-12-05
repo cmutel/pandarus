@@ -1,10 +1,9 @@
-__version__ = (1, 1)
-
+"""pandarus"""
 __all__ = (
     "Map",
+    'calculate_remaining',
     'clean_raster',
     'convert_to_vector',
-    'calculate_remaining',
     'intersect',
     'intersections_from_intersection',
     'raster_statistics',
@@ -17,5 +16,10 @@ from .calculate import (
     intersections_from_intersection,
     raster_statistics,
 )
+from .conversion import (
+    clean_raster,
+    convert_to_vector,
+    round_raster,
+)
 from .maps import Map
-from .conversion import convert_to_vector, clean_raster, round_raster
+from .version import __version__
