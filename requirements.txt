@@ -1,5 +1,6 @@
 appdirs
 fiona
+gdal
 numpy
 pyproj
 Rtree
