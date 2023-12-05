@@ -6,7 +6,6 @@ import numpy as np
 import os
 import pytest
 import rasterio
-import tempfile
 
 dirpath = os.path.abspath(os.path.join(os.path.dirname(__file__), "data"))
 grid = os.path.join(dirpath, "grid.geojson")
@@ -37,18 +36,17 @@ def create_raster(name, array, dirpath, nodata=-1, **kwargs):
 
     return fp
 
-def test_create_raster():
-    with tempfile.TemporaryDirectory() as dirpath:
-        fp = create_raster(
-            'foo.tif',
-            np.random.random(size=(10,10)).astype(np.float32),
-            dirpath
-        )
-        assert os.path.isfile(fp)
-        assert check_type(fp) == 'raster'
-        with rasterio.open(fp) as f:
-            assert f.read(1).shape == (10, 10)
-            assert f.read(1).dtype == np.float32
+def test_create_raster(tmpdir):
+    fp = create_raster(
+        'foo.tif',
+        np.random.random(size=(10,10)).astype(np.float32),
+        tmpdir
+    )
+    assert os.path.isfile(fp)
+    assert check_type(fp) == 'raster'
+    with rasterio.open(fp) as f:
+        assert f.read(1).shape == (10, 10)
+        assert f.read(1).dtype == np.float32
 
 def test_check_type():
     assert check_type(grid) == 'vector'
@@ -56,24 +54,23 @@ def test_check_type():
     with pytest.raises(ValueError):
         check_type(invalid)
 
-def test_convert_to_vector():
+def test_convert_to_vector(tmpdir):
     with pytest.raises(AssertionError):
         convert_to_vector(cfs, band='1')
 
-    with tempfile.TemporaryDirectory() as dirpath:
-        out = convert_to_vector(cfs, dirpath)
-        assert check_type(out) == 'vector'
+    out = convert_to_vector(cfs, tmpdir)
+    assert check_type(out) == 'vector'
 
-        # Second time should be a no-op
-        out = convert_to_vector(cfs, dirpath)
-        assert check_type(out) == 'vector'
+    # Second time should be a no-op
+    out = convert_to_vector(cfs, tmpdir)
+    assert check_type(out) == 'vector'
 
-        with fiona.open(out) as src:
-            meta = src.meta
+    with fiona.open(out) as src:
+        meta = src.meta
 
-            assert meta['crs'] == {'init': 'epsg:4326'}
-            assert meta['schema']['properties'].keys() == {'filename', 'id', 'val'}
-            assert meta['schema']['geometry'] in ('Polygon', 'MultiPolygon')
+        assert meta['crs'] == {'init': 'epsg:4326'}
+        assert meta['schema']['properties'].keys() == {'filename', 'id', 'val'}
+        assert meta['schema']['geometry'] in ('Polygon', 'MultiPolygon')
 
     out = convert_to_vector(cfs)
     assert check_type(out) == 'vector'
@@ -85,15 +82,14 @@ def test_rounding():
     for x, y in zip(round_to_x_significant_digits(given, 4), expected):
         assert x == y
 
-def test_round_raster():
-    with tempfile.TemporaryDirectory() as dirpath:
-        out = os.path.join(dirpath, "test.tif")
+def test_round_raster(tmpdir):
+    out = os.path.join(tmpdir, "test.tif")
 
-        assert round_raster(cfs, out) == out
+    assert round_raster(cfs, out) == out
 
-        with rasterio.open(out) as src:
-            array = src.read(1)
-            profile = src.profile
+    with rasterio.open(out) as src:
+        array = src.read(1)
+        profile = src.profile
 
     assert profile['driver'] == 'GTiff'
     assert profile['compress'] == 'lzw'
@@ -119,81 +115,72 @@ def test_clean_raster():
     assert 'blockxsize' not in profile
     os.remove(out)
 
-def test_clean_raster_null_nodata():
-    with tempfile.TemporaryDirectory() as dirpath:
-        out = os.path.join(dirpath, "test.tif")
-        result = clean_raster(dem, out)
+def test_clean_raster_null_nodata(tmpdir):
+    out = os.path.join(tmpdir, "test.tif")
+    result = clean_raster(dem, out)
 
-        with rasterio.open(out) as src:
-            profile = src.profile
+    with rasterio.open(out) as src:
+        profile = src.profile
 
     assert profile['nodata'] is None
 
-def test_clean_raster_filepath():
-    with tempfile.TemporaryDirectory() as dirpath:
-        out = os.path.join(dirpath, "test.tif")
-        result = clean_raster(sixty_four, out)
-        assert result == out
+def test_clean_raster_filepath(tmpdir):
+    out = os.path.join(tmpdir, "test.tif")
+    result = clean_raster(sixty_four, out)
+    assert result == out
 
-def test_clean_raster_64bit():
+def test_clean_raster_64bit(tmpdir):
     array = np.array([[0, -1, 1e100]])
 
-    with tempfile.TemporaryDirectory() as dirpath:
-        fp = create_raster('foo.tif', array, dirpath, dtype='float64', nodata=42)
+    fp = create_raster('foo.tif', array, tmpdir, dtype='float64', nodata=42)
 
-        with rasterio.open(fp) as f:
-            assert f.profile['nodata'] == 42
-            assert f.read(1).dtype == np.float64
+    with rasterio.open(fp) as f:
+        assert f.profile['nodata'] == 42
+        assert f.read(1).dtype == np.float64
 
-        out_fp = os.path.join(dirpath, 'clean.tif')
-        out = clean_raster(fp, out_fp)
+    out_fp = os.path.join(tmpdir, 'clean.tif')
+    out = clean_raster(fp, out_fp)
 
-        with rasterio.open(fp) as f:
-            assert f.read(1).dtype == np.float64
+    with rasterio.open(fp) as f:
+        assert f.read(1).dtype == np.float64
 
-def test_clean_raster_out_of_bounds():
+def test_clean_raster_out_of_bounds(tmpdir):
     array = np.array([[0, 1.5, 42, -1e50]])
-    with tempfile.TemporaryDirectory() as dirpath:
-        fp = create_raster('foo.tif', array, dirpath, dtype='float64', nodata=None)
-        out = clean_raster(fp)
-        assert out is None
+    fp = create_raster('foo.tif', array, tmpdir, dtype='float64', nodata=None)
+    out = clean_raster(fp)
+    assert out is None
 
-def test_clean_raster_dont_change():
+def test_clean_raster_dont_change(tmpdir):
     array = np.array([[0, 1.5, 42, -1e7]])
-    with tempfile.TemporaryDirectory() as dirpath:
-        fp = create_raster('foo.tif', array, dirpath, dtype='float64', nodata=-1e7)
-        out = clean_raster(fp)
-        with rasterio.open(out) as f:
-            assert f.profile['nodata'] == -1e7
+    fp = create_raster('foo.tif', array, tmpdir, dtype='float64', nodata=-1e7)
+    out = clean_raster(fp)
+    with rasterio.open(out) as f:
+        assert f.profile['nodata'] == -1e7
     os.remove(out)
 
-def test_clean_raster_nodata():
+def test_clean_raster_nodata(tmpdir):
     array = np.array([[0, 1.5, 42, -1e50]])
-    with tempfile.TemporaryDirectory() as dirpath:
-        fp = create_raster('foo.tif', array, dirpath, dtype='float64', nodata=-1e50)
-        out = clean_raster(fp)
-        with rasterio.open(out) as f:
-            assert f.profile['nodata'] == -1
+    fp = create_raster('foo.tif', array, tmpdir, dtype='float64', nodata=-1e50)
+    out = clean_raster(fp)
+    with rasterio.open(out) as f:
+        assert f.profile['nodata'] == -1
     os.remove(out)
 
     array = np.array([[0, -1., -99., 6/7]])
-    with tempfile.TemporaryDirectory() as dirpath:
-        fp = create_raster('foo.tif', array, dirpath, dtype='float64', nodata=-1e50)
-        out = clean_raster(fp)
+    fp = create_raster('foo.tif', array, tmpdir, dtype='float64', nodata=-1e50)
+    out = clean_raster(fp)
     with rasterio.open(out) as f:
         assert f.profile['nodata'] == -999
     os.remove(out)
 
     array = np.array([[0, -1., -99., -999., -9999.]])
-    with tempfile.TemporaryDirectory() as dirpath:
-        fp = create_raster('foo.tif', array, dirpath, dtype='float64', nodata=-1e50)
-        assert clean_raster(fp) is None
+    fp = create_raster('foo.tif', array, tmpdir, dtype='float64', nodata=-1e50)
+    assert clean_raster(fp) is None
 
-def test_clean_raster_try_given_nodata():
+def test_clean_raster_try_given_nodata(tmpdir):
     array = np.array([[0, -1., -99., -999., -9999]])
-    with tempfile.TemporaryDirectory() as dirpath:
-        fp = create_raster('foo.tif', array, dirpath, dtype='float64', nodata=-1e50)
-        out = clean_raster(fp, nodata=42)
-        with rasterio.open(out) as f:
-            assert f.profile['nodata'] == 42
+    fp = create_raster('foo.tif', array, tmpdir, dtype='float64', nodata=-1e50)
+    out = clean_raster(fp, nodata=42)
+    with rasterio.open(out) as f:
+        assert f.profile['nodata'] == 42
     os.remove(out)
