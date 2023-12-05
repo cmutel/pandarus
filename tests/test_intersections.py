@@ -10,7 +10,6 @@ from pandarus.intersections import (
 import os
 import numpy as np
 import pytest
-import tempfile
 
 dirpath = os.path.abspath(os.path.join(os.path.dirname(__file__), "data"))
 grid = os.path.join(dirpath, "grid.geojson")
@@ -28,11 +27,10 @@ def test_chunker():
     ]
     assert list(chunker(numbers, 4)) == expected
 
-def test_worker_init():
-    with tempfile.TemporaryDirectory() as dirpath:
-        ql, lq = logger_init(dirpath)
-        worker_init(lq)
-        assert os.listdir(dirpath)
+def test_worker_init(tmpdir):
+    ql, lq = logger_init(tmpdir)
+    worker_init(lq)
+    assert os.listdir(tmpdir)
 
 def test_get_jobs():
     assert get_jobs(10) == (20, 1)
@@ -65,7 +63,6 @@ def test_intersection_dispatcher_zero_cpus():
     result = intersection_dispatcher(grid, square)
     assert len(result) == 4
 
-def test_intersection_dispatcher_indices():
-    with tempfile.TemporaryDirectory() as dirpath:
-        result = intersection_dispatcher(grid, square, [0, 1], 1, dirpath)
-        assert len(result) == 2
+def test_intersection_dispatcher_indices(tmpdir):
+    result = intersection_dispatcher(grid, square, [0, 1], 1, tmpdir)
+    assert len(result) == 2
