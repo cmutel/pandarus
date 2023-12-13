@@ -7,7 +7,7 @@ import os
 from logging.handlers import QueueHandler, QueueListener
 
 from shapely.geometry import shape
-from shapely.geos import TopologicalError
+from shapely.errors import TopologicalError
 
 from .geometry import clean, get_intersection, kind_mapping
 from .maps import Map
