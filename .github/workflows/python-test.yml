@@ -27,7 +27,7 @@ jobs:
 
     strategy:
       matrix:
-        python-version: ["3.7"]
+        python-version: ["3.8"]
         os: [windows-latest, macos-latest, ubuntu-latest]
 
     timeout-minutes: 10
@@ -49,11 +49,11 @@ jobs:
         run: conda install -y -c conda-forge gdal
 
       - name: Install package
-        run: pip install .[test]
+        run: python -m pip install .[test]
 
       - name: Run linting and style checks
         run: |
-          pip install flake8
+          python -m pip install flake8
           flake8 .
 
       - name: Test with pytest
