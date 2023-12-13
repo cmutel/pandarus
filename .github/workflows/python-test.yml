@@ -28,7 +28,7 @@ jobs:
     strategy:
       matrix:
         python-version: ["3.7"]
-        os: [windows-latest]
+        os: [windows-latest, macos-latest, ubuntu-latest]
 
     timeout-minutes: 10
     steps:
@@ -43,14 +43,7 @@ jobs:
       - name: Setup Miniconda
         uses: conda-incubator/setup-miniconda@v3
         with:
-          auto-activate-base: true
-
-      - name: Create Conda environment
-        run: |
-          conda create -y -n pandarus${{ matrix.python-version }} python=${{ matrix.python-version }}
-
-      - name: Activate Conda environment
-        run: conda activate pandarus${{ matrix.python-version }}
+          python-version: ${{ matrix.python-version }}
 
       - name: Install gdal
         run: conda install -y -c conda-forge gdal
