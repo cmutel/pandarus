@@ -1,9 +1,0 @@
-appdirs
-fiona
-gdal
-numpy
-pyproj
-Rtree
-rasterio
-rasterstats
-shapely

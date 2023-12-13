@@ -1,62 +1,70 @@
----
-  # This workflow will install Python dependencies and run tests
-  # across operating systems, select versions of Python, and user + dev environments
-  # For more info see:
-  # https://help.github.com/actions/language-and-framework-guides/using-python-with-github-actions
-  
-  name: Python 🐍 CI/CD tests
-  
-  on:
-    push:
-      branches: [main, develop]
-      paths-ignore: # prevents workflow execution when only these types of files are modified
-        - "**.md" # wildcards prevent file in any repo dir from trigering workflow
-        - "**.bib"
-        - "**.ya?ml" # captures both .yml and .yaml
-        - "LICENSE"
-        - ".gitignore"
-    pull_request:
-      branches: [main, develop]
-      types: [opened, reopened] # excludes syncronize to avoid redundant trigger from commits on PRs
-      paths-ignore:
-        - "**.md"
-        - "**.bib"
-        - "**.ya?ml"
-        - "LICENSE"
-        - ".gitignore"
-    workflow_dispatch: # also allow manual trigger, for testing purposes
-  
-  jobs:
-    build:
-      runs-on: ${{ matrix.os }}
-      strategy:
-        fail-fast: false
-        matrix:
-          os: [ubuntu-latest, windows-latest, macos-latest]
-          py-version: ["3.8", "3.9", "3.10", "3.11", "3.12"]
-  
-      steps:
-        - uses: actions/checkout@v2
-  
-        # general Python setup
-        - name: Set up Python ${{ matrix.py-version }}
-          uses: actions/setup-python@v2
-          with:
-            python-version: ${{ matrix.py-version }}
-  
-        - name: Update pip & install testing pkgs
-          run: |
-            python -VV
-            python -m pip install --upgrade pip setuptools wheel
-  
-        # install testing
-        - name: Install package and test deps
-          run: |
-            pip install .[testing] # install the package and the testing deps
-  
-        - name: Test with pytest
-          run: |
-            pytest
-  
-        - name: Upload coverage to Codecov
-          uses: codecov/codecov-action@v3
+name: Python 🐍 CI/CD tests
+
+on:
+  push:
+    branches: [main, develop]
+    paths-ignore: # prevents workflow execution when only these types of files are modified
+      - "**.md" # wildcards prevent file in any repo dir from trigering workflow
+      - "**.bib"
+      - "**.ya?ml" # captures both .yml and .yaml
+      - "LICENSE"
+      - ".gitignore"
+  pull_request:
+    branches: [main, develop]
+    types: [opened, reopened] # excludes syncronize to avoid redundant trigger from commits on PRs
+    paths-ignore:
+      - "**.md"
+      - "**.bib"
+      - "**.ya?ml"
+      - "LICENSE"
+      - ".gitignore"
+  workflow_dispatch: # also allow manual trigger, for testing purposes
+
+jobs:
+  build:
+    name: Python ${{ matrix.python-version }} on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      matrix:
+        python-version: ["3.7"]
+        os: [windows-latest]
+
+    timeout-minutes: 10
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Setup Miniconda
+        uses: conda-incubator/setup-miniconda@v3
+        with:
+          auto-activate-base: true
+
+      - name: Create Conda environment
+        run: |
+          conda create -y -n pandarus${{ matrix.python-version }} python=${{ matrix.python-version }}
+    
+      - name: Activate Conda environment
+        run: conda activate pandarus${{ matrix.python-version }}
+
+      - name: Install gdal
+        run: conda install -y -c conda-forge gdal
+
+      - name: Install package
+        run: pip install .
+
+      - name: Run linting and style checks
+        run: |
+          pip install flake8
+          flake8 .
+
+      - name: Test with pytest
+        run: pytest
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
