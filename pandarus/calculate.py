@@ -1,27 +1,32 @@
 # -*- coding: utf-8 -*-
-from .conversion import check_type
-from .filesystem import json_exporter, get_appdirs_path, sha256, json_importer
-from .maps import Map
-from .intersections import intersection_dispatcher
-from .geometry import get_remaining
-from .projection import project
-from .rasters import gen_zonal_stats
-from fiona.crs import from_string
-from functools import partial
-from shapely.geometry import mapping, shape
 import datetime
-import fiona
 import multiprocessing
 import os
-import rasterio
 import warnings
+from functools import partial
 
+import fiona
+import rasterio
+from fiona.crs import from_string
+from shapely.geometry import mapping, shape
+
+from .conversion import check_type
+from .filesystem import get_appdirs_path, json_exporter, json_importer, sha256
+from .geometry import get_remaining
+from .intersections import intersection_dispatcher
+from .maps import Map
+from .projection import project
+from .rasters import gen_zonal_stats
 
 WGS84 = from_string("+datum=WGS84 +ellps=WGS84 +no_defs +proj=longlat")
 
-MISMATCHED_CRS = """Possible coordinate reference systems (CRS) mismatch. The raster statistics may be incorrect, please only use this method when both vector and raster have the same CRS.
+MISMATCHED_CRS = """
+    Possible coordinate reference systems (CRS) mismatch.
+    The raster statistics may be incorrect, please only use this method
+    when both vector and raster have the same CRS.
     Vector: {}
-    Raster: {}"""
+    Raster: {}
+"""
 
 CPU_COUNT = multiprocessing.cpu_count()
 
@@ -29,33 +34,53 @@ CPU_COUNT = multiprocessing.cpu_count()
 def get_map(fp, field, kwargs):
     obj = Map(fp, field, **kwargs)
     metadata = {
-        'sha256': obj.hash,
-        'filename': os.path.basename(fp),
-        'field': field,
-        'path': os.path.abspath(fp),
+        "sha256": obj.hash,
+        "filename": os.path.basename(fp),
+        "field": field,
+        "path": os.path.abspath(fp),
     }
     return obj, metadata
 
 
-def raster_statistics(vector_fp, identifying_field, raster, output=None,
-        band=1, compress=True, fiona_kwargs={}, **kwargs):
-    """Create statistics by matching ``raster`` against each spatial unit in ``self.from_map``.
+def raster_statistics(
+    vector_fp,
+    identifying_field,
+    raster,
+    output=None,
+    band=1,
+    compress=True,
+    fiona_kwargs={},
+    **kwargs
+):
+    """Create statistics by matching ``raster`` against each spatial unit in
+    ``self.from_map``.
 
-    For each spatial unit in ``self.from_map``, calculates the following statistics for values from ``raster``: min, mean, max, and count. Count is the number of raster cells intersecting the vector spatial unit. No data values in the raster are not including in the generated statistics.
+    For each spatial unit in ``self.from_map``, calculates the following statistics
+    for values from ``raster``: min, mean, max, and count. Count is the number of raster
+    cells intersecting the vector spatial unit. No data values in the raster are not
+    including in the generated statistics.
 
-    This function uses a fork of the ``rasterstats`` library that break each raster cell into 100 smaller cells, as a compromise approach to handle the fact that some raster cells are completely with a vector geometry, while others only have a small fraction of their cell area within the vector geometry. Each of the 100 small raster cells is weighted equally, and each is tested to make sure it intersects the vector geometry.
+    This function uses a fork of the ``rasterstats`` library that break each raster cell
+    into 100 smaller cells, as a compromise approach to handle the fact that some raster
+    cells are completely with a vector geometry, while others only have a small fraction
+    of their cell area within the vector geometry. Each of the 100 small raster cells is
+    weighted equally, and each is tested to make sure it intersects the vector geometry.
 
-    This function assumes that each smaller raster cell has the same area. This may change in the future.
+    This function assumes that each smaller raster cell has the same area. This may
+    change in the future.
 
     Input parameters:
 
         * ``vector_fp``: str. Filepath of the vector dataset.
-        * ``identifying_field``: str. Name of the field in ``vector_fp`` that uniquely identifies each feature.
+        * ``identifying_field``: str. Name of the field in ``vector_fp`` that uniquely
+        identifies each feature.
         * ``raster``: str. Filepath of the raster dataset.
-        * ``output``: str, optional. Filepath of the output file. Will be deleted if it exists already.
+        * ``output``: str, optional. Filepath of the output file. Will be deleted if it
+        exists already.
         * ``band``: int, optional. Raster band used for calculations. Default is ``1``.
         * ``compress``: bool, optional. Compress JSON results file. Default is ``True``.
-        * ``fiona_kwargs``: dict, optional. Additional arguments to pass to fiona when opening ``vector_fp``.
+        * ``fiona_kwargs``: dict, optional. Additional arguments to pass to fiona when
+        opening ``vector_fp``.
 
     Any additional ``kwargs`` are passed to ``gen_zonal_stats``.
 
@@ -84,7 +109,8 @@ def raster_statistics(vector_fp, identifying_field, raster, output=None,
                 [
                     'vector `identifying_field` value',
                     {
-                        'count': 'number of raster cells included. float because consider fractional intersections',
+                        'count': 'number of raster cells included. float because
+                                  consider fractional intersections',
                         'min': 'minimum raster value in this vector feature',
                         'mean': 'average raster value in this vector feature',
                         'max': 'maximum raster value in this vector feature',
@@ -95,7 +121,7 @@ def raster_statistics(vector_fp, identifying_field, raster, output=None,
 
     """
     vector, v_metadata = get_map(vector_fp, identifying_field, fiona_kwargs)
-    assert check_type(raster) == 'raster'
+    assert check_type(raster) == "raster"
 
     with rasterio.open(raster) as r:
         raster_crs = r.crs.to_string()
@@ -107,80 +133,116 @@ def raster_statistics(vector_fp, identifying_field, raster, output=None,
     if not output:
         dirpath = get_appdirs_path("rasterstats")
         output = os.path.join(
-            dirpath,
-            "{}-{}-{}.json".format(vector.hash, sha256(raster), band)
+            dirpath, "{}-{}-{}.json".format(vector.hash, sha256(raster), band)
         )
 
     if os.path.exists(output):
         os.remove(output)
 
-    pcw = meta['height'] < 5000 and meta['width'] < 10000
+    pcw = meta["height"] < 5000 and meta["width"] < 10000
 
-    stats_generator = gen_zonal_stats(vector_fp, raster, band=band, percent_cover_weighting=pcw, **kwargs)
+    stats_generator = gen_zonal_stats(
+        vector_fp, raster, band=band, percent_cover_weighting=pcw, **kwargs
+    )
     mapping_dict = vector.get_fieldnames_dictionary()
-    results = [(mapping_dict[index], row)
-               for index, row in enumerate(stats_generator)]
+    results = [(mapping_dict[index], row) for index, row in enumerate(stats_generator)]
 
     metadata = {
-        'vector': v_metadata,
-        'raster': {
-            'sha256': sha256(raster),
-            'path': raster,
-            'filename': os.path.basename(raster),
-            'band': band
+        "vector": v_metadata,
+        "raster": {
+            "sha256": sha256(raster),
+            "path": raster,
+            "filename": os.path.basename(raster),
+            "band": band,
         },
-        'when': datetime.datetime.now().isoformat()
+        "when": datetime.datetime.now().isoformat(),
     }
-    return json_exporter({'data': results, 'metadata': metadata}, output, compress)
+    return json_exporter({"data": results, "metadata": metadata}, output, compress)
 
 
 def as_features(dct):
     for index, key in enumerate(dct):
         row = dct[key]
         gj = {
-            'geometry': mapping(row['geom']),
-            'properties': {
-                'id': index,
-                'from_label': key[0],
-                'to_label': key[1],
-                'measure': row['measure']},
+            "geometry": mapping(row["geom"]),
+            "properties": {
+                "id": index,
+                "from_label": key[0],
+                "to_label": key[1],
+                "measure": row["measure"],
+            },
         }
         yield gj
 
 
-def intersect(first_fp, first_field, second_fp, second_field,
-        first_kwargs={}, second_kwargs={}, dirpath=None, cpus=CPU_COUNT,
-        driver='GeoJSON', compress=True, log_dir=None):
+def intersect(
+    first_fp,
+    first_field,
+    second_fp,
+    second_field,
+    first_kwargs={},
+    second_kwargs={},
+    dirpath=None,
+    cpus=CPU_COUNT,
+    driver="GeoJSON",
+    compress=True,
+    log_dir=None,
+):
     """Calculate the intersection of two vector spatial datasets.
 
-    The first spatial input file **must** have only one type of geometry, i.e. points, lines, or polygons, and excluding geometry collections. Any of the following are allowed: Point, MultiPoint, LineString, LinearRing, MultiLineString, Polygon, MultiPolygon.
+    The first spatial input file **must** have only one type of geometry, i.e. points,
+    lines, or polygons, and excluding geometry collections. Any of the following are
+    allowed: Point, MultiPoint, LineString, LinearRing, MultiLineString, Polygon,
+    MultiPolygon.
 
-    The second spatial input file **must** have either Polygons or MultiPolygons. Although no checks are made, this and other functions make a strong assumption that the spatial units in the second spatial unit do not overlap.
+    The second spatial input file **must** have either Polygons or MultiPolygons.
+    Although no checks are made, this and other functions make a strong assumption
+    that the spatial units in the second spatial unit do not overlap.
 
     Input parameters:
 
         * ``first_fp``: String. File path to the first spatial dataset.
-        * ``first_field``: String. Name of field that uniquely identifies features in the first spatial dataset.
+        * ``first_field``: String. Name of field that uniquely identifies features
+        in the first spatial dataset.
         * ``second_fp``: String. File path to the second spatial dataset.
-        * ``second_field``: String. Name of field that uniquely identifies features in the second spatial dataset.
-        * ``first_kwargs``: Dictionary, optional. Additional arguments, such as layer name, passed to fiona when opening the first spatial dataset.
-        * ``second_kwargs``: Dictionary, optional. Additional arguments, such as layer name, passed to fiona when opening the second spatial dataset.
+        * ``second_field``: String. Name of field that uniquely identifies features in
+        the second spatial dataset.
+        * ``first_kwargs``: Dictionary, optional. Additional arguments, such as layer
+        name, passed to fiona when opening the first spatial dataset.
+        * ``second_kwargs``: Dictionary, optional. Additional arguments, such as layer
+        name, passed to fiona when opening the second spatial dataset.
         * ``dirpath``: String, optional. Directory to save output files.
-        * ``cpus``: Integer, default is ``multiprocessing.cpu_count()``. Number of CPU cores to use when calculating. Use ``cpus=0`` to avoid starting a multiprocessing pool.
-        * ``driver``: String, default is ``GeoJSON``. Fiona driver name to use when writing geospatial output file. Common values are ``GeoJSON`` or ``GPKG``.
+        * ``cpus``: Integer, default is ``multiprocessing.cpu_count()``. Number of CPU
+        cores to use when calculating. Use ``cpus=0`` to avoid starting a
+        multiprocessing pool.
+        * ``driver``: String, default is ``GeoJSON``. Fiona driver name to use when
+        writing geospatial output file. Common values are ``GeoJSON`` or ``GPKG``.
         * ``compress``: Boolean, default is True. Compress JSON output file.
         * ``log_dir``: String, optional.
 
     Returns filepaths for two created files.
 
-    The first is a geospatial file that has the geometry of each possible intersection of spatial units from the two input files. The geometry type of this file will depend on the geometry type of the first input file, but will always be a multi geometry, i.e. one of MultiPoint, MultiLineString, MultiPolygon. This file will also always have the `WGS 84 CRS <http://spatialreference.org/ref/epsg/wgs-84/>`__. The output file has the following schema:
+    The first is a geospatial file that has the geometry of each possible intersection
+    of spatial units from the two input files. The geometry type of this file will
+    depend on the geometry type of the first input file, but will always be a multi
+    geometry, i.e. one of MultiPoint, MultiLineString, MultiPolygon. This file will also
+    always have the `WGS 84 CRS <http://spatialreference.org/ref/epsg/wgs-84/>`__.
+    The output file has the following schema:
 
         * ``id``: Integer. Auto-increment field starting from zero.
-        * ``from_label``: String. The value for the uniquely identifying field from the first input file.
-        * ``to_label``: String. The value for the uniquely identifying field from the second input file.
-        * ``measure``: Float. A measure of the intersected shape. For polygons, this is the area of the feature in square meters. For lines, this is the length in meters. For points, this is the number of points. Area and length calculations are made using the `Mollweide projection <https://en.wikipedia.org/wiki/Mollweide_projection>`__.
+        * ``from_label``: String. The value for the uniquely identifying field from the
+        first input file.
+        * ``to_label``: String. The value for the uniquely identifying field from the
+        second input file.
+        * ``measure``: Float. A measure of the intersected shape. For polygons, this is
+        the area of the feature in square meters. For lines, this is the length in
+        meters. For points, this is the number of points. Area and length calculations
+        are made using the `Mollweide projection
+        <https://en.wikipedia.org/wiki/Mollweide_projection>`__.
 
-    The second file is an extract of some of the feature fields in the JSON data format. This is used by programs that don't need to depend on GIS data libraries. The JSON format is:
+    The second file is an extract of some of the feature fields in the JSON data format.
+    This is used by programs that don't need to depend on GIS data libraries. The JSON
+    format is:
 
     .. code-block:: python
 
@@ -216,9 +278,7 @@ def intersect(first_fp, first_field, second_fp, second_field,
     if not dirpath:
         dirpath = get_appdirs_path("intersections")
 
-    base_filepath = os.path.join(dirpath, "{}.{}.".format(
-        first.hash, second.hash
-    ))
+    base_filepath = os.path.join(dirpath, "{}.{}.".format(first.hash, second.hash))
 
     fiona_fp = base_filepath + driver.lower()
     data_fp = base_filepath + "json"
@@ -232,62 +292,71 @@ def intersect(first_fp, first_field, second_fp, second_field,
 
     first_mapping = first.get_fieldnames_dictionary()
     second_mapping = second.get_fieldnames_dictionary()
-    data = {
-        (first_mapping[k[0]], second_mapping[k[1]]): v
-        for k, v in data.items()
-    }
+    data = {(first_mapping[k[0]], second_mapping[k[1]]): v for k, v in data.items()}
 
     schema = {
-        'properties': {
-            'id': 'int',
-            'from_label': first.file.meta['schema']['properties'][first_field],
-            'to_label': second.file.meta['schema']['properties'][second_field],
-            'measure': 'float',
+        "properties": {
+            "id": "int",
+            "from_label": first.file.meta["schema"]["properties"][first_field],
+            "to_label": second.file.meta["schema"]["properties"][second_field],
+            "measure": "float",
         },
-        'geometry': 'MultiPolygon',
+        "geometry": "MultiPolygon",
     }
 
     with fiona.Env():
         with fiona.open(
-                fiona_fp, 'w',
-                crs=WGS84,
-                driver=driver,
-                schema=schema,
-            ) as sink:
+            fiona_fp,
+            "w",
+            crs=WGS84,
+            driver=driver,
+            schema=schema,
+        ) as sink:
             for f in as_features(data):
                 sink.write(f)
 
     data_fp = json_exporter(
         {
-            'data': [(k[0], k[1], v['measure']) for k, v in data.items()],
-            'metadata':
-                {
-                    'first': first_metadata,
-                    'second': second_metadata,
-                    'when': datetime.datetime.now().isoformat(),
-                }
+            "data": [(k[0], k[1], v["measure"]) for k, v in data.items()],
+            "metadata": {
+                "first": first_metadata,
+                "second": second_metadata,
+                "when": datetime.datetime.now().isoformat(),
+            },
         },
         data_fp,
-        compress=compress
+        compress=compress,
     )
 
     return fiona_fp, data_fp
 
 
-def calculate_remaining(source_fp, source_field, intersection_fp,
-        source_kwargs={}, dirpath=None, compress=True):
-    """Calculate the remaining area/length/number of points left out of an intersections file generated by ``intersect``.
+def calculate_remaining(
+    source_fp,
+    source_field,
+    intersection_fp,
+    source_kwargs={},
+    dirpath=None,
+    compress=True,
+):
+    """Calculate the remaining area/length/number of points left out of an intersections
+    file generated by ``intersect``.
 
     Input parameters:
 
-        * ``source_fp``: String. Filepath of the input spatial data which could have features outside of the intersection result.
-        * ``source_field``: String. Name of field that uniquely identifies features in the input spatial dataset.
-        * ``intersection_fp``: Filepath of the intersection spatial dataset generated by the ``intersect`` function.
-        * ``source_kwargs``: Dictionary, optional. Additional arguments, such as layer name, passed to fiona when opening the input spatial dataset.
+        * ``source_fp``: String. Filepath of the input spatial data which could have
+        features outside of the intersection result.
+        * ``source_field``: String. Name of field that uniquely identifies features in
+        the input spatial dataset.
+        * ``intersection_fp``: Filepath of the intersection spatial dataset generated
+        by the ``intersect`` function.
+        * ``source_kwargs``: Dictionary, optional. Additional arguments, such as layer
+        name, passed to fiona when opening the input spatial dataset.
         * ``dirpath``: String, optional. Directory where the output file will be saved.
         * ``compress``: Boolean. Whether or not to compress the output file.
 
-    .. warning:: ``source_fp`` must be the first file provided to the ``intersect`` function, **not** the second!
+    .. warning:: ``source_fp`` must be the first file provided to the ``intersect``
+    function, **not** the second!
 
     Returns the filepath of the output file. The output file JSON format is:
 
@@ -319,52 +388,59 @@ def calculate_remaining(source_fp, source_field, intersection_fp,
 
     """
     source, source_metadata = get_map(source_fp, source_field, source_kwargs)
-    intersections, inter_metadata = get_map(intersection_fp, 'id', {})
+    intersections, inter_metadata = get_map(intersection_fp, "id", {})
 
-    assert intersections.file.schema['properties'].keys() == \
-        {'id', 'from_label', 'to_label', 'measure'}
-    assert intersections.file.schema['properties']['id'] == 'int'
-    assert intersections.file.schema['properties']['measure'] == 'float'
+    assert intersections.file.schema["properties"].keys() == {
+        "id",
+        "from_label",
+        "to_label",
+        "measure",
+    }
+    assert intersections.file.schema["properties"]["id"] == "int"
+    assert intersections.file.schema["properties"]["measure"] == "float"
 
     if not dirpath:
         dirpath = get_appdirs_path("intersections")
 
-    output = os.path.join(dirpath, "{}.{}.json".format(source.hash, intersections.hash)
-    )
+    output = os.path.join(dirpath, "{}.{}.json".format(source.hash, intersections.hash))
 
-    _ = partial(project, from_proj=source.crs, to_proj='')
+    _ = partial(project, from_proj=source.crs, to_proj="")
 
     def get_geoms(feat):
         return [
-            shape(x['geometry'])
+            shape(x["geometry"])
             for x in intersections
-            if (x['properties']['from_label'] ==
-                feat['properties'][source_field])
+            if (x["properties"]["from_label"] == feat["properties"][source_field])
         ]
 
-    data = [(
-            feat['properties'][source_field],
-            get_remaining(
-                _(shape(feat['geometry'])), get_geoms(feat)
-            )
-        ) for feat in source
+    data = [
+        (
+            feat["properties"][source_field],
+            get_remaining(_(shape(feat["geometry"])), get_geoms(feat)),
+        )
+        for feat in source
     ]
 
     metadata = {
-        'source': source_metadata,
-        'intersections': inter_metadata,
-        'when': datetime.datetime.now().isoformat(),
+        "source": source_metadata,
+        "intersections": inter_metadata,
+        "when": datetime.datetime.now().isoformat(),
     }
 
-    return json_exporter({'data': data, 'metadata': metadata}, output, compress)
+    return json_exporter({"data": data, "metadata": metadata}, output, compress)
 
 
 def intersections_from_intersection(fp, metadata=None, dirpath=None):
     """Process an intersections spatial dataset to create two intersections data files.
 
-    ``fp`` is the file path of a vector dataset created by the ``intersect`` function. The intersection of two spatial scales (A, B) is a third spatial scale (C); this function creates intersection data files for (A, C) and (B, C).
+    ``fp`` is the file path of a vector dataset created by the ``intersect`` function.
+    The intersection of two spatial scales (A, B) is a third spatial scale (C); this
+    function creates intersection data files for (A, C) and (B, C).
 
-    As the intersections data file includes metadata on the input files, this function must have access to the intersections data file created at the same time as intersections spatial dataset. If the ``metadata`` filepath is not provided, the metadata file is looked for in the same directory as ``fp``.
+    As the intersections data file includes metadata on the input files, this function
+    must have access to the intersections data file created at the same time as
+    intersections spatial dataset. If the ``metadata`` filepath is not provided, the
+    metadata file is looked for in the same directory as ``fp``.
 
     Returns the file paths of the two new intersections data files.
     """
@@ -379,50 +455,48 @@ def intersections_from_intersection(fp, metadata=None, dirpath=None):
             if not os.path.isfile(metadata):
                 raise ValueError("Can't find metadata file")
 
-    metadata = json_importer(metadata)['metadata']
+    metadata = json_importer(metadata)["metadata"]
 
     with fiona.open(fp) as source:
-        for key in ('id', 'from_label', 'to_label', 'measure'):
-            assert key in source.schema['properties']
-        data = [feat['properties'] for feat in source]
+        for key in ("id", "from_label", "to_label", "measure"):
+            assert key in source.schema["properties"]
+        data = [feat["properties"] for feat in source]
 
     this = {
-        'field': 'id',
-        'path': fp,
-        'filename': os.path.basename(fp),
-        'sha256': sha256(fp)
+        "field": "id",
+        "path": fp,
+        "filename": os.path.basename(fp),
+        "sha256": sha256(fp),
     }
 
     first_dataset = {
-        'data': [(o['id'], o['from_label'], o['measure']) for o in data],
-        'metadata': {
-            'first': this,
-            'second': metadata['first'],
-            'when': datetime.datetime.now().isoformat()
-        }
+        "data": [(o["id"], o["from_label"], o["measure"]) for o in data],
+        "metadata": {
+            "first": this,
+            "second": metadata["first"],
+            "when": datetime.datetime.now().isoformat(),
+        },
     }
     second_dataset = {
-        'data': [(o['id'], o['to_label'], o['measure']) for o in data],
-        'metadata': {
-            'first': this,
-            'second': metadata['second'],
-            'when': datetime.datetime.now().isoformat()
-        }
+        "data": [(o["id"], o["to_label"], o["measure"]) for o in data],
+        "metadata": {
+            "first": this,
+            "second": metadata["second"],
+            "when": datetime.datetime.now().isoformat(),
+        },
     }
 
     if not dirpath:
         dirpath = get_appdirs_path("intersections")
 
     first_fp = os.path.join(
-        dirpath,
-        "{}.{}.json".format(this['sha256'], metadata['first']['sha256'])
+        dirpath, "{}.{}.json".format(this["sha256"], metadata["first"]["sha256"])
     )
     second_fp = os.path.join(
-        dirpath,
-        "{}.{}.json".format(this['sha256'], metadata['second']['sha256'])
+        dirpath, "{}.{}.json".format(this["sha256"], metadata["second"]["sha256"])
     )
 
     return (
         json_exporter(first_dataset, first_fp),
-        json_exporter(second_dataset, second_fp)
+        json_exporter(second_dataset, second_fp),
     )

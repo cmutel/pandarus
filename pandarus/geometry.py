@@ -1,4 +1,3 @@
-from .projection import project
 from shapely.geometry import (
     GeometryCollection,
     LinearRing,
@@ -11,20 +10,22 @@ from shapely.geometry import (
 )
 from shapely.ops import cascaded_union
 
+from .projection import project
 
 kind_mapping = {
-    'Polygon': 'polygon',
-    'MultiPolygon': 'polygon',
-    'LineString': 'line',
-    'MultiLineString': 'line',
-    'LinearRing': 'line',
-    'Point': 'point',
-    'MultiPoint': 'point',
+    "Polygon": "polygon",
+    "MultiPolygon": "polygon",
+    "LineString": "line",
+    "MultiLineString": "line",
+    "LinearRing": "line",
+    "Point": "point",
+    "MultiPoint": "point",
 }
 
 
 class IncompatibleTypes(Exception):
     """Geometry comparison across geometry types is meaningless"""
+
     pass
 
 
@@ -38,24 +39,26 @@ def clean(geom):
 
 
 def recursive_geom_finder(geom, kind):
-    """Return all elements of ``geom`` that are of ``kind``. For example, return all linestrings in a geometry collection.
+    """Return all elements of ``geom`` that are of ``kind``. For example, return all
+    linestrings in a geometry collection.
 
     ``geom`` is a Shapely geometry.
 
     ``kind`` should be one of ``("line", "point", "polygon")``.
 
-    Returns either a ``MultiPoint``, ``MultiLineString``, or ``MultiPolygon``. Returns ``None`` is no valid element is found."""
+    Returns either a ``MultiPoint``, ``MultiLineString``, or ``MultiPolygon``. Returns
+    ``None`` is no valid element is found."""
     assert kind in ("line", "point", "polygon"), "Invalid ``kind``"
 
     TYPES = {
-        'line': (LineString, LinearRing, MultiLineString),
-        'point': (Point, MultiPoint),
-        'polygon': (Polygon, MultiPolygon),
+        "line": (LineString, LinearRing, MultiLineString),
+        "point": (Point, MultiPoint),
+        "polygon": (Polygon, MultiPolygon),
     }
     CONTAINER = {
-        'line': MultiLineString,
-        'point': MultiPoint,
-        'polygon': MultiPolygon,
+        "line": MultiLineString,
+        "point": MultiPoint,
+        "polygon": MultiPolygon,
     }
 
     def recurse(geom, types):
@@ -68,27 +71,27 @@ def recursive_geom_finder(geom, kind):
         else:
             yield None
 
-    elements = [elem for elem in recurse(geom, TYPES[kind])
-                if elem is not None]
+    elements = [elem for elem in recurse(geom, TYPES[kind]) if elem is not None]
     if not elements:
         return None
     else:
         geom = clean(cascaded_union(elements))
-        if 'Multi' not in geom.type:
+        if "Multi" not in geom.type:
             geom = CONTAINER[kind]([geom])
         return geom
 
 
-def get_intersection(obj, kind, collection, indices,
-                     to_meters=True,
-                     return_geoms=True):
-    """Return a dictionary describing the intersection of ``obj`` with ``collection[indices]``.
+def get_intersection(obj, kind, collection, indices, to_meters=True, return_geoms=True):
+    """Return a dictionary describing the intersection of ``obj`` with
+    ``collection[indices]``.
 
     ``obj`` is a Shapely geometry.
-    ``kind`` is one of ``("line", "point", "polygon")`` - the kind of object to be returned.
+    ``kind`` is one of ``("line", "point", "polygon")`` - the kind of object to be
+    returned.
     ``collection`` is a ``Map``.
     ``indices`` is an iterator of integers; indices into ``collection``.
-    ``projection_func`` is a function to project the results to a new CRS before taking area, etc. If falsey, no projection will take place.
+    ``projection_func`` is a function to project the results to a new CRS before taking
+    area, etc. If falsey, no projection will take place.
     ``return_geoms``: Return intersected geometries in addition to area, etc.
 
     Assumes that the polygons in ``collection`` do not overlap.
@@ -104,7 +107,10 @@ def get_intersection(obj, kind, collection, indices,
             }
         }
 
-    The algorithm used for line and point intersections is incorrect - it will double count lines which lay along the borders of two polygons, and point that lie on the border of two polygons. A more robust function would take substantially more development and computation time, and total error should be less than 10 percent.
+    The algorithm used for line and point intersections is incorrect - it will double
+    count lines which lay along the borders of two polygons, and point that lie on the
+    border of two polygons. A more robust function would take substantially more
+    development and computation time, and total error should be less than 10 percent.
 
     """
     assert kind in ("line", "point", "polygon"), "Invalid ``kind``"
@@ -117,15 +123,12 @@ def get_intersection(obj, kind, collection, indices,
     for index, geom in collection.iter_latlong(indices):
         if not geom.intersects(obj):
             continue
-        g = recursive_geom_finder(
-            clean(obj.intersection(geom)),
-            kind
-        )
+        g = recursive_geom_finder(clean(obj.intersection(geom)), kind)
         if not g:
             continue
-        results[index] = {'measure': get_measure(proj_func(g), kind)}
+        results[index] = {"measure": get_measure(proj_func(g), kind)}
         if return_geoms:
-            results[index]['geom'] = g
+            results[index]["geom"] = g
 
     return results
 
@@ -144,38 +147,36 @@ def get_measure(geom, kind=None):
     if kind is None:
         kind = kind_mapping.get(geom.geom_type)
 
-    if kind == 'polygon':
+    if kind == "polygon":
         return geom.area
-    elif kind == 'line':
+    elif kind == "line":
         return geom.length
-    elif kind == 'point':
-        if geom.geom_type == 'MultiPoint':
+    elif kind == "point":
+        if geom.geom_type == "MultiPoint":
             return float(len(geom))
-        elif geom.geom_type == 'Point':
-            return 1.
-    raise ValueError(
-        "No applicable measure for geom: {}".format(geom)
-    )
+        elif geom.geom_type == "Point":
+            return 1.0
+    raise ValueError("No applicable measure for geom: {}".format(geom))
 
 
 def get_remaining(original, geoms, to_meters=True):
-    """Get the remaining area/length/number from ``original`` after subtracting the union of ``geoms``.
+    """Get the remaining area/length/number from ``original`` after subtracting
+    the union of ``geoms``.
 
     * ``original``: Shapely geom in WGS84 CRS.
     * ``geoms``: List of shapely geoms in WGS84 CRS.
     * ``to_meters``: Boolean. Return value calculated in Mollweide projection.
 
-    ``original`` and ``geoms`` should have the same geometry type, and ``geoms`` are components of ``original``.
+    ``original`` and ``geoms`` should have the same geometry type, and ``geoms`` are
+    components of ``original``.
 
     Returns a float."""
     try:
         kind = kind_mapping[original.geom_type]
     except KeyError:
-        raise ValueError(
-            "Can't use this geometry type: {}".format(original.geom_type)
-        )
+        raise ValueError("Can't use this geometry type: {}".format(original.geom_type))
 
-    if not to_meters or kind == 'point':
+    if not to_meters or kind == "point":
         proj_func = lambda x: x
     else:
         proj_func = project

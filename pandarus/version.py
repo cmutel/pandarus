@@ -14,8 +14,7 @@ def get_version_tuple() -> tuple:
             return version  # pragma: no cover
 
     return tuple(
-        as_integer(v)
-        for v in importlib.metadata.version("pandarus").strip().split(".")
+        as_integer(v) for v in importlib.metadata.version("pandarus").strip().split(".")
     )
 
 

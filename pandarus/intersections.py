@@ -1,24 +1,22 @@
 # -*- coding: utf-8 -*-
-from .maps import Map
-from .geometry import (
-    clean,
-    get_intersection,
-    kind_mapping,
-)
-from .projection import project
-from logging.handlers import QueueHandler, QueueListener
-from shapely.geometry import shape
-from shapely.geos import TopologicalError
 import datetime
 import logging
 import math
 import multiprocessing
 import os
+from logging.handlers import QueueHandler, QueueListener
+
+from shapely.geometry import shape
+from shapely.geos import TopologicalError
+
+from .geometry import clean, get_intersection, kind_mapping
+from .maps import Map
+from .projection import project
 
 
 def chunker(iterable, chunk_size):
     for i in range(0, len(iterable), chunk_size):
-        yield list(iterable[i:i + chunk_size])
+        yield list(iterable[i : i + chunk_size])
 
 
 def logger_init(dirpath=None):
@@ -26,15 +24,17 @@ def logger_init(dirpath=None):
     logging_queue = multiprocessing.Queue()
     # this is the handler for all log records
     filepath = "{}-{}.log".format(
-        'pandarus-worker', datetime.datetime.now().strftime("%d-%B-%Y-%I-%M%p")
+        "pandarus-worker", datetime.datetime.now().strftime("%d-%B-%Y-%I-%M%p")
     )
     if dirpath is not None:
         filepath = os.path.join(dirpath, filepath)
     handler = logging.FileHandler(
         filepath,
-        encoding='utf-8',
+        encoding="utf-8",
     )
-    handler.setFormatter(logging.Formatter("%(asctime)s %(levelname)s %(lineno)d %(message)s"))
+    handler.setFormatter(
+        logging.Formatter("%(asctime)s %(levelname)s %(lineno)d %(message)s")
+    )
 
     # queue_listener gets records from the queue and sends them to the handler
     queue_listener = QueueListener(logging_queue, handler)
@@ -67,18 +67,25 @@ def get_jobs(map_size):
 
 def intersection_worker(from_map, from_objs, to_map, worker_id=1):
     """Multiprocessing worker for map matching"""
-    logging.info("""Starting intersection_worker:
+    logging.info(
+        """Starting intersection_worker:
     from map: {}
     from objs: {} ({} to {})
     to map: {}
-    worker id: {}""".format(from_map, len(from_objs or []) or 'all',
-                            min(from_objs or [0]), max(from_objs or [0]),
-                            to_map, worker_id))
+    worker id: {}""".format(
+            from_map,
+            len(from_objs or []) or "all",
+            min(from_objs or [0]),
+            max(from_objs or [0]),
+            to_map,
+            worker_id,
+        )
+    )
 
     results = {}
 
     to_map = Map(to_map)
-    if to_map.geometry not in ('Polygon', 'MultiPolygon'):
+    if to_map.geometry not in ("Polygon", "MultiPolygon"):
         raise ValueError("`to_map` geometry must be polygons")
     rtree_index = to_map.create_rtree_index()
 
@@ -92,8 +99,6 @@ def intersection_worker(from_map, from_objs, to_map, worker_id=1):
 
     logging.info("Worker {}: Loaded `from` map.".format(worker_id))
 
-    to_shape = lambda x: project(shape(x['geometry']), from_map.crs, '')
-
     if from_objs:
         from_gen = ((index, from_map[index]) for index in from_objs)
     else:
@@ -101,21 +106,18 @@ def intersection_worker(from_map, from_objs, to_map, worker_id=1):
 
     for from_index, from_obj in from_gen:
         try:
-            geom = clean(to_shape(from_obj))
+            to_shape = project(shape(from_obj["geometry"]), from_map.crs, "")
+            geom = clean(to_shape)
 
             for k, v in get_intersection(
-                geom,
-                kind,
-                to_map,
-                rtree_index.intersection(geom.bounds),
-                project
+                geom, kind, to_map, rtree_index.intersection(geom.bounds), project
             ).items():
                 results[(from_index, k)] = v
 
         except TopologicalError:
             logging.exception("Skipping topological error.")
             continue
-        except:
+        except Exception:
             logging.exception("Intersection worker failed.")
             raise
 
@@ -136,14 +138,16 @@ def intersection_dispatcher(from_map, to_map, from_objs=None, cpus=None, log_dir
     chunk_size, num_jobs = get_jobs(map_size)
 
     queue_listener, logging_queue = logger_init(log_dir)
-    logging.info("""Starting `intersect` calculation.
+    logging.info(
+        """Starting `intersect` calculation.
     From map: {}
     To map: {}
     Map size: {}
     Chunk size: {}
     Number of jobs: {}""".format(
-        from_map, to_map, map_size, chunk_size, num_jobs
-    ))
+            from_map, to_map, map_size, chunk_size, num_jobs
+        )
+    )
 
     results = {}
 
@@ -151,10 +155,8 @@ def intersection_dispatcher(from_map, to_map, from_objs=None, cpus=None, log_dir
         results.update(data)
 
     with multiprocessing.Pool(
-                cpus or multiprocessing.cpu_count(),
-                worker_init,
-                [logging_queue]
-            ) as pool:
+        cpus or multiprocessing.cpu_count(), worker_init, [logging_queue]
+    ) as pool:
         arguments = [
             (from_map, chunk, to_map, index)
             for index, chunk in enumerate(chunker(ids, chunk_size))
@@ -163,11 +165,11 @@ def intersection_dispatcher(from_map, to_map, from_objs=None, cpus=None, log_dir
         function_results = []
 
         for argument_set in arguments:
-            function_results.append(pool.apply_async(
-                intersection_worker,
-                argument_set,
-                callback=callback_func
-            ))
+            function_results.append(
+                pool.apply_async(
+                    intersection_worker, argument_set, callback=callback_func
+                )
+            )
         for fr in function_results:
             fr.wait()
 
@@ -176,13 +178,15 @@ def intersection_dispatcher(from_map, to_map, from_objs=None, cpus=None, log_dir
 
     queue_listener.stop()
 
-    logging.info("""Finished `intersect` calculation.
+    logging.info(
+        """Finished `intersect` calculation.
     From map: {}
     To map: {}
     Map size: {}
     Chunk size: {}
     Number of jobs: {}""".format(
-        from_map, to_map, map_size, chunk_size, num_jobs
-    ))
+            from_map, to_map, map_size, chunk_size, num_jobs
+        )
+    )
 
     return results

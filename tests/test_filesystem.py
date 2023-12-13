@@ -1,43 +1,49 @@
-from pandarus.filesystem import sha256, json_exporter, get_appdirs_path, json_importer
 import os
+
+from pandarus.filesystem import get_appdirs_path, json_exporter, json_importer, sha256
 
 dirpath = os.path.abspath(os.path.join(os.path.dirname(__file__), "data"))
 
 
 def test_hashing():
-    assert sha256(os.path.join(dirpath, "testfile.hash")) == \
-        '703734a71a2252ed9cabfeb5ddc4aeeb6c96becb720382f1edca0c87472bacef'
+    assert (
+        sha256(os.path.join(dirpath, "testfile.hash"))
+        == "703734a71a2252ed9cabfeb5ddc4aeeb6c96becb720382f1edca0c87472bacef"
+    )
 
 
 def test_json_exporting(tmpdir):
-    new_fp = os.path.join(tmpdir, 'testfile')
-    fp = json_exporter({'d': [1,2,3], 'e': {'foo': 'bar'}}, new_fp, False)
+    new_fp = os.path.join(tmpdir, "testfile")
+    fp = json_exporter({"d": [1, 2, 3], "e": {"foo": "bar"}}, new_fp, False)
     assert fp
     assert not fp.endswith(".bz2")
     assert os.path.isfile(fp)
 
-    fp = json_exporter([1,2,3], new_fp, True)
+    fp = json_exporter([1, 2, 3], new_fp, True)
     assert fp
     assert fp.endswith(".bz2")
     assert os.path.isfile(fp)
 
+
 def test_json_importing():
     fp = os.path.join(dirpath, "json_test.json")
-    assert json_importer(fp) == {'d': [1,2,3], 'e': {'foo': 'bar'}}
+    assert json_importer(fp) == {"d": [1, 2, 3], "e": {"foo": "bar"}}
 
     fp = os.path.join(dirpath, "json_test.json.bz2")
-    assert json_importer(fp) == {'d': [1,2,3], 'e': {'foo': 'bar'}}
+    assert json_importer(fp) == {"d": [1, 2, 3], "e": {"foo": "bar"}}
+
 
 def test_json_roundtrip(tmpdir):
-    data = {'d': [1,2,3], 'e': {'foo': 'bar'}}
+    data = {"d": [1, 2, 3], "e": {"foo": "bar"}}
 
-    new_fp = os.path.join(tmpdir, 'testfile')
+    new_fp = os.path.join(tmpdir, "testfile")
 
     fp = json_exporter(data, new_fp, False)
     assert json_importer(fp) == data
 
     fp = json_exporter(data, new_fp)
     assert json_importer(fp) == data
+
 
 def test_appdirs_path():
     dp = get_appdirs_path("test-dir")
