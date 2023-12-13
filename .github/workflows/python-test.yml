@@ -56,7 +56,7 @@ jobs:
         run: conda install -y -c conda-forge gdal
 
       - name: Install package
-        run: pip install .
+        run: pip install .[test]
 
       - name: Run linting and style checks
         run: |
