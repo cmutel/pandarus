@@ -8,7 +8,7 @@ dirpath = os.path.abspath(os.path.join(os.path.dirname(__file__), "data"))
 def test_hashing():
     assert (
         sha256(os.path.join(dirpath, "testfile.hash"))
-        == "703734a71a2252ed9cabfeb5ddc4aeeb6c96becb720382f1edca0c87472bacef"
+        == "d2adeda32326a6576b73f9f387d75798d5bd6f0b4d385d36684fdb7d205a0ab0"
     )
 
 
