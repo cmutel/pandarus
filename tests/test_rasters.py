@@ -1,3 +1,4 @@
+"""Test cases for the __rasters__ module."""
 import os
 
 from pandarus.rasters import gen_zonal_stats

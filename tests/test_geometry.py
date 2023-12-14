@@ -1,5 +1,4 @@
-import os
-
+"""Test cases for the __geometry__ module."""
 import numpy as np
 import pytest
 from shapely.geometry import (
@@ -19,8 +18,7 @@ from pandarus.geometry import IncompatibleTypes, clean
 from pandarus.geometry import get_intersection as _get_intersection
 from pandarus.geometry import get_measure, get_remaining, recursive_geom_finder
 
-dirpath = os.path.abspath(os.path.join(os.path.dirname(__file__), "data"))
-grid = os.path.join(dirpath, "grid.geojson")
+from . import PATH_GRID
 
 
 def get_intersection(*args, **kwargs):
@@ -41,7 +39,7 @@ def test_no_return_geoms():
     result = get_intersection(
         mp,
         "point",
-        Map(grid, "name"),
+        Map(PATH_GRID, "name"),
         (0, 1, 2, 3),
         to_meters=False,
         return_geoms=False,
@@ -69,13 +67,13 @@ def test_single_point():
         0: {"geom": {"type": "MultiPoint", "coordinates": ((0.5, 1.0),)}, "measure": 1},
         1: {"geom": {"type": "MultiPoint", "coordinates": ((0.5, 1.0),)}, "measure": 1},
     }
-    result = get_intersection(mp, "point", Map(grid, "name"), (0, 1, 2, 3))
+    result = get_intersection(mp, "point", Map(PATH_GRID, "name"), (0, 1, 2, 3))
     assert result == expected
 
     expected = {
         0: {"geom": {"type": "MultiPoint", "coordinates": ((0.5, 1.0),)}, "measure": 1}
     }
-    assert get_intersection(mp, "point", Map(grid, "name"), (0, 2)) == expected
+    assert get_intersection(mp, "point", Map(PATH_GRID, "name"), (0, 2)) == expected
 
 
 def test_multi_point():
@@ -98,7 +96,9 @@ def test_multi_point():
             "measure": 2,
         },
     }
-    assert get_intersection(mp, "point", Map(grid, "name"), (0, 1, 2, 3)) == expected
+    assert (
+        get_intersection(mp, "point", Map(PATH_GRID, "name"), (0, 1, 2, 3)) == expected
+    )
 
 
 def test_point_geometry_collection():
@@ -121,12 +121,14 @@ def test_point_geometry_collection():
             "measure": 2,
         },
     }
-    assert get_intersection(mp, "point", Map(grid, "name"), (0, 1, 2, 3)) == expected
+    assert (
+        get_intersection(mp, "point", Map(PATH_GRID, "name"), (0, 1, 2, 3)) == expected
+    )
 
 
 def test_point_wrong_geometry():
     ls = LineString([(0.5, 0.5), (1.5, 0.5)])
-    assert get_intersection(ls, "point", Map(grid, "name"), (0, 1, 2, 3)) == {}
+    assert not get_intersection(ls, "point", Map(PATH_GRID, "name"), (0, 1, 2, 3))
 
 
 # Lines
@@ -151,7 +153,7 @@ def test_line_string():
         },
     }
     result = get_intersection(
-        ls, "line", Map(grid, "name"), (0, 1, 2, 3), to_meters=False
+        ls, "line", Map(PATH_GRID, "name"), (0, 1, 2, 3), to_meters=False
     )
     assert result == expected
 
@@ -164,7 +166,9 @@ def test_line_string():
             "measure": 0.5,
         }
     }
-    result = get_intersection(ls, "line", Map(grid, "name"), (0, 1), to_meters=False)
+    result = get_intersection(
+        ls, "line", Map(PATH_GRID, "name"), (0, 1), to_meters=False
+    )
     print(result)
     assert result == expected
 
@@ -188,7 +192,9 @@ def test_multi_line_string():
         },
     }
     assert (
-        get_intersection(ls, "line", Map(grid, "name"), (0, 1, 2, 3), to_meters=False)
+        get_intersection(
+            ls, "line", Map(PATH_GRID, "name"), (0, 1, 2, 3), to_meters=False
+        )
         == expected
     )
 
@@ -202,7 +208,7 @@ def test_multi_line_string():
         }
     }
     assert (
-        get_intersection(ls, "line", Map(grid, "name"), (0, 1), to_meters=False)
+        get_intersection(ls, "line", Map(PATH_GRID, "name"), (0, 1), to_meters=False)
         == expected
     )
 
@@ -240,7 +246,7 @@ def test_linear_ring():
         },
     }
     result = get_intersection(
-        ls, "line", Map(grid, "name"), (0, 1, 2, 3), to_meters=False
+        ls, "line", Map(PATH_GRID, "name"), (0, 1, 2, 3), to_meters=False
     )
     assert result == expected
 
@@ -261,7 +267,7 @@ def test_linear_ring():
         },
     }
     assert (
-        get_intersection(ls, "line", Map(grid, "name"), (0, 1), to_meters=False)
+        get_intersection(ls, "line", Map(PATH_GRID, "name"), (0, 1), to_meters=False)
         == expected
     )
 
@@ -285,7 +291,9 @@ def test_line_geometry_collection():
         },
     }
     assert (
-        get_intersection(ls, "line", Map(grid, "name"), (0, 1, 2, 3), to_meters=False)
+        get_intersection(
+            ls, "line", Map(PATH_GRID, "name"), (0, 1, 2, 3), to_meters=False
+        )
         == expected
     )
 
@@ -299,14 +307,14 @@ def test_line_geometry_collection():
         }
     }
     assert (
-        get_intersection(ls, "line", Map(grid, "name"), (0, 1), to_meters=False)
+        get_intersection(ls, "line", Map(PATH_GRID, "name"), (0, 1), to_meters=False)
         == expected
     )
 
 
 def test_line_wrong_geometry():
     mp = Point((0.5, 1))
-    assert get_intersection(mp, "line", Map(grid, "name"), (0, 1, 2, 3)) == {}
+    assert get_intersection(mp, "line", Map(PATH_GRID, "name"), (0, 1, 2, 3)) == {}
 
 
 # Polygons
@@ -354,7 +362,7 @@ def test_polygon():
     }
     assert (
         get_intersection(
-            pg, "polygon", Map(grid, "name"), (0, 1, 2, 3), to_meters=False
+            pg, "polygon", Map(PATH_GRID, "name"), (0, 1, 2, 3), to_meters=False
         )
         == expected
     )
@@ -380,7 +388,7 @@ def test_polygon():
         },
     }
     assert (
-        get_intersection(pg, "polygon", Map(grid, "name"), (0, 1), to_meters=False)
+        get_intersection(pg, "polygon", Map(PATH_GRID, "name"), (0, 1), to_meters=False)
         == expected
     )
 
@@ -429,7 +437,7 @@ def test_multi_polygon():
     }
     assert (
         get_intersection(
-            pg, "polygon", Map(grid, "name"), (0, 1, 2, 3), to_meters=False
+            pg, "polygon", Map(PATH_GRID, "name"), (0, 1, 2, 3), to_meters=False
         )
         == expected
     )
@@ -455,7 +463,7 @@ def test_multi_polygon():
         },
     }
     assert (
-        get_intersection(pg, "polygon", Map(grid, "name"), (0, 1), to_meters=False)
+        get_intersection(pg, "polygon", Map(PATH_GRID, "name"), (0, 1), to_meters=False)
         == expected
     )
 
@@ -504,7 +512,7 @@ def test_polygon_geometry_collection():
     }
     assert (
         get_intersection(
-            pg, "polygon", Map(grid, "name"), (0, 1, 2, 3), to_meters=False
+            pg, "polygon", Map(PATH_GRID, "name"), (0, 1, 2, 3), to_meters=False
         )
         == expected
     )
@@ -530,14 +538,14 @@ def test_polygon_geometry_collection():
         },
     }
     assert (
-        get_intersection(pg, "polygon", Map(grid, "name"), (0, 1), to_meters=False)
+        get_intersection(pg, "polygon", Map(PATH_GRID, "name"), (0, 1), to_meters=False)
         == expected
     )
 
 
 def test_polygon_wrong_geometry():
     mp = Point((0.5, 1))
-    assert get_intersection(mp, "polygon", Map(grid, "name"), (0, 1, 2, 3)) == {}
+    assert get_intersection(mp, "polygon", Map(PATH_GRID, "name"), (0, 1, 2, 3)) == {}
 
 
 # Clean

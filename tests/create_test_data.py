@@ -93,14 +93,14 @@ def create_grid(start_x=0.0, start_y=0.0, cols=4, rows=4, width=1.0, height=1.0)
 def create_test_datasets():
     # Create 4x4 grid
     x, y, cols, rows = 0, 0, 2, 2
-    names = ["grid cell {}".format(i * 2 + j) for i in range(cols) for j in range(rows)]
+    names = [f"grid cell {i * 2 + j}" for i in range(cols) for j in range(rows)]
     cells = create_grid(x, y, cols, rows)
     create_test_file(
         os.path.join(dirpath, "grid.geojson"),
         [create_record(name, coords) for name, coords in zip(names, cells)],
     )
 
-    names = ["grid cell {}".format(i * 2 + j) for i in range(cols) for j in range(rows)]
+    names = [f"grid cell {i * 2 + j}" for i in range(cols) for j in range(rows)]
     cells = create_grid(0, 7, cols, rows)
     create_test_file(
         os.path.join(dirpath, "big-grid.geojson"),
@@ -183,7 +183,7 @@ def create_test_datasets():
             }
         ],
     }
-    with open("data/gc.geojson", "w") as f:
+    with open("data/gc.geojson", "w", encoding="UTF-8") as f:
         json.dump(gc_data, f)
 
     # Test raster for rasterstats

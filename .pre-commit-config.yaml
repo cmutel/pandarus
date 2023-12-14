@@ -5,6 +5,7 @@ repos:
   rev: v4.4.0
   hooks:
   - id: trailing-whitespace
+    exclude: ".*.key"
   - id: check-added-large-files
   - id: check-ast
   - id: check-json

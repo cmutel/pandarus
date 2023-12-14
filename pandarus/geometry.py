@@ -1,3 +1,4 @@
+"""Geometry functions for Pandarus."""
 from shapely.geometry import (
     GeometryCollection,
     LinearRing,
@@ -25,8 +26,6 @@ kind_mapping = {
 
 class IncompatibleTypes(Exception):
     """Geometry comparison across geometry types is meaningless"""
-
-    pass
 
 
 def clean(geom):
@@ -74,11 +73,11 @@ def recursive_geom_finder(geom, kind):
     elements = [elem for elem in recurse(geom, TYPES[kind]) if elem is not None]
     if not elements:
         return None
-    else:
-        geom = clean(cascaded_union(elements))
-        if "Multi" not in geom.type:
-            geom = CONTAINER[kind]([geom])
-        return geom
+
+    geom = clean(cascaded_union(elements))
+    if "Multi" not in geom.type:
+        geom = CONTAINER[kind]([geom])
+    return geom
 
 
 def get_intersection(obj, kind, collection, indices, to_meters=True, return_geoms=True):
@@ -149,14 +148,14 @@ def get_measure(geom, kind=None):
 
     if kind == "polygon":
         return geom.area
-    elif kind == "line":
+    if kind == "line":
         return geom.length
-    elif kind == "point":
+    if kind == "point":
         if geom.geom_type == "MultiPoint":
             return float(len(geom))
         elif geom.geom_type == "Point":
             return 1.0
-    raise ValueError("No applicable measure for geom: {}".format(geom))
+    raise ValueError(f"No applicable measure for geom: {geom}")
 
 
 def get_remaining(original, geoms, to_meters=True):
@@ -174,7 +173,7 @@ def get_remaining(original, geoms, to_meters=True):
     try:
         kind = kind_mapping[original.geom_type]
     except KeyError:
-        raise ValueError("Can't use this geometry type: {}".format(original.geom_type))
+        raise ValueError(f"Can't use this geometry type: {original.geom_type}")
 
     if not to_meters or kind == "point":
         proj_func = lambda x: x
@@ -189,5 +188,4 @@ def get_remaining(original, geoms, to_meters=True):
         union_total = get_measure(proj_func(cascaded_union(geoms)), kind)
         individ_total = sum(get_measure(proj_func(geom), kind) for geom in geoms)
         return (actual - union_total) * (individ_total / union_total)
-    else:
-        return actual
+    return actual

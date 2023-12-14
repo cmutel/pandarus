@@ -1,0 +1,20 @@
+"""Test suite for the __pandarus__ package."""
+import os
+
+PATH_DATA: str = os.path.abspath(os.path.join(os.path.dirname(__file__), "data"))
+PATH_DEM: str = os.path.join(PATH_DATA, "DEMs.tif")
+PATH_DUPLICATES: str = os.path.join(PATH_DATA, "duplicates.geojson")
+PATH_COUNTRIES: str = os.path.join(PATH_DATA, "test_countries.gpkg")
+PATH_GRID: str = os.path.join(PATH_DATA, "grid.geojson")
+PATH_GRID_INTS: str = os.path.join(PATH_DATA, "grid-ints.geojson")
+PATH_GRID_PROJ: str = os.path.join(PATH_DATA, "grid-3410.geojson")
+PATH_LINES: str = os.path.join(PATH_DATA, "lines.geojson")
+PATH_LINES_PROJ: str = os.path.join(PATH_DATA, "lines-25000.geojson")
+PATH_OUTSIDE: str = os.path.join(PATH_DATA, "outside.geojson")
+PATH_POINTS: str = os.path.join(PATH_DATA, "points.geojson")
+PATH_POINTS_PROJ: str = os.path.join(PATH_DATA, "points-32631.geojson")
+PATH_RANGE_RASTER: str = os.path.join(PATH_DATA, "range.tif")
+PATH_RASTER: str = os.path.join(PATH_DATA, "test_raster_cfs.tif")
+PATH_REMAIN_RESULT: str = os.path.join(PATH_DATA, "remaining.geojson")
+PATH_SQUARE: str = os.path.join(PATH_DATA, "square.geojson")
+PATH_SQUARE_PROJ: str = os.path.join(PATH_DATA, "square-3857.geojson")

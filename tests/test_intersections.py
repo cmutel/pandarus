@@ -27,7 +27,7 @@ def test_chunker():
 
 
 def test_worker_init(tmpdir):
-    ql, lq = logger_init(tmpdir)
+    _, lq = logger_init(tmpdir)
     worker_init(lq)
     assert os.listdir(tmpdir)
 

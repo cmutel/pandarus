@@ -1,7 +1,8 @@
-# -*- coding: utf-8 -*-
+"""Projection utilities for pandarus package."""
 from functools import partial
 
 import pyproj
+from shapely.geometry.base import BaseGeometry
 from shapely.ops import transform
 
 WGS84 = "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs"
@@ -12,17 +13,16 @@ MOLLWEIDE = (
 )
 
 
-def wgs84(s):
+def wgs84(crs: str):
     """Fix no CRS or fiona giving abbreviated wgs84 definition.
-
     Returns WGS84 if ``s`` is falsey."""
-    if s == "+no_defs" or not s:
+
+    if not crs or crs == "+no_defs":
         return WGS84
-    else:
-        return s
+    return crs
 
 
-def project(geom, from_proj=None, to_proj=None):
+def project(geom: BaseGeometry, from_proj: str = None, to_proj: str = None):
     """
     Project a ``shapely`` geometry, and returns a new geometry of the same type from the
     transformed coordinates.
@@ -40,18 +40,19 @@ def project(geom, from_proj=None, to_proj=None):
         A ``shapely`` geometry.
 
     """
+
     from_proj = wgs84(from_proj)
     if to_proj is None:
         to_proj = MOLLWEIDE
     else:
         to_proj = wgs84(to_proj)
 
-    to_proj, from_proj = pyproj.Proj(to_proj), pyproj.Proj(from_proj)
+    to_pyproj, from_pyproj = pyproj.Proj(to_proj), pyproj.Proj(from_proj)
 
-    if (to_proj == from_proj) or (
-        to_proj.crs.is_geographic and from_proj.crs.is_geographic
+    if (to_pyproj == from_pyproj) or (
+        to_pyproj.crs.is_geographic and from_pyproj.crs.is_geographic
     ):
         return geom
 
-    projection_func = partial(pyproj.transform, from_proj, to_proj)
+    projection_func = partial(pyproj.transform, from_pyproj, to_pyproj)
     return transform(projection_func, geom)

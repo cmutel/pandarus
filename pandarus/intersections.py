@@ -6,8 +6,8 @@ import multiprocessing
 import os
 from logging.handlers import QueueHandler, QueueListener
 
-from shapely.geometry import shape
 from shapely.errors import TopologicalError
+from shapely.geometry import shape
 
 from .geometry import clean, get_intersection, kind_mapping
 from .maps import Map
@@ -67,19 +67,17 @@ def get_jobs(map_size):
 
 def intersection_worker(from_map, from_objs, to_map, worker_id=1):
     """Multiprocessing worker for map matching"""
+    objs_len = len(from_objs or []) or "all"
+    objs_min = min(from_objs or [0])
+    objs_max = max(from_objs or [0])
     logging.info(
-        """Starting intersection_worker:
-    from map: {}
-    from objs: {} ({} to {})
-    to map: {}
-    worker id: {}""".format(
-            from_map,
-            len(from_objs or []) or "all",
-            min(from_objs or [0]),
-            max(from_objs or [0]),
-            to_map,
-            worker_id,
-        )
+        f"""
+        Starting intersection_worker:
+        from map: {from_map}
+        from objs: {objs_len} ({objs_min} to {objs_max})
+        to map: {to_map}
+        worker id: {worker_id}
+        """
     )
 
     results = {}
@@ -95,9 +93,9 @@ def intersection_worker(from_map, from_objs, to_map, worker_id=1):
     try:
         kind = kind_mapping[from_map.geometry]
     except KeyError:
-        raise ValueError("No valid geometry type in map {}".format(from_map))
+        raise ValueError(f"No valid geometry type in map {from_map}")
 
-    logging.info("Worker {}: Loaded `from` map.".format(worker_id))
+    logging.info(f"Worker {worker_id}: Loaded `from` map.")
 
     if from_objs:
         from_gen = ((index, from_map[index]) for index in from_objs)
@@ -139,14 +137,14 @@ def intersection_dispatcher(from_map, to_map, from_objs=None, cpus=None, log_dir
 
     queue_listener, logging_queue = logger_init(log_dir)
     logging.info(
-        """Starting `intersect` calculation.
-    From map: {}
-    To map: {}
-    Map size: {}
-    Chunk size: {}
-    Number of jobs: {}""".format(
-            from_map, to_map, map_size, chunk_size, num_jobs
-        )
+        f"""
+        Starting `intersect` calculation.
+        From map: {from_map}
+        To map: {to_map}
+        Map size: {map_size}
+        Chunk size: {chunk_size}
+        Number of jobs: {num_jobs}
+    """
     )
 
     results = {}
@@ -179,14 +177,14 @@ def intersection_dispatcher(from_map, to_map, from_objs=None, cpus=None, log_dir
     queue_listener.stop()
 
     logging.info(
-        """Finished `intersect` calculation.
-    From map: {}
-    To map: {}
-    Map size: {}
-    Chunk size: {}
-    Number of jobs: {}""".format(
-            from_map, to_map, map_size, chunk_size, num_jobs
-        )
+        f"""
+        Finished `intersect` calculation.
+        From map: {from_map}
+        To map: {to_map}
+        Map size: {map_size}
+        Chunk size: {chunk_size}
+        Number of jobs: {num_jobs}
+    """
     )
 
     return results

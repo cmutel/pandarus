@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+"""Maps utility functions for Pandarus."""
 import os
 from functools import partial
 
@@ -15,10 +15,8 @@ from .projection import project
 class DuplicateFieldID(Exception):
     """Field ID value is duplicated and should be unique"""
 
-    pass
 
-
-class Map(object):
+class Map:
     """A wrapper around fiona ``open`` that provides some additional functionality.
 
     Requires an absolute filepath.
@@ -86,8 +84,7 @@ class Map(object):
             geoms = {obj["geometry"]["type"] for obj in self}
             if len(geoms) == 1:
                 return geoms.pop()
-            else:
-                return "Unknown"
+            return "Unknown"
         return geom
 
     @property

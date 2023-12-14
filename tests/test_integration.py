@@ -1,5 +1,5 @@
+"""Test cases for the __integration__ module."""
 import json
-import os
 from math import sqrt
 
 import fiona
@@ -8,39 +8,53 @@ import numpy as np
 from pandarus import intersect
 from pandarus.conversion import round_to_x_significant_digits
 
-dirpath = os.path.abspath(os.path.join(os.path.dirname(__file__), "data"))
-grid = os.path.join(dirpath, "grid.geojson")
-square = os.path.join(dirpath, "square.geojson")
-range_raster = os.path.join(dirpath, "range.tif")
-dem = os.path.join(dirpath, "DEM.tif")
-outside = os.path.join(dirpath, "outside.geojson")
-remain_result = os.path.join(dirpath, "remaining.geojson")
-pgrid = os.path.join(dirpath, "grid-3410.geojson")
-igrid = os.path.join(dirpath, "grid-ints.geojson")
-psquare = os.path.join(dirpath, "square-3857.geojson")
-plines = os.path.join(dirpath, "lines-25000.geojson")
-lines = os.path.join(dirpath, "lines.geojson")
-ppoints = os.path.join(dirpath, "points-32631.geojson")
-points = os.path.join(dirpath, "points.geojson")
+from . import (
+    PATH_GRID,
+    PATH_GRID_INTS,
+    PATH_GRID_PROJ,
+    PATH_LINES,
+    PATH_LINES_PROJ,
+    PATH_OUTSIDE,
+    PATH_POINTS,
+    PATH_POINTS_PROJ,
+    PATH_SQUARE_PROJ,
+)
 
 
 def test_intersection_polygon(tmpdir):
     area = 1 / 4 * (4e7 / 360) ** 2
 
     vector_fp, data_fp = intersect(
-        outside, "name", grid, "name", dirpath=tmpdir, compress=False, log_dir=tmpdir
+        PATH_OUTSIDE,
+        "name",
+        PATH_GRID,
+        "name",
+        dirpath=tmpdir,
+        compress=False,
+        log_dir=tmpdir,
     )
-    data = json.load(open(data_fp))
+    with open(data_fp, encoding="utf-8") as f:
+        data = json.load(f)
 
-    assert len(data["data"]) == 2
-    for x, y, z in data["data"]:
-        assert x == "by-myself"
-        assert y in ("grid cell 1", "grid cell 3")
-        assert np.isclose(z, area, rtol=1e-2)
+        assert len(data["data"]) == 2
+        for x, y, z in data["data"]:
+            assert x == "by-myself"
+            assert y in ("grid cell 1", "grid cell 3")
+            assert np.isclose(z, area, rtol=1e-2)
 
-    assert data["metadata"].keys() == {"first", "second", "when"}
-    assert data["metadata"]["first"].keys() == {"field", "filename", "path", "sha256"}
-    assert data["metadata"]["second"].keys() == {"field", "filename", "path", "sha256"}
+        assert data["metadata"].keys() == {"first", "second", "when"}
+        assert data["metadata"]["first"].keys() == {
+            "field",
+            "filename",
+            "path",
+            "sha256",
+        }
+        assert data["metadata"]["second"].keys() == {
+            "field",
+            "filename",
+            "path",
+            "sha256",
+        }
 
     with fiona.open(vector_fp) as src:
         meta = src.meta
@@ -80,19 +94,37 @@ def test_intersection_polygon_integer_indices(tmpdir):
     area = 1 / 4 * (4e7 / 360) ** 2
 
     vector_fp, data_fp = intersect(
-        outside, "name", igrid, "name", dirpath=tmpdir, compress=False, log_dir=tmpdir
+        PATH_OUTSIDE,
+        "name",
+        PATH_GRID_INTS,
+        "name",
+        dirpath=tmpdir,
+        compress=False,
+        log_dir=tmpdir,
     )
-    data = json.load(open(data_fp))
 
-    assert len(data["data"]) == 2
-    for x, y, z in data["data"]:
-        assert x == "by-myself"
-        assert y in (1, 3)
-        assert np.isclose(z, area, rtol=1e-2)
+    with open(data_fp, encoding="utf-8") as f:
+        data = json.load(f)
 
-    assert data["metadata"].keys() == {"first", "second", "when"}
-    assert data["metadata"]["first"].keys() == {"field", "filename", "path", "sha256"}
-    assert data["metadata"]["second"].keys() == {"field", "filename", "path", "sha256"}
+        assert len(data["data"]) == 2
+        for x, y, z in data["data"]:
+            assert x == "by-myself"
+            assert y in (1, 3)
+            assert np.isclose(z, area, rtol=1e-2)
+
+        assert data["metadata"].keys() == {"first", "second", "when"}
+        assert data["metadata"]["first"].keys() == {
+            "field",
+            "filename",
+            "path",
+            "sha256",
+        }
+        assert data["metadata"]["second"].keys() == {
+            "field",
+            "filename",
+            "path",
+            "sha256",
+        }
 
     with fiona.open(vector_fp) as src:
         meta = src.meta
@@ -132,19 +164,37 @@ def test_intersection_polygon_projection(tmpdir):
     area = 1 / 4 * (4e7 / 360) ** 2
 
     vector_fp, data_fp = intersect(
-        pgrid, "name", psquare, "name", dirpath=tmpdir, compress=False, log_dir=tmpdir
+        PATH_GRID_PROJ,
+        "name",
+        PATH_SQUARE_PROJ,
+        "name",
+        dirpath=tmpdir,
+        compress=False,
+        log_dir=tmpdir,
     )
-    data = json.load(open(data_fp))
 
-    assert len(data["data"]) == 4
-    for x, y, z in data["data"]:
-        assert x in ["grid cell {}".format(x) for x in range(4)]
-        assert y == "single"
-        assert np.isclose(z, area, rtol=1e-2)
+    with open(data_fp, encoding="utf-8") as f:
+        data = json.load(f)
 
-    assert data["metadata"].keys() == {"first", "second", "when"}
-    assert data["metadata"]["first"].keys() == {"field", "filename", "path", "sha256"}
-    assert data["metadata"]["second"].keys() == {"field", "filename", "path", "sha256"}
+        assert len(data["data"]) == 4
+        for x, y, z in data["data"]:
+            assert x in [f"grid cell {x}" for x in range(4)]
+            assert y == "single"
+            assert np.isclose(z, area, rtol=1e-2)
+
+        assert data["metadata"].keys() == {"first", "second", "when"}
+        assert data["metadata"]["first"].keys() == {
+            "field",
+            "filename",
+            "path",
+            "sha256",
+        }
+        assert data["metadata"]["second"].keys() == {
+            "field",
+            "filename",
+            "path",
+            "sha256",
+        }
 
     with fiona.open(vector_fp) as src:
         meta = src.meta
@@ -187,22 +237,40 @@ def test_intersection_line(tmpdir):
     one_degree = 4e7 / 360
 
     vector_fp, data_fp = intersect(
-        lines, "name", grid, "name", dirpath=tmpdir, compress=False, log_dir=tmpdir
-    )
-    data = json.load(open(data_fp))
-    data_dct = {(x, y): z for x, y, z in data["data"]}
-
-    assert len(data["data"]) == 4
-    assert np.isclose(data_dct[("A", "grid cell 0")], 62000, rtol=1e-2)
-    assert np.isclose(data_dct[("A", "grid cell 1")], one_degree, rtol=1e-2)
-    assert np.isclose(data_dct[("A", "grid cell 3")], 50000, rtol=1e-2)
-    assert np.isclose(
-        data_dct[("B", "grid cell 2")], sqrt(2) * one_degree / 2, rtol=2e-2
+        PATH_LINES,
+        "name",
+        PATH_GRID,
+        "name",
+        dirpath=tmpdir,
+        compress=False,
+        log_dir=tmpdir,
     )
 
-    assert data["metadata"].keys() == {"first", "second", "when"}
-    assert data["metadata"]["first"].keys() == {"field", "filename", "path", "sha256"}
-    assert data["metadata"]["second"].keys() == {"field", "filename", "path", "sha256"}
+    with open(data_fp, encoding="utf-8") as f:
+        data = json.load(f)
+        data_dct = {(x, y): z for x, y, z in data["data"]}
+
+        assert len(data["data"]) == 4
+        assert np.isclose(data_dct[("A", "grid cell 0")], 62000, rtol=1e-2)
+        assert np.isclose(data_dct[("A", "grid cell 1")], one_degree, rtol=1e-2)
+        assert np.isclose(data_dct[("A", "grid cell 3")], 50000, rtol=1e-2)
+        assert np.isclose(
+            data_dct[("B", "grid cell 2")], sqrt(2) * one_degree / 2, rtol=2e-2
+        )
+
+        assert data["metadata"].keys() == {"first", "second", "when"}
+        assert data["metadata"]["first"].keys() == {
+            "field",
+            "filename",
+            "path",
+            "sha256",
+        }
+        assert data["metadata"]["second"].keys() == {
+            "field",
+            "filename",
+            "path",
+            "sha256",
+        }
 
     with fiona.open(vector_fp) as src:
         meta = src.meta
@@ -243,23 +311,41 @@ def test_intersection_line_projection(tmpdir):
     one_degree = 4e7 / 360
 
     vector_fp, data_fp = intersect(
-        plines, "name", pgrid, "name", dirpath=tmpdir, compress=False, log_dir=tmpdir
+        PATH_LINES_PROJ,
+        "name",
+        PATH_GRID_PROJ,
+        "name",
+        dirpath=tmpdir,
+        compress=False,
+        log_dir=tmpdir,
     )
-    data = json.load(open(data_fp))
-    data_dct = {(x, y): z for x, y, z in data["data"]}
 
-    assert len(data["data"]) == 5
-    assert np.isclose(data_dct[("A", "grid cell 0")], 62000, rtol=1e-2)
-    assert np.isclose(data_dct[("A", "grid cell 1")], one_degree, rtol=1e-2)
-    assert np.isclose(data_dct[("A", "grid cell 3")], 50000, rtol=1e-2)
-    assert np.isclose(
-        data_dct[("B", "grid cell 2")], sqrt(2) * one_degree / 2, rtol=2e-2
-    )
-    assert data_dct[("B", "grid cell 3")] < 1e-3
+    with open(data_fp, encoding="utf-8") as f:
+        data = json.load(f)
+        data_dct = {(x, y): z for x, y, z in data["data"]}
 
-    assert data["metadata"].keys() == {"first", "second", "when"}
-    assert data["metadata"]["first"].keys() == {"field", "filename", "path", "sha256"}
-    assert data["metadata"]["second"].keys() == {"field", "filename", "path", "sha256"}
+        assert len(data["data"]) == 5
+        assert np.isclose(data_dct[("A", "grid cell 0")], 62000, rtol=1e-2)
+        assert np.isclose(data_dct[("A", "grid cell 1")], one_degree, rtol=1e-2)
+        assert np.isclose(data_dct[("A", "grid cell 3")], 50000, rtol=1e-2)
+        assert np.isclose(
+            data_dct[("B", "grid cell 2")], sqrt(2) * one_degree / 2, rtol=2e-2
+        )
+        assert data_dct[("B", "grid cell 3")] < 1e-3
+
+        assert data["metadata"].keys() == {"first", "second", "when"}
+        assert data["metadata"]["first"].keys() == {
+            "field",
+            "filename",
+            "path",
+            "sha256",
+        }
+        assert data["metadata"]["second"].keys() == {
+            "field",
+            "filename",
+            "path",
+            "sha256",
+        }
 
     with fiona.open(vector_fp) as src:
         meta = src.meta
@@ -312,17 +398,35 @@ def test_intersection_line_projection(tmpdir):
 
 def test_intersection_point(tmpdir):
     vector_fp, data_fp = intersect(
-        points, "name", grid, "name", dirpath=tmpdir, compress=False, log_dir=tmpdir
+        PATH_POINTS,
+        "name",
+        PATH_GRID,
+        "name",
+        dirpath=tmpdir,
+        compress=False,
+        log_dir=tmpdir,
     )
-    data = json.load(open(data_fp))
 
-    assert sorted(data["data"]) == sorted(
-        [["point 1", "grid cell 0", 1.0], ["point 2", "grid cell 3", 1.0]]
-    )
+    with open(data_fp, encoding="utf-8") as f:
+        data = json.load(f)
 
-    assert data["metadata"].keys() == {"first", "second", "when"}
-    assert data["metadata"]["first"].keys() == {"field", "filename", "path", "sha256"}
-    assert data["metadata"]["second"].keys() == {"field", "filename", "path", "sha256"}
+        assert sorted(data["data"]) == sorted(
+            [["point 1", "grid cell 0", 1.0], ["point 2", "grid cell 3", 1.0]]
+        )
+
+        assert data["metadata"].keys() == {"first", "second", "when"}
+        assert data["metadata"]["first"].keys() == {
+            "field",
+            "filename",
+            "path",
+            "sha256",
+        }
+        assert data["metadata"]["second"].keys() == {
+            "field",
+            "filename",
+            "path",
+            "sha256",
+        }
 
     with fiona.open(vector_fp) as src:
         meta = src.meta
@@ -356,17 +460,35 @@ def test_intersection_point(tmpdir):
 
 def test_intersection_point_projection(tmpdir):
     vector_fp, data_fp = intersect(
-        ppoints, "name", pgrid, "name", dirpath=tmpdir, compress=False, log_dir=tmpdir
+        PATH_POINTS_PROJ,
+        "name",
+        PATH_GRID_PROJ,
+        "name",
+        dirpath=tmpdir,
+        compress=False,
+        log_dir=tmpdir,
     )
-    data = json.load(open(data_fp))
-    data_dct = {(x, y): z for x, y, z in data["data"]}
 
-    assert len(data["data"]) == 2
-    assert data_dct[("point 1", "grid cell 0")] == 1
-    assert data_dct[("point 2", "grid cell 3")] == 1
-    assert data["metadata"].keys() == {"first", "second", "when"}
-    assert data["metadata"]["first"].keys() == {"field", "filename", "path", "sha256"}
-    assert data["metadata"]["second"].keys() == {"field", "filename", "path", "sha256"}
+    with open(data_fp, encoding="utf-8") as f:
+        data = json.load(f)
+        data_dct = {(x, y): z for x, y, z in data["data"]}
+
+        assert len(data["data"]) == 2
+        assert data_dct[("point 1", "grid cell 0")] == 1
+        assert data_dct[("point 2", "grid cell 3")] == 1
+        assert data["metadata"].keys() == {"first", "second", "when"}
+        assert data["metadata"]["first"].keys() == {
+            "field",
+            "filename",
+            "path",
+            "sha256",
+        }
+        assert data["metadata"]["second"].keys() == {
+            "field",
+            "filename",
+            "path",
+            "sha256",
+        }
 
     with fiona.open(vector_fp) as src:
         meta = src.meta

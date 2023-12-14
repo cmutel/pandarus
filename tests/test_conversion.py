@@ -1,3 +1,4 @@
+"""Test cases for the __conversion__ module."""
 import os
 
 import fiona

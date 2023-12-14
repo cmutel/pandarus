@@ -1,3 +1,4 @@
+"""Test cases for the __calculate__ module."""
 import json
 import os
 import shutil
