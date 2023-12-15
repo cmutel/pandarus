@@ -294,6 +294,7 @@ def intersect(
     second_mapping = second.get_fieldnames_dictionary()
     data = {(first_mapping[k[0]], second_mapping[k[1]]): v for k, v in data.items()}
 
+    print(data)
     schema = {
         "properties": {
             "id": "int",
@@ -301,7 +302,7 @@ def intersect(
             "to_label": second.file.meta["schema"]["properties"][second_field],
             "measure": "float",
         },
-        "geometry": "MultiPolygon",
+        "geometry": next(iter(data.values()))["geom"].type,
     }
 
     with fiona.Env():

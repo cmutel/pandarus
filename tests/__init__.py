@@ -2,12 +2,15 @@
 import os
 
 PATH_DATA: str = os.path.abspath(os.path.join(os.path.dirname(__file__), "data"))
-PATH_DEM: str = os.path.join(PATH_DATA, "DEMs.tif")
+PATH_DEM: str = os.path.join(PATH_DATA, "DEM.tif")
 PATH_DUPLICATES: str = os.path.join(PATH_DATA, "duplicates.geojson")
 PATH_COUNTRIES: str = os.path.join(PATH_DATA, "test_countries.gpkg")
 PATH_GRID: str = os.path.join(PATH_DATA, "grid.geojson")
 PATH_GRID_INTS: str = os.path.join(PATH_DATA, "grid-ints.geojson")
 PATH_GRID_PROJ: str = os.path.join(PATH_DATA, "grid-3410.geojson")
+PATH_INTER_RES = os.path.join(PATH_DATA, "intersection_result.geojson")
+PATH_INTER_RES_DECOMP = os.path.join(PATH_DATA, "i_result.json")
+PATH_INTER_RES_MD = os.path.join(PATH_DATA, "intersection_result.json.bz2")
 PATH_LINES: str = os.path.join(PATH_DATA, "lines.geojson")
 PATH_LINES_PROJ: str = os.path.join(PATH_DATA, "lines-25000.geojson")
 PATH_OUTSIDE: str = os.path.join(PATH_DATA, "outside.geojson")

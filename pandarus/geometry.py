@@ -64,7 +64,7 @@ def recursive_geom_finder(geom, kind):
         if isinstance(geom, types):
             yield geom
         elif isinstance(geom, GeometryCollection):
-            for elem in geom:
+            for elem in geom.geoms:
                 for val in recurse(elem, types):
                     yield val
         else:
@@ -152,7 +152,7 @@ def get_measure(geom, kind=None):
         return geom.length
     if kind == "point":
         if geom.geom_type == "MultiPoint":
-            return float(len(geom))
+            return float(len(geom.geoms))
         elif geom.geom_type == "Point":
             return 1.0
     raise ValueError(f"No applicable measure for geom: {geom}")

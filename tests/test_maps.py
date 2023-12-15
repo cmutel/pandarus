@@ -3,6 +3,7 @@ import os
 
 import fiona
 import pytest
+from fiona.model import Feature
 from rtree import Rtree
 
 import pandarus
@@ -44,10 +45,10 @@ def test_get_fieldnames_dictionary() -> None:
     """Test getting a dictionary of fieldnames."""
     m = Map(PATH_GRID, "name")
     expected = {
-        0: "PATH_GRID cell 0",
-        1: "PATH_GRID cell 1",
-        2: "PATH_GRID cell 2",
-        3: "PATH_GRID cell 3",
+        0: "grid cell 0",
+        1: "grid cell 1",
+        2: "grid cell 2",
+        3: "grid cell 3",
     }
     assert m.get_fieldnames_dictionary("name") == expected
 
@@ -71,7 +72,7 @@ def test_properties() -> None:
     m = Map(PATH_GRID, "name")
     assert m.geometry == "Polygon"
     assert m.hash
-    assert m.crs == "+init=epsg:4326"
+    assert m.crs == "EPSG:4326"
 
 
 def test_magic_methods() -> None:
@@ -90,14 +91,12 @@ def test_magic_methods() -> None:
                 [(1.0, 0.0), (1.0, 1.0), (2.0, 1.0), (2.0, 0.0), (1.0, 0.0)]
             ],
         },
-        "properties": {"name": "PATH_GRID cell 2"},
+        "properties": {"name": "grid cell 2"},
         "id": "2",
         "type": "Feature",
     }
 
-    assert m[2].geometry == expected["geometry"]
-    assert m[2].id == expected["id"]
-    assert m[2].properties == expected["properties"]
+    assert m[2] == Feature.from_dict(expected)
     assert len(m) == 4
 
 
@@ -115,11 +114,12 @@ def test_getitem() -> None:
                 [(1.0, 0.0), (1.0, 1.0), (2.0, 1.0), (2.0, 0.0), (1.0, 0.0)]
             ],
         },
-        "properties": {"name": "PATH_GRID cell 2"},
+        "properties": {"name": "grid cell 2"},
         "id": "2",
         "type": "Feature",
     }
-    assert m[2] == expected
+    print(m[2])
+    assert m[2] == Feature.from_dict(expected)
     assert hasattr(m, "_index_map")
 
 
