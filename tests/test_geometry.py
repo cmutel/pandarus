@@ -320,7 +320,7 @@ def test_line_wrong_geometry():
 # Polygons
 
 
-def test_polygon():
+def test_polygon(equal_intersections):
     pg = Polygon([(0.5, 0.5), (1.5, 0.5), (1.5, 1.5), (0.5, 1.5), (0.5, 0.5)])
     expected = {
         0: {
@@ -360,11 +360,11 @@ def test_polygon():
             },
         },
     }
-    assert (
+    assert equal_intersections(
         get_intersection(
             pg, "polygon", Map(PATH_GRID, "name"), (0, 1, 2, 3), to_meters=False
-        )
-        == expected
+        ),
+        expected,
     )
 
     expected = {
@@ -387,13 +387,15 @@ def test_polygon():
             },
         },
     }
-    assert (
-        get_intersection(pg, "polygon", Map(PATH_GRID, "name"), (0, 1), to_meters=False)
-        == expected
+    assert equal_intersections(
+        get_intersection(
+            pg, "polygon", Map(PATH_GRID, "name"), (0, 1, 2, 3), to_meters=False
+        ),
+        expected,
     )
 
 
-def test_multi_polygon():
+def test_multi_polygon(equal_intersections):
     pg = MultiPolygon(
         [[[(0.5, 0.5), (1.5, 0.5), (1.5, 1.5), (0.5, 1.5), (0.5, 0.5)], []]]
     )
@@ -435,11 +437,11 @@ def test_multi_polygon():
             "measure": 0.25,
         },
     }
-    assert (
+    assert equal_intersections(
         get_intersection(
             pg, "polygon", Map(PATH_GRID, "name"), (0, 1, 2, 3), to_meters=False
-        )
-        == expected
+        ),
+        expected,
     )
 
     expected = {
@@ -462,13 +464,15 @@ def test_multi_polygon():
             },
         },
     }
-    assert (
-        get_intersection(pg, "polygon", Map(PATH_GRID, "name"), (0, 1), to_meters=False)
-        == expected
+    assert equal_intersections(
+        get_intersection(
+            pg, "polygon", Map(PATH_GRID, "name"), (0, 1), to_meters=False
+        ),
+        expected,
     )
 
 
-def test_polygon_geometry_collection():
+def test_polygon_geometry_collection(equal_intersections):
     pg = GeometryCollection(
         [Polygon([(0.5, 0.5), (1.5, 0.5), (1.5, 1.5), (0.5, 1.5), (0.5, 0.5)])]
     )
@@ -510,11 +514,11 @@ def test_polygon_geometry_collection():
             "measure": 0.25,
         },
     }
-    assert (
+    assert equal_intersections(
         get_intersection(
             pg, "polygon", Map(PATH_GRID, "name"), (0, 1, 2, 3), to_meters=False
-        )
-        == expected
+        ),
+        expected,
     )
 
     expected = {
@@ -537,9 +541,11 @@ def test_polygon_geometry_collection():
             "measure": 0.25,
         },
     }
-    assert (
-        get_intersection(pg, "polygon", Map(PATH_GRID, "name"), (0, 1), to_meters=False)
-        == expected
+    assert equal_intersections(
+        get_intersection(
+            pg, "polygon", Map(PATH_GRID, "name"), (0, 1), to_meters=False
+        ),
+        expected,
     )
 
 
