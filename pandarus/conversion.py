@@ -142,7 +142,7 @@ def _shapes(in_fp, out_fp, bidx):
             sequence=False,
             geojson_type="collection",
             use_rs=False,
-            **dump_kwds
+            **dump_kwds,
         )
 
 
