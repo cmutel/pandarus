@@ -9,7 +9,7 @@ from shapely.geometry import (
     Point,
     Polygon,
 )
-from shapely.ops import cascaded_union
+from shapely.ops import unary_union
 
 from .projection import project
 
@@ -74,7 +74,7 @@ def recursive_geom_finder(geom, kind):
     if not elements:
         return None
 
-    geom = clean(cascaded_union(elements))
+    geom = clean(unary_union(elements))
     if "Multi" not in geom.geom_type:
         geom = CONTAINER[kind]([geom])
     return geom
@@ -185,7 +185,7 @@ def get_remaining(original, geoms, to_meters=True):
 
     actual = get_measure(proj_func(original))
     if geoms:
-        union_total = get_measure(proj_func(cascaded_union(geoms)), kind)
+        union_total = get_measure(proj_func(unary_union(geoms)), kind)
         individ_total = sum(get_measure(proj_func(geom), kind) for geom in geoms)
         return (actual - union_total) * (individ_total / union_total)
     return actual
