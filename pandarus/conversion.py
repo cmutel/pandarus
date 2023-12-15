@@ -1,6 +1,5 @@
 import os
 import tempfile
-import warnings
 
 import fiona
 import numpy as np
