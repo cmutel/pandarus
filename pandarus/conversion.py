@@ -178,11 +178,10 @@ def clean_raster(fp, new_fp=None, band=1, nodata=None):
 
     # Set nodata to a reasonable value if possible
     if profile.get("nodata") is None and (array < -1e30).sum():
-        warnings.warn(
+        raise ValueError(
             "No `nodata` value set, but large negative numbers present. "
             "Please set a valid `nodata` value in raster file."
         )
-        return
     elif profile.get("nodata") and profile["nodata"] < -1e30:
         nodatas = [-1, -99, -999, -9999]
         if nodata is not None:
@@ -198,13 +197,10 @@ def clean_raster(fp, new_fp=None, band=1, nodata=None):
             array[np.isnan(array)] = nodata
             profile["nodata"] = nodata
         else:
-            warnings.warn(
-                (
-                    "`nodata` value is large and negative ({}), but no suitable "
-                    "replacement value found. Please specify a `nodata` value."
-                ).format(profile["nodata"])
+            raise ValueError(
+                f"`nodata` value is large and negative ({profile['nodata']}), but"
+                "no suitable replacement value found. Please specify a `nodata` value."
             )
-            return
 
     if dtypes[band - 1] == rasterio.float64:
         if not (

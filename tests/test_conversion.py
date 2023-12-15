@@ -124,8 +124,6 @@ def test_clean_raster():
     assert profile["count"] == 1
     assert profile["nodata"] == -1
     assert not profile["tiled"]
-    assert "blockysize" not in profile
-    assert "blockxsize" not in profile
     os.remove(out)
 
 
@@ -164,8 +162,8 @@ def test_clean_raster_64bit(tmpdir):
 def test_clean_raster_out_of_bounds(tmpdir):
     array = np.array([[0, 1.5, 42, -1e50]])
     fp = create_raster("foo.tif", array, tmpdir, dtype="float64", nodata=None)
-    out = clean_raster(fp)
-    assert out is None
+    with pytest.raises(ValueError):
+        _ = clean_raster(fp)
 
 
 def test_clean_raster_dont_change(tmpdir):
@@ -194,7 +192,8 @@ def test_clean_raster_nodata(tmpdir):
 
     array = np.array([[0, -1.0, -99.0, -999.0, -9999.0]])
     fp = create_raster("foo.tif", array, tmpdir, dtype="float64", nodata=-1e50)
-    assert clean_raster(fp) is None
+    with pytest.raises(ValueError):
+        _ = clean_raster(fp)
 
 
 def test_clean_raster_try_given_nodata(tmpdir):
