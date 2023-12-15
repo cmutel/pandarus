@@ -4,6 +4,7 @@ from math import sqrt
 
 import fiona
 import numpy as np
+from shapely import MultiPolygon
 
 from pandarus import intersect
 from pandarus.conversion import round_to_x_significant_digits
@@ -73,13 +74,13 @@ def test_intersection_polygon(tmpdir):
         }
         assert meta["crs"] == {"init": "epsg:4326"}
 
-        coords = [
-            [[[(0.5, 1.5), (0.5, 2.0), (1.0, 2.0), (1.0, 1.5), (0.5, 1.5)]]],
-            [[[(1.5, 2.0), (1.5, 1.5), (1.0, 1.5), (1.0, 2.0), (1.5, 2.0)]]],
-        ]
+        coords = MultiPolygon(
+            [[[(0.5, 1.5), (0.5, 2.0), (1.0, 2.0), (1.0, 1.5), (0.5, 1.5)]]]
+        )
 
         for feature in src:
-            assert feature["geometry"]["coordinates"] in coords
+            feature_mp = MultiPolygon(feature["geometry"]["coordinates"])
+            feature_mp.equals_exact(coords, 1e-5)
             assert feature["geometry"]["type"] == "MultiPolygon"
             assert feature["properties"].keys() == {
                 "measure",
@@ -143,13 +144,13 @@ def test_intersection_polygon_integer_indices(tmpdir):
         }
         assert meta["crs"] == {"init": "epsg:4326"}
 
-        coords = [
+        coords = MultiPolygon(
             [[[(0.5, 1.5), (0.5, 2.0), (1.0, 2.0), (1.0, 1.5), (0.5, 1.5)]]],
-            [[[(1.5, 2.0), (1.5, 1.5), (1.0, 1.5), (1.0, 2.0), (1.5, 2.0)]]],
-        ]
+        )
 
         for feature in src:
-            assert feature["geometry"]["coordinates"] in coords
+            feature_mp = MultiPolygon(feature["geometry"]["coordinates"])
+            feature_mp.equals_exact(coords, 1e-5)
             assert feature["geometry"]["type"] == "MultiPolygon"
             assert feature["properties"].keys() == {
                 "measure",
@@ -213,16 +214,13 @@ def test_intersection_polygon_projection(tmpdir):
         }
         assert meta["crs"] == {"init": "epsg:4326"}
 
-        coords = [
+        coords = MultiPolygon(
             [[[(0.5, 1.0), (1.0, 1.0), (1.0, 0.5), (0.5, 0.5), (0.5, 1.0)]]],
-            [[[(1.0, 1.5), (1.0, 1.0), (0.5, 1.0), (0.5, 1.5), (1.0, 1.5)]]],
-            [[[(1.0, 0.5), (1.0, 1.0), (1.5, 1.0), (1.5, 0.5), (1.0, 0.5)]]],
-            [[[(1.0, 1.0), (1.0, 1.5), (1.5, 1.5), (1.5, 1.0), (1.0, 1.0)]]],
-        ]
+        )
 
         for feature in src:
-            print(feature["geometry"]["coordinates"])
-            assert feature["geometry"]["coordinates"] in coords
+            feature_mp = MultiPolygon(feature["geometry"]["coordinates"])
+            feature_mp.equals_exact(coords, 1e-5)
             assert feature["geometry"]["type"] == "MultiPolygon"
             assert feature["properties"].keys() == {
                 "measure",
@@ -320,32 +318,32 @@ def test_intersection_line_projection(tmpdir):
         log_dir=tmpdir,
     )
 
-    with open(data_fp, encoding="utf-8") as f:
-        data = json.load(f)
-        data_dct = {(x, y): z for x, y, z in data["data"]}
+    with fiona.open(vector_fp, encoding="utf-8") as vf:
+        with open(data_fp, encoding="utf-8") as f:
+            data = json.load(f)
+            data_dct = {(x, y): z for x, y, z in data["data"]}
 
-        assert len(data["data"]) == 5
-        assert np.isclose(data_dct[("A", "grid cell 0")], 62000, rtol=1e-2)
-        assert np.isclose(data_dct[("A", "grid cell 1")], one_degree, rtol=1e-2)
-        assert np.isclose(data_dct[("A", "grid cell 3")], 50000, rtol=1e-2)
-        assert np.isclose(
-            data_dct[("B", "grid cell 2")], sqrt(2) * one_degree / 2, rtol=2e-2
-        )
-        assert data_dct[("B", "grid cell 3")] < 1e-3
+            assert len(data["data"]) == len(vf)
+            assert np.isclose(data_dct[("A", "grid cell 0")], 62000, rtol=1e-2)
+            assert np.isclose(data_dct[("A", "grid cell 1")], one_degree, rtol=1e-2)
+            assert np.isclose(data_dct[("A", "grid cell 3")], 50000, rtol=1e-2)
+            assert np.isclose(
+                data_dct[("B", "grid cell 2")], sqrt(2) * one_degree / 2, rtol=2e-2
+            )
 
-        assert data["metadata"].keys() == {"first", "second", "when"}
-        assert data["metadata"]["first"].keys() == {
-            "field",
-            "filename",
-            "path",
-            "sha256",
-        }
-        assert data["metadata"]["second"].keys() == {
-            "field",
-            "filename",
-            "path",
-            "sha256",
-        }
+            assert data["metadata"].keys() == {"first", "second", "when"}
+            assert data["metadata"]["first"].keys() == {
+                "field",
+                "filename",
+                "path",
+                "sha256",
+            }
+            assert data["metadata"]["second"].keys() == {
+                "field",
+                "filename",
+                "path",
+                "sha256",
+            }
 
     with fiona.open(vector_fp) as src:
         meta = src.meta

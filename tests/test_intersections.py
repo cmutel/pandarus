@@ -3,6 +3,7 @@ import os
 
 import numpy as np
 import pytest
+from shapely.geometry import Polygon
 
 from pandarus.intersections import (
     chunker,
@@ -44,8 +45,8 @@ def test_intersection_worker_indices():
     result = intersection_worker(grid, [0], square)
     assert result.keys() == {(0, 0)}
     _, value = list(result.keys())[0], list(result.values())[0]
-    expected = "MULTIPOLYGON (((0.5 1, 1 1, 1 0.5, 0.5 0.5, 0.5 1)))"
-    assert value["geom"].wkt == expected
+    expected = Polygon([(0.5, 1), (1, 1), (1, 0.5), (0.5, 0.5), (0.5, 1)])
+    assert value["geom"].equals(expected)
     assert np.isclose(value["measure"], area, rtol=1e-2)
 
 
