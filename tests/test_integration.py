@@ -23,6 +23,7 @@ from . import (
 
 
 def test_intersection_polygon(tmpdir):
+    """Test the intersection function with a polygon input."""
     area = 1 / 4 * (4e7 / 360) ** 2
 
     vector_fp, data_fp = intersect(
@@ -92,6 +93,7 @@ def test_intersection_polygon(tmpdir):
 
 
 def test_intersection_polygon_integer_indices(tmpdir):
+    """Test the intersection function with a polygon input and integer indices."""
     area = 1 / 4 * (4e7 / 360) ** 2
 
     vector_fp, data_fp = intersect(
@@ -162,6 +164,7 @@ def test_intersection_polygon_integer_indices(tmpdir):
 
 
 def test_intersection_polygon_projection(tmpdir):
+    """Test the intersection function with a polygon input and projection."""
     area = 1 / 4 * (4e7 / 360) ** 2
 
     vector_fp, data_fp = intersect(
@@ -232,6 +235,7 @@ def test_intersection_polygon_projection(tmpdir):
 
 
 def test_intersection_line(tmpdir):
+    """Test the intersection function with a line input."""
     one_degree = 4e7 / 360
 
     vector_fp, data_fp = intersect(
@@ -306,6 +310,7 @@ def test_intersection_line(tmpdir):
 
 
 def test_intersection_line_projection(tmpdir):
+    """Test the intersection function with a line input and projection."""
     one_degree = 4e7 / 360
 
     vector_fp, data_fp = intersect(
@@ -395,6 +400,7 @@ def test_intersection_line_projection(tmpdir):
 
 
 def test_intersection_point(tmpdir):
+    """Test the intersection function with a point input."""
     vector_fp, data_fp = intersect(
         PATH_POINTS,
         "name",
@@ -457,6 +463,7 @@ def test_intersection_point(tmpdir):
 
 
 def test_intersection_point_projection(tmpdir):
+    """Test the intersection function with a point input and projection."""
     vector_fp, data_fp = intersect(
         PATH_POINTS_PROJ,
         "name",

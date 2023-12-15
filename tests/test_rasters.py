@@ -11,6 +11,7 @@ range_raster = os.path.join(dirpath, "range.tif")
 
 
 def test_rasterstats_vector():
+    """Test the rasterstats function with a vector input."""
     result = list(gen_zonal_stats(grid, range_raster))
     assert result == [
         {
@@ -31,6 +32,7 @@ def test_rasterstats_vector():
 
 
 def test_rasterstats_lines():
+    """Test the rasterstats function with a line input."""
     result = list(gen_zonal_stats(lines, range_raster))
     assert result == [
         {
@@ -49,6 +51,7 @@ def test_rasterstats_lines():
 
 
 def test_rasterstats_points():
+    """Test the rasterstats function with a point input."""
     result = list(gen_zonal_stats(points, range_raster))
     assert result == [
         {"min": 30.0, "max": 42.0, "count": 9, "mean": 36.0},

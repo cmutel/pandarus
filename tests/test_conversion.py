@@ -6,7 +6,7 @@ import numpy as np
 import pytest
 import rasterio
 from affine import Affine
-from rasterio.crs import CRS
+from rasterio import CRS
 
 from pandarus.conversion import (
     check_type,
@@ -16,15 +16,11 @@ from pandarus.conversion import (
     round_to_x_significant_digits,
 )
 
-dirpath = os.path.abspath(os.path.join(os.path.dirname(__file__), "data"))
-grid = os.path.join(dirpath, "grid.geojson")
-sixty_four = os.path.join(dirpath, "test_raster_cfs.tif")
-cfs = os.path.join(dirpath, "raster_cfs_32bit.tif")
-dem = os.path.join(dirpath, "DEM.tif")
-invalid = os.path.join(dirpath, "invalid.txt")
+from . import PATH_CFS, PATH_DEM, PATH_GRID, PATH_INVALID, PATH_SIXTY_FOUR
 
 
 def create_raster(name, array, dirpath, nodata=-1, **kwargs):
+    """Create a raster file with the given array."""
     profile = {
         "count": 1,
         "nodata": nodata,
@@ -47,6 +43,7 @@ def create_raster(name, array, dirpath, nodata=-1, **kwargs):
 
 
 def test_create_raster(tmpdir):
+    """Test the create_raster function."""
     fp = create_raster(
         "foo.tif", np.random.random(size=(10, 10)).astype(np.float32), tmpdir
     )
@@ -58,21 +55,23 @@ def test_create_raster(tmpdir):
 
 
 def test_check_type():
-    assert check_type(grid) == "vector"
-    assert check_type(cfs) == "raster"
+    """Test the check_type function."""
+    assert check_type(PATH_GRID) == "vector"
+    assert check_type(PATH_CFS) == "raster"
     with pytest.raises(ValueError):
-        check_type(invalid)
+        check_type(PATH_INVALID)
 
 
 def test_convert_to_vector(tmpdir):
+    """Test the convert_to_vector function."""
     with pytest.raises(AssertionError):
-        convert_to_vector(cfs, band="1")
+        convert_to_vector(PATH_CFS, band="1")
 
-    out = convert_to_vector(cfs, tmpdir)
+    out = convert_to_vector(PATH_CFS, tmpdir)
     assert check_type(out) == "vector"
 
     # Second time should be a no-op
-    out = convert_to_vector(cfs, tmpdir)
+    out = convert_to_vector(PATH_CFS, tmpdir)
     assert check_type(out) == "vector"
 
     with fiona.open(out) as src:
@@ -82,12 +81,13 @@ def test_convert_to_vector(tmpdir):
         assert meta["schema"]["properties"].keys() == {"filename", "id", "val"}
         assert meta["schema"]["geometry"] in ("Polygon", "MultiPolygon")
 
-    out = convert_to_vector(cfs)
+    out = convert_to_vector(PATH_CFS)
     assert check_type(out) == "vector"
     os.remove(out)
 
 
 def test_rounding():
+    """Test the round_to_x_significant_digits function."""
     given = np.array([3.14159358979, 2.718281828459045235360, 325796139])
     expected = (3.142, 2.718, 3.258e8)
     for x, y in zip(round_to_x_significant_digits(given, 4), expected):
@@ -95,9 +95,10 @@ def test_rounding():
 
 
 def test_round_raster(tmpdir):
+    """Test the round_raster function."""
     out = os.path.join(tmpdir, "test.tif")
 
-    assert round_raster(cfs, out) == out
+    assert round_raster(PATH_CFS, out) == out
 
     with rasterio.open(out) as src:
         array = src.read(1)
@@ -112,7 +113,8 @@ def test_round_raster(tmpdir):
 
 
 def test_clean_raster():
-    out = clean_raster(sixty_four)
+    """Test the clean_raster function."""
+    out = clean_raster(PATH_SIXTY_FOUR)
 
     with rasterio.open(out) as src:
         array = src.read(1)
@@ -128,8 +130,9 @@ def test_clean_raster():
 
 
 def test_clean_raster_null_nodata(tmpdir):
+    """Test the clean_raster function with a null nodata value."""
     out = os.path.join(tmpdir, "test.tif")
-    _ = clean_raster(dem, out)
+    _ = clean_raster(PATH_DEM, out)
 
     with rasterio.open(out) as src:
         profile = src.profile
@@ -138,12 +141,14 @@ def test_clean_raster_null_nodata(tmpdir):
 
 
 def test_clean_raster_filepath(tmpdir):
+    """Test the clean_raster function with a filepath."""
     out = os.path.join(tmpdir, "test.tif")
-    result = clean_raster(sixty_four, out)
+    result = clean_raster(PATH_SIXTY_FOUR, out)
     assert result == out
 
 
 def test_clean_raster_64bit(tmpdir):
+    """Test the clean_raster function with a 64bit raster."""
     array = np.array([[0, -1, 1e100]])
 
     fp = create_raster("foo.tif", array, tmpdir, dtype="float64", nodata=42)
@@ -160,6 +165,7 @@ def test_clean_raster_64bit(tmpdir):
 
 
 def test_clean_raster_out_of_bounds(tmpdir):
+    """Test the clean_raster function with out of bounds values."""
     array = np.array([[0, 1.5, 42, -1e50]])
     fp = create_raster("foo.tif", array, tmpdir, dtype="float64", nodata=None)
     with pytest.raises(ValueError):
@@ -167,6 +173,7 @@ def test_clean_raster_out_of_bounds(tmpdir):
 
 
 def test_clean_raster_dont_change(tmpdir):
+    """Test the clean_raster function with a given nodata value that doesn't change."""
     array = np.array([[0, 1.5, 42, -1e7]])
     fp = create_raster("foo.tif", array, tmpdir, dtype="float64", nodata=-1e7)
     out = clean_raster(fp)
@@ -176,6 +183,7 @@ def test_clean_raster_dont_change(tmpdir):
 
 
 def test_clean_raster_nodata(tmpdir):
+    """Test the clean_raster function with a given nodata value that changes."""
     array = np.array([[0, 1.5, 42, -1e50]])
     fp = create_raster("foo.tif", array, tmpdir, dtype="float64", nodata=-1e50)
     out = clean_raster(fp)
@@ -197,6 +205,7 @@ def test_clean_raster_nodata(tmpdir):
 
 
 def test_clean_raster_try_given_nodata(tmpdir):
+    """Test the clean_raster function with a given nodata value to try."""
     array = np.array([[0, -1.0, -99.0, -999.0, -9999]])
     fp = create_raster("foo.tif", array, tmpdir, dtype="float64", nodata=-1e50)
     out = clean_raster(fp, nodata=42)
