@@ -75,7 +75,7 @@ def recursive_geom_finder(geom, kind):
         return None
 
     geom = clean(cascaded_union(elements))
-    if "Multi" not in geom.type:
+    if "Multi" not in geom.geom_type:
         geom = CONTAINER[kind]([geom])
     return geom
 

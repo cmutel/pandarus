@@ -302,7 +302,7 @@ def intersect(
             "to_label": second.file.meta["schema"]["properties"][second_field],
             "measure": "float",
         },
-        "geometry": next(iter(data.values()))["geom"].type,
+        "geometry": next(iter(data.values()))["geom"].geom_type,
     }
 
     with fiona.Env():
