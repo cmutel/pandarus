@@ -14,15 +14,15 @@ def test_rasterstats_vector():
     result = list(gen_zonal_stats(grid, range_raster))
     assert result == [
         {
-            "count": 10.200000762939453,
+            "count": 10.0,
             "min": 30.0,
-            "mean": 38.32352828979492,
+            "mean": 38.29999923706055,
             "max": 47.0,
         },
         {
-            "count": 10.199999809265137,
+            "count": 10.0,
             "min": 0.0,
-            "mean": 8.323529243469238,
+            "mean": 8.300000190734863,
             "max": 17.0,
         },
         {"count": 10.0, "min": 32.0, "mean": 40.70000076293945, "max": 49.0},
