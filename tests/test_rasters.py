@@ -1,18 +1,12 @@
 """Test cases for the __rasters__ module."""
-import os
-
 from pandarus.rasters import gen_zonal_stats
 
-dirpath = os.path.abspath(os.path.join(os.path.dirname(__file__), "data"))
-grid = os.path.join(dirpath, "grid.geojson")
-lines = os.path.join(dirpath, "lines.geojson")
-points = os.path.join(dirpath, "points.geojson")
-range_raster = os.path.join(dirpath, "range.tif")
+from . import PATH_GRID, PATH_LINES, PATH_POINTS, PATH_RANGE_RASTER
 
 
 def test_rasterstats_vector():
     """Test the rasterstats function with a vector input."""
-    result = list(gen_zonal_stats(grid, range_raster))
+    result = list(gen_zonal_stats(PATH_GRID, PATH_RANGE_RASTER))
     assert result == [
         {
             "count": 10.0,
@@ -33,7 +27,7 @@ def test_rasterstats_vector():
 
 def test_rasterstats_lines():
     """Test the rasterstats function with a line input."""
-    result = list(gen_zonal_stats(lines, range_raster))
+    result = list(gen_zonal_stats(PATH_LINES, PATH_RANGE_RASTER))
     assert result == [
         {
             "max": 36.0,
@@ -52,7 +46,7 @@ def test_rasterstats_lines():
 
 def test_rasterstats_points():
     """Test the rasterstats function with a point input."""
-    result = list(gen_zonal_stats(points, range_raster))
+    result = list(gen_zonal_stats(PATH_POINTS, PATH_RANGE_RASTER))
     assert result == [
         {"min": 30.0, "max": 42.0, "count": 9, "mean": 36.0},
         {"min": 7.0, "max": 19.0, "count": 9, "mean": 13.0},
