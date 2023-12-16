@@ -38,6 +38,7 @@ def fake_zonal_stats(vector, *_, **__) -> int:
 
 
 def fake_intersection(first, second, indices=None, cpus=None, log_dir=None):
+    # pylint: disable=unused-argument
     """Fake intersection function."""
     _, geom = next(Map(second).iter_latlong())
     return {(0, 0): {"measure": 42, "geom": geom}}

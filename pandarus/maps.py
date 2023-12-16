@@ -34,6 +34,9 @@ class Map:
     def __init__(self, filepath, identifying_field=None, **kwargs):
         assert os.path.exists(filepath), "No file at given path"
 
+        self.rtree_index = None
+        self._index_map = None
+
         self.filepath = filepath
         self.fieldname = identifying_field
         self.metadata = kwargs
@@ -119,7 +122,7 @@ class Map:
         (geopackage[0] will just return ``None``).
 
         Note that our lookup dictionary breaks negative indexing."""
-        if not hasattr(self, "_index_map"):
+        if not hasattr(self, "_index_map") or self._index_map is None:
             self._create_index_map()
         return self.file[self._index_map[index]]
 

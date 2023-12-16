@@ -175,10 +175,7 @@ def get_remaining(original, geoms, to_meters=True):
     except KeyError as exc:
         raise ValueError(f"Can't use this geometry type: {original.geom_type}") from exc
 
-    if not to_meters or kind == "point":
-        proj_func = lambda x: x
-    else:
-        proj_func = project
+    proj_func = project if to_meters or kind != "point" else lambda x: x
 
     if geoms and {kind_mapping[g.geom_type] for g in geoms} != {kind}:
         raise IncompatibleTypes

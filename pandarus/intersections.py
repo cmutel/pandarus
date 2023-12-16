@@ -71,21 +71,18 @@ def get_jobs(map_size):
 
 def intersection_worker(from_map, from_objs, to_map, worker_id=1):
     """Multiprocessing worker for map matching"""
-    objs_len = len(from_objs or []) or "all"
-    objs_min = min(from_objs or [0])
-    objs_max = max(from_objs or [0])
     logging.info(
         """
         Starting intersection_worker:
         from map: %s
-        from objs: %s %d to %d)
+        from objs: %d %d to %d)
         to map: %s
         worker id: %d
         """,
         from_map,
-        objs_len,
-        objs_min,
-        objs_max,
+        len(from_objs or []) or "all",
+        min(from_objs or [0]),
+        max(from_objs or [0]),
         to_map,
         worker_id,
     )
