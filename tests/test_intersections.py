@@ -14,11 +14,7 @@ from pandarus.intersections import (
     worker_init,
 )
 
-dirpath = os.path.abspath(os.path.join(os.path.dirname(__file__), "data"))
-grid = os.path.join(dirpath, "grid.geojson")
-square = os.path.join(dirpath, "square.geojson")
-point = os.path.join(dirpath, "point.geojson")
-gc = os.path.join(dirpath, "gc.geojson")
+from . import PATH_GC, PATH_GRID, PATH_POINT, PATH_SQUARE
 
 
 def test_chunker():
@@ -46,7 +42,7 @@ def test_get_jobs():
 def test_intersection_worker_indices():
     """Test the intersection worker function with indices."""
     area = 1 / 4 * (4e7 / 360) ** 2
-    result = intersection_worker(grid, [0], square)
+    result = intersection_worker(PATH_GRID, [0], PATH_SQUARE)
     assert result.keys() == {(0, 0)}
     _, value = list(result.keys())[0], list(result.values())[0]
     expected = Polygon([(0.5, 1), (1, 1), (1, 0.5), (0.5, 0.5), (0.5, 1)])
@@ -56,29 +52,29 @@ def test_intersection_worker_indices():
 
 def test_intersection_worker_no_indices():
     """Test the intersection worker function without indices."""
-    result = intersection_worker(grid, None, square)
+    result = intersection_worker(PATH_GRID, None, PATH_SQUARE)
     assert len(result) == 4
 
 
 def test_intersection_worker_wrong_from_type():
     """Test the intersection worker function with wrong from type."""
     with pytest.raises(ValueError):
-        intersection_worker(gc, None, square)
+        intersection_worker(PATH_GC, None, PATH_SQUARE)
 
 
 def test_intersection_worker_wrong_to_type():
     """Test the intersection worker function with wrong to type."""
     with pytest.raises(ValueError):
-        intersection_worker(grid, [0], point)
+        intersection_worker(PATH_GRID, [0], PATH_POINT)
 
 
 def test_intersection_dispatcher_zero_cpus():
     """Test the intersection dispatcher with zero cpus."""
-    result = intersection_dispatcher(grid, square)
+    result = intersection_dispatcher(PATH_GRID, PATH_SQUARE)
     assert len(result) == 4
 
 
 def test_intersection_dispatcher_indices(tmpdir):
     """Test the intersection dispatcher with indices."""
-    result = intersection_dispatcher(grid, square, [0, 1], 1, tmpdir)
+    result = intersection_dispatcher(PATH_GRID, PATH_SQUARE, [0, 1], 1, tmpdir)
     assert len(result) == 2
