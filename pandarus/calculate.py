@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+"""Calculate statistics and intersections from spatial data."""
 import datetime
 import multiprocessing
 import os
@@ -7,7 +7,7 @@ from functools import partial
 
 import fiona
 import rasterio
-from fiona.crs import from_string
+from fiona.crs import CRS
 from shapely.geometry import mapping, shape
 
 from .conversion import check_type
@@ -18,7 +18,7 @@ from .maps import Map
 from .projection import project
 from .rasters import gen_zonal_stats
 
-WGS84 = from_string("+datum=WGS84 +ellps=WGS84 +no_defs +proj=longlat")
+WGS84 = CRS.from_string("+datum=WGS84 +ellps=WGS84 +no_defs +proj=longlat")
 
 MISMATCHED_CRS = """
     Possible coordinate reference systems (CRS) mismatch.
@@ -32,6 +32,7 @@ CPU_COUNT = multiprocessing.cpu_count()
 
 
 def get_map(fp, field, kwargs):
+    """Create a ``Map`` object and return it with metadata."""
     obj = Map(fp, field, **kwargs)
     metadata = {
         "sha256": obj.hash,
@@ -49,8 +50,8 @@ def raster_statistics(
     output=None,
     band=1,
     compress=True,
-    fiona_kwargs={},
-    **kwargs
+    fiona_kwargs=None,
+    **kwargs,
 ):
     """Create statistics by matching ``raster`` against each spatial unit in
     ``self.from_map``.
@@ -120,6 +121,9 @@ def raster_statistics(
         }
 
     """
+    if fiona_kwargs is None:
+        fiona_kwargs = {}
+
     vector, v_metadata = get_map(vector_fp, identifying_field, fiona_kwargs)
     assert check_type(raster) == "raster"
 
@@ -132,9 +136,7 @@ def raster_statistics(
 
     if not output:
         dirpath = get_appdirs_path("rasterstats")
-        output = os.path.join(
-            dirpath, "{}-{}-{}.json".format(vector.hash, sha256(raster), band)
-        )
+        output = os.path.join(dirpath, f"{vector.hash}-{sha256(raster)}-{band}.json")
 
     if os.path.exists(output):
         os.remove(output)
@@ -161,6 +163,7 @@ def raster_statistics(
 
 
 def as_features(dct):
+    """Convert a dictionary of dictionaries to a generator of GeoJSON features."""
     for index, key in enumerate(dct):
         row = dct[key]
         gj = {
@@ -180,8 +183,8 @@ def intersect(
     first_field,
     second_fp,
     second_field,
-    first_kwargs={},
-    second_kwargs={},
+    first_kwargs=None,
+    second_kwargs=None,
     dirpath=None,
     cpus=CPU_COUNT,
     driver="GeoJSON",
@@ -272,13 +275,18 @@ def intersect(
         }
 
     """
+    if first_kwargs is None:
+        first_kwargs = {}
+    if second_kwargs is None:
+        second_kwargs = {}
+
     first, first_metadata = get_map(first_fp, first_field, first_kwargs)
     second, second_metadata = get_map(second_fp, second_field, second_kwargs)
 
     if not dirpath:
         dirpath = get_appdirs_path("intersections")
 
-    base_filepath = os.path.join(dirpath, "{}.{}.".format(first.hash, second.hash))
+    base_filepath = os.path.join(dirpath, f"{first.hash}.{second.hash}.")
 
     fiona_fp = base_filepath + driver.lower()
     data_fp = base_filepath + "json"
@@ -336,7 +344,7 @@ def calculate_remaining(
     source_fp,
     source_field,
     intersection_fp,
-    source_kwargs={},
+    source_kwargs=None,
     dirpath=None,
     compress=True,
 ):
@@ -388,6 +396,9 @@ def calculate_remaining(
         }
 
     """
+    if source_kwargs is None:
+        source_kwargs = {}
+
     source, source_metadata = get_map(source_fp, source_field, source_kwargs)
     intersections, inter_metadata = get_map(intersection_fp, "id", {})
 
@@ -403,7 +414,7 @@ def calculate_remaining(
     if not dirpath:
         dirpath = get_appdirs_path("intersections")
 
-    output = os.path.join(dirpath, "{}.{}.json".format(source.hash, intersections.hash))
+    output = os.path.join(dirpath, "f{source.hash}.{intersections.hash}.json")
 
     _ = partial(project, from_proj=source.crs, to_proj="")
 
@@ -491,10 +502,10 @@ def intersections_from_intersection(fp, metadata=None, dirpath=None):
         dirpath = get_appdirs_path("intersections")
 
     first_fp = os.path.join(
-        dirpath, "{}.{}.json".format(this["sha256"], metadata["first"]["sha256"])
+        dirpath, f"{this['sha256']}.{metadata['first']['sha256']}.json"
     )
     second_fp = os.path.join(
-        dirpath, "{}.{}.json".format(this["sha256"], metadata["second"]["sha256"])
+        dirpath, f"{this['sha256']}.{metadata['second']['sha256']}.json"
     )
 
     return (

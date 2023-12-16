@@ -1,3 +1,4 @@
+"""Functions for converting between raster and vector data."""
 import os
 import tempfile
 
@@ -6,7 +7,8 @@ import numpy as np
 import rasterio
 import rasterio.features
 import rasterio.warp
-from rasterio.crs import CRS
+from fiona.errors import DataIOError, DriverError
+from rasterio import CRS
 from rasterio.rio.helpers import coords, write_features
 
 from .filesystem import get_appdirs_path, sha256
@@ -23,13 +25,13 @@ def check_type(filepath):
         with fiona.open(filepath) as ds:
             assert ds.meta["schema"]["geometry"] != "None"
         return "vector"
-    except Exception:
+    except (DataIOError, DriverError):
         try:
             with rasterio.open(filepath) as ds:
                 assert ds.meta
             return "raster"
-        except Exception:
-            raise ValueError("Unknown data type")
+        except Exception as exc:
+            raise ValueError("Unknown data type") from exc
 
 
 def convert_to_vector(filepath, dirpath=None, band=1):
@@ -58,7 +60,7 @@ def convert_to_vector(filepath, dirpath=None, band=1):
             dirpath, os.W_OK
         ), "dirpath must be a writable directory"
 
-    out_fp = os.path.join(dirpath, "{}.{}.geojson".format(sha256(filepath), band))
+    out_fp = os.path.join(dirpath, f"{sha256(filepath)}.{band}.geojson")
     if os.path.exists(out_fp):
         return out_fp
 
@@ -82,13 +84,16 @@ def _shapes(in_fp, out_fp, bidx):
     dump_kwds = {"sort_keys": True}
 
     # This is the generator for (feature, bbox) pairs.
-    class Collection(object):
+    class Collection:
+        """A GeoJSON FeatureCollection of shapes."""
+
         def __init__(self):
             self._xs = []
             self._ys = []
 
         @property
         def bbox(self):
+            """Return the bounding box of the collection."""
             return min(self._xs), min(self._ys), max(self._xs), max(self._ys)
 
         def __call__(self):
@@ -135,7 +140,7 @@ def _shapes(in_fp, out_fp, bidx):
                         "geometry": g,
                     }
 
-    with open(out_fp, "w") as f:
+    with open(out_fp, "w", encoding="UTF-8") as f:
         write_features(
             f,
             Collection(),
@@ -181,7 +186,7 @@ def clean_raster(fp, new_fp=None, band=1, nodata=None):
             "No `nodata` value set, but large negative numbers present. "
             "Please set a valid `nodata` value in raster file."
         )
-    elif profile.get("nodata") and profile["nodata"] < -1e30:
+    if profile.get("nodata") and profile["nodata"] < -1e30:
         nodatas = [-1, -99, -999, -9999]
         if nodata is not None:
             nodatas = [nodata] + nodatas
@@ -226,6 +231,7 @@ def clean_raster(fp, new_fp=None, band=1, nodata=None):
 
 
 def round_to_x_significant_digits(array, sf=3):
+    """Round array to a certain number of significant digits"""
     num_digits = sf - np.floor(np.log10(np.abs(array))).astype(int) - 1
     num_digits[np.where(array == 0)] = 0
     for value in np.unique(num_digits):

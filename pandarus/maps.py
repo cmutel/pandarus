@@ -4,7 +4,7 @@ from functools import partial
 
 import fiona
 import rtree
-from fiona import crs as fiona_crs
+from fiona.crs import CRS
 from shapely.geometry import shape
 
 from .conversion import check_type
@@ -64,6 +64,7 @@ class Map:
         return self.rtree_index
 
     def get_fieldnames_dictionary(self, fieldname=None):
+        """Get a dictionary of field values to indices."""
         fieldname = fieldname or self.fieldname
         assert fieldname, "No valid identifying field name"
         assert (
@@ -79,6 +80,7 @@ class Map:
 
     @property
     def geometry(self):
+        """Geometry type, as defined by vector file."""
         geom = self.file.meta["schema"]["geometry"]
         if geom == "Unknown":
             geoms = {obj["geometry"]["type"] for obj in self}
@@ -89,12 +91,13 @@ class Map:
 
     @property
     def hash(self):
+        """SHA256 hash of file."""
         return sha256(self.filepath)
 
     @property
     def crs(self):
         """Coordinate reference system, as defined by vector file."""
-        return fiona_crs.to_string(self.file.crs)
+        return CRS.to_string(self.file.crs)
 
     def __iter__(self):
         return iter(self.file)
