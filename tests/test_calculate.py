@@ -31,7 +31,7 @@ from . import (
 )
 
 
-def fake_zonal_stats(vector, *args, **kwargs) -> int:
+def fake_zonal_stats(vector, *_, **__) -> int:
     """Fake zonal stats function."""
     for i, _ in enumerate(Map(vector, "name")):
         yield i
@@ -70,7 +70,7 @@ def test_rasterstats(monkeypatch, tmpdir) -> None:
     )
     assert result == fp
 
-    with open(fp) as f:
+    with open(fp, encoding="UTF-8") as f:
         result = json.load(f)
 
         expected = [
@@ -102,7 +102,7 @@ def test_rasterstats_overwrite_existing(monkeypatch, tmpdir) -> None:
 
     fp = os.path.join(tmpdir, "test.json")
 
-    with open(fp, "w") as f:
+    with open(fp, "w", encoding="UTF-8") as f:
         f.write("Original content")
 
     result = raster_statistics(
@@ -111,8 +111,9 @@ def test_rasterstats_overwrite_existing(monkeypatch, tmpdir) -> None:
 
     assert result == fp
 
-    content = open(result).read()
-    assert content != "Original content"
+    with open(result, encoding="UTF-8") as f:
+        content = f.read()
+        assert content != "Original content"
 
 
 def test_rasterstats_mismatched_crs(monkeypatch, tmpdir) -> None:
@@ -150,31 +151,42 @@ def test_intersect(monkeypatch, tmpdir) -> None:
         cpus=None,
     )
 
-    data = json.load(open(data_fp))
-    assert data["data"] == [["grid cell 0", "single", 42]]
-    assert data["metadata"].keys() == {"first", "second", "when"}
-    assert data["metadata"]["first"].keys() == {"field", "filename", "path", "sha256"}
-    assert data["metadata"]["second"].keys() == {"field", "filename", "path", "sha256"}
+    with open(data_fp, encoding="UTF-8") as f:
+        data = json.load(f)
+        assert data["data"] == [["grid cell 0", "single", 42]]
+        assert data["metadata"].keys() == {"first", "second", "when"}
+        assert data["metadata"]["first"].keys() == {
+            "field",
+            "filename",
+            "path",
+            "sha256",
+        }
+        assert data["metadata"]["second"].keys() == {
+            "field",
+            "filename",
+            "path",
+            "sha256",
+        }
 
-    expected = {
-        "id": "0",
-        "type": "Feature",
-        "geometry": {
-            "coordinates": [
-                [(0.5, 0.5), (0.5, 1.5), (1.5, 1.5), (1.5, 0.5), (0.5, 0.5)]
-            ],
-            "type": "Polygon",
-        },
-        "properties": dict(
-            [
-                ("id", 0),
-                ("to_label", "single"),
-                ("from_label", "grid cell 0"),
-                ("measure", 42.0),
-            ]
-        ),
-    }
-    assert next(iter(fiona.open(vector_fp))) == Feature.from_dict(expected)
+        expected = {
+            "id": "0",
+            "type": "Feature",
+            "geometry": {
+                "coordinates": [
+                    [(0.5, 0.5), (0.5, 1.5), (1.5, 1.5), (1.5, 0.5), (0.5, 0.5)]
+                ],
+                "type": "Polygon",
+            },
+            "properties": dict(
+                [
+                    ("id", 0),
+                    ("to_label", "single"),
+                    ("from_label", "grid cell 0"),
+                    ("measure", 42.0),
+                ]
+            ),
+        }
+        assert next(iter(fiona.open(vector_fp))) == Feature.from_dict(expected)
 
 
 def test_intersect_default_path(monkeypatch) -> None:
@@ -206,9 +218,9 @@ def test_intersect_overwrite_existing(monkeypatch, tmpdir) -> None:
         cpus=None,
     )
 
-    with open(vector_fp, "w") as f:
+    with open(vector_fp, "w", encoding="UTF-8") as f:
         f.write("Weeeee!")
-    with open(data_fp, "w") as f:
+    with open(data_fp, "w", encoding="UTF-8") as f:
         f.write("Wooooo!")
 
     vector_fp, data_fp = intersect(
@@ -221,8 +233,9 @@ def test_intersect_overwrite_existing(monkeypatch, tmpdir) -> None:
         cpus=None,
     )
 
-    data = json.load(open(data_fp))
-    assert data["data"] == [["grid cell 0", "single", 42]]
+    with open(data_fp, encoding="UTF-8") as f:
+        data = json.load(f)
+        assert data["data"] == [["grid cell 0", "single", 42]]
 
     assert len(fiona.open(vector_fp)) == 1
 
@@ -238,18 +251,25 @@ def test_calculate_remaining(tmpdir) -> None:
     data_fp = calculate_remaining(
         PATH_OUTSIDE, "name", PATH_REMAIN_RESULT, dirpath=tmpdir, compress=False
     )
-    data = json.load(open(data_fp))
 
-    assert data["data"][0][0] == "by-myself"
-    assert np.isclose(area, data["data"][0][1], rtol=1e-2)
-    assert data["metadata"].keys() == {"intersections", "source", "when"}
-    assert data["metadata"]["intersections"].keys() == {
-        "field",
-        "filename",
-        "path",
-        "sha256",
-    }
-    assert data["metadata"]["source"].keys() == {"field", "filename", "path", "sha256"}
+    with open(data_fp, encoding="UTF-8") as f:
+        data = json.load(f)
+
+        assert data["data"][0][0] == "by-myself"
+        assert np.isclose(area, data["data"][0][1], rtol=1e-2)
+        assert data["metadata"].keys() == {"intersections", "source", "when"}
+        assert data["metadata"]["intersections"].keys() == {
+            "field",
+            "filename",
+            "path",
+            "sha256",
+        }
+        assert data["metadata"]["source"].keys() == {
+            "field",
+            "filename",
+            "path",
+            "sha256",
+        }
 
 
 def test_calculate_remaining_copmressed_fp(tmpdir) -> None:

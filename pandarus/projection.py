@@ -1,4 +1,4 @@
-"""Projection utilities for pandarus package."""
+"""Projection utilities."""
 from functools import partial
 
 import pyproj

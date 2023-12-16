@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+"""Calculate intersections between two maps."""
 import datetime
 import logging
 import math
@@ -15,16 +15,18 @@ from .projection import project
 
 
 def chunker(iterable, chunk_size):
+    """Split an iterable into chunks of size ``chunk_size``."""
     for i in range(0, len(iterable), chunk_size):
         yield list(iterable[i : i + chunk_size])
 
 
 def logger_init(dirpath=None):
+    """Initialize a logger."""
     # Adapted from http://stackoverflow.com/a/34964369/164864
     logging_queue = multiprocessing.Queue()
     # this is the handler for all log records
-    filepath = "{}-{}.log".format(
-        "pandarus-worker", datetime.datetime.now().strftime("%d-%B-%Y-%I-%M%p")
+    filepath = (
+        f"pandarus-worker-{datetime.datetime.now().strftime('%d-%B-%Y-%I-%M%p')}.log"
     )
     if dirpath is not None:
         filepath = os.path.join(dirpath, filepath)
@@ -48,6 +50,7 @@ def logger_init(dirpath=None):
 
 
 def worker_init(logging_queue):
+    """Initialize a worker."""
     # Needed to pass logging messages from child processes to a queue
     # handler which in turn passes them onto queue listener
     queue_handler = QueueHandler(logging_queue)
@@ -57,6 +60,7 @@ def worker_init(logging_queue):
 
 
 def get_jobs(map_size):
+    """Get number of jobs and chunk size for multiprocessing."""
     # Want a reasonable chunk size
     # But also want a maximum of 200 jobs
     # Both numbers picked more or less at random...
@@ -71,13 +75,19 @@ def intersection_worker(from_map, from_objs, to_map, worker_id=1):
     objs_min = min(from_objs or [0])
     objs_max = max(from_objs or [0])
     logging.info(
-        f"""
-        Starting intersection_worker:
-        from map: {from_map}
-        from objs: {objs_len} ({objs_min} to {objs_max})
-        to map: {to_map}
-        worker id: {worker_id}
         """
+        Starting intersection_worker:
+        from map: %s
+        from objs: %s %d to %d)
+        to map: %s
+        worker id: %d
+        """,
+        from_map,
+        objs_len,
+        objs_min,
+        objs_max,
+        to_map,
+        worker_id,
     )
 
     results = {}
@@ -87,15 +97,15 @@ def intersection_worker(from_map, from_objs, to_map, worker_id=1):
         raise ValueError("`to_map` geometry must be polygons")
     rtree_index = to_map.create_rtree_index()
 
-    logging.info("Worker {}: Loaded `to` map.".format(worker_id))
+    logging.info("Worker %d: Loaded `to` map.", worker_id)
 
     from_map = Map(from_map)
     try:
         kind = kind_mapping[from_map.geometry]
-    except KeyError:
-        raise ValueError(f"No valid geometry type in map {from_map}")
+    except KeyError as exc:
+        raise ValueError(f"No valid geometry type in map {from_map}") from exc
 
-    logging.info(f"Worker {worker_id}: Loaded `from` map.")
+    logging.info("Worker %d: Loaded `from` map.", worker_id)
 
     if from_objs:
         from_gen = ((index, from_map[index]) for index in from_objs)
@@ -123,6 +133,7 @@ def intersection_worker(from_map, from_objs, to_map, worker_id=1):
 
 
 def intersection_dispatcher(from_map, to_map, from_objs=None, cpus=None, log_dir=None):
+    """Dispatch intersection workers."""
     if not cpus:
         return intersection_worker(from_map, None, to_map)
 
@@ -137,14 +148,19 @@ def intersection_dispatcher(from_map, to_map, from_objs=None, cpus=None, log_dir
 
     queue_listener, logging_queue = logger_init(log_dir)
     logging.info(
-        f"""
+        """
         Starting `intersect` calculation.
-        From map: {from_map}
-        To map: {to_map}
-        Map size: {map_size}
-        Chunk size: {chunk_size}
-        Number of jobs: {num_jobs}
-    """
+        From map: %s
+        To map: %s
+        Map size: %d
+        Chunk size: %d
+        Number of jobs: %d
+        """,
+        from_map,
+        to_map,
+        map_size,
+        chunk_size,
+        num_jobs,
     )
 
     results = {}
@@ -177,14 +193,19 @@ def intersection_dispatcher(from_map, to_map, from_objs=None, cpus=None, log_dir
     queue_listener.stop()
 
     logging.info(
-        f"""
+        """
         Finished `intersect` calculation.
-        From map: {from_map}
-        To map: {to_map}
-        Map size: {map_size}
-        Chunk size: {chunk_size}
-        Number of jobs: {num_jobs}
-    """
+        From map: %s
+        To map: %s
+        Map size: %d
+        Chunk size: %d
+        Number of jobs: %d
+        """,
+        from_map,
+        to_map,
+        map_size,
+        chunk_size,
+        num_jobs,
     )
 
     return results

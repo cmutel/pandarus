@@ -1,4 +1,4 @@
-"""Geometry functions for Pandarus."""
+"""Geometry functions."""
 from shapely.geometry import (
     GeometryCollection,
     LinearRing,
@@ -49,12 +49,12 @@ def recursive_geom_finder(geom, kind):
     ``None`` is no valid element is found."""
     assert kind in ("line", "point", "polygon"), "Invalid ``kind``"
 
-    TYPES = {
+    tpyes_map = {
         "line": (LineString, LinearRing, MultiLineString),
         "point": (Point, MultiPoint),
         "polygon": (Polygon, MultiPolygon),
     }
-    CONTAINER = {
+    container_map = {
         "line": MultiLineString,
         "point": MultiPoint,
         "polygon": MultiPolygon,
@@ -70,13 +70,13 @@ def recursive_geom_finder(geom, kind):
         else:
             yield None
 
-    elements = [elem for elem in recurse(geom, TYPES[kind]) if elem is not None]
+    elements = [elem for elem in recurse(geom, tpyes_map[kind]) if elem is not None]
     if not elements:
         return None
 
     geom = clean(unary_union(elements))
     if "Multi" not in geom.geom_type:
-        geom = CONTAINER[kind]([geom])
+        geom = container_map[kind]([geom])
     return geom
 
 
@@ -153,7 +153,7 @@ def get_measure(geom, kind=None):
     if kind == "point":
         if geom.geom_type == "MultiPoint":
             return float(len(geom.geoms))
-        elif geom.geom_type == "Point":
+        if geom.geom_type == "Point":
             return 1.0
     raise ValueError(f"No applicable measure for geom: {geom}")
 
@@ -172,8 +172,8 @@ def get_remaining(original, geoms, to_meters=True):
     Returns a float."""
     try:
         kind = kind_mapping[original.geom_type]
-    except KeyError:
-        raise ValueError(f"Can't use this geometry type: {original.geom_type}")
+    except KeyError as exc:
+        raise ValueError(f"Can't use this geometry type: {original.geom_type}") from exc
 
     if not to_meters or kind == "point":
         proj_func = lambda x: x

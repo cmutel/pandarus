@@ -1,4 +1,4 @@
-"""Maps utility functions for Pandarus."""
+"""Maps utility functions for."""
 import os
 from functools import partial
 

@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+"""Raster statistics functions."""
 import warnings
 
 import numpy as np
@@ -13,7 +13,7 @@ from rasterstats.utils import (
     key_assoc_val,
     remap_categories,
 )
-from shapely.geometry import shape
+from shapely.geometry import shape as shapely_shape
 
 # Code from https://github.com/perrygeo/python-rasterstats/pull/136
 # Percent coverage selection and weighting
@@ -39,7 +39,6 @@ def gen_zonal_stats(
     raster_out=False,
     prefix=None,
     geojson_out=False,
-    **kwargs
 ):
     """Zonal statistics of raster values aggregated to vector geometries.
 
@@ -155,36 +154,36 @@ def gen_zonal_stats(
         try:
             if percent_cover_scale != int(percent_cover_scale):
                 warnings.warn(
-                    "Value for `percent_cover_scale` given ({0}) "
-                    "was converted to int ({1}) but does not "
-                    "match original value".format(
-                        percent_cover_scale, int(percent_cover_scale)
-                    )
+                    f"""
+                        Value for `percent_cover_scale` given ({percent_cover_scale})
+                        was converted to int ({int(percent_cover_scale)}) but does not
+                        match original value
+                    """
                 )
 
             percent_cover_scale = int(percent_cover_scale)
 
             if percent_cover_scale <= 1:
-                raise Exception(
-                    "Value for `percent_cover_scale` must be "
-                    "greater than one ({0})".format(percent_cover_scale)
+                raise ValueError(
+                    f"""Value for `percent_cover_scale` must be
+                    greater than one ({percent_cover_scale})"""
                 )
 
-        except Exception:
-            raise Exception(
-                "Invalid value for `percent_cover_scale` "
-                "provided ({0}). Must be type int.".format(percent_cover_scale)
-            )
+        except Exception as exc:
+            raise TypeError(
+                f"""Invalid value for `percent_cover_scale`
+                provided ({percent_cover_scale}). Must be type int."""
+            ) from exc
 
         if percent_cover_selection is not None:
             try:
                 percent_cover_selection = float(percent_cover_selection)
-            except Exception:
-                raise Exception(
-                    "Invalid value for `percent_cover_selection` "
-                    "provided ({0}). Must be able to be converted "
-                    "to a float.".format(percent_cover_selection)
-                )
+            except Exception as exc:
+                raise TypeError(
+                    f"""Invalid value for `percent_cover_selection`
+                    provided ({percent_cover_selection}). Must be able to be converted
+                    "to a float."""
+                ) from exc
 
         # if not all_touched:
         #     warnings.warn('`all_touched` was not enabled but an option requiring '
@@ -195,7 +194,7 @@ def gen_zonal_stats(
     with Raster(raster, affine, nodata, band) as rast:
         features_iter = read_features(vectors, layer)
         for _, feat in enumerate(features_iter):
-            geom = shape(feat["geometry"])
+            geom = shapely_shape(feat["geometry"])
 
             if "Point" in geom.geom_type:
                 geom = boxify_points(geom, rast)
@@ -227,7 +226,7 @@ def gen_zonal_stats(
 
             # Mask the source data array
             # mask everything that is not a valid value or not within our geom
-            masked = np.ma.MaskedArray(fsrc.array, mask=(isnodata | ~rv_array))
+            masked = np.ma.MaskedArray(fsrc.array, mask=isnodata | ~rv_array)
 
             # execute zone_func on masked zone ndarray
             if zone_func is not None:
@@ -243,7 +242,7 @@ def gen_zonal_stats(
 
             if masked.compressed().size == 0:
                 # nothing here, fill with None and move on
-                feature_stats = dict([(stat, None) for stat in stats])
+                feature_stats = {stat: None for stat in stats}
                 if "count" in stats:  # special case, zero makes sense here
                     feature_stats["count"] = 0
             else:
@@ -332,7 +331,7 @@ def gen_zonal_stats(
             if prefix is not None:
                 prefixed_feature_stats = {}
                 for key, val in feature_stats.items():
-                    newkey = "{}{}".format(prefix, key)
+                    newkey = f"{prefix}{key}"
                     prefixed_feature_stats[newkey] = val
                 feature_stats = prefixed_feature_stats
 
@@ -372,9 +371,10 @@ def rasterize_geom(geom, shape, affine, all_touched=False):
     return rv_array.astype(bool)
 
 
-# https://stackoverflow.com/questions/8090229/
-#   resize-with-averaging-or-rebin-a-numpy-2d-array/8090605#8090605
 def rebin_sum(a, shape, dtype):
+    """Resizes a 2d array by rebounding and summing.
+    # https://stackoverflow.com/questions/8090229/
+    # resize-with-averaging-or-rebin-a-numpy-2d-array/8090605#8090605"""
     sh = shape[0], a.shape[0] // shape[0], shape[1], a.shape[1] // shape[1]
     return a.reshape(sh).sum(-1, dtype=dtype).sum(1, dtype=dtype)
 

@@ -1,3 +1,4 @@
+"""Usage example for Pandarus."""
 import json
 import os
 from pprint import pprint
@@ -27,7 +28,8 @@ spatial_result, json_data = intersect(
 
 # Load resulting output data
 print("Output from intersecting polygons")
-pprint(json.load(open(json_data)))
+with open(json_data, encoding="UTF-8") as f:
+    pprint(json.load(f))
 
 
 # Intersecting lines
@@ -35,7 +37,8 @@ spatial_result, json_data = intersect(lines_fp, "name", grid_fp, "name", compres
 
 # Load resulting output data
 print("Output from intersecting lines")
-pprint(json.load(open(json_data)))
+with open(json_data, encoding="UTF-8") as f:
+    pprint(json.load(f))
 print("Vector file with calculated intersections written to:", spatial_result)
 
 # Intersecting points
@@ -45,7 +48,8 @@ spatial_result, json_data = intersect(
 
 # Load resulting output data
 print("Output from intersecting points")
-pprint(json.load(open(json_data)))
+with open(json_data, encoding="UTF-8") as f:
+    pprint(json.load(f))
 print("Vector file with calculated intersections written to:", spatial_result)
 
 
@@ -54,7 +58,8 @@ json_data = raster_statistics(grid_fp, "name", range_fp, compress=False)
 
 # Load resulting output data
 print("Output from raster statistics for polygons")
-pprint(json.load(open(json_data)))
+with open(json_data, encoding="UTF-8") as f:
+    pprint(json.load(f))
 print("Vector file with calculated intersections written to:", spatial_result)
 
 
@@ -63,7 +68,8 @@ json_data = raster_statistics(lines_fp, "name", range_fp, compress=False)
 
 # Load resulting output data
 print("Output from raster statistics for lines")
-pprint(json.load(open(json_data)))
+with open(json_data, encoding="UTF-8") as f:
+    pprint(json.load(f))
 
 
 # Getting raster statistics for points
@@ -71,4 +77,5 @@ json_data = raster_statistics(points_fp, "name", range_fp, compress=False)
 
 # Load resulting output data
 print("Output from raster statistics for points")
-pprint(json.load(open(json_data)))
+with open(json_data, encoding="UTF-8") as f:
+    pprint(json.load(f))
