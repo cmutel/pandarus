@@ -75,7 +75,7 @@ def intersection_worker(from_map, from_objs, to_map, worker_id=1):
         """
         Starting intersection_worker:
         from map: %s
-        from objs: %d %d to %d)
+        from objs: %s %d to %d)
         to map: %s
         worker id: %d
         """,
