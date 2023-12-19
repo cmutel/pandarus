@@ -44,9 +44,6 @@ jobs:
           python-version: ${{ matrix.python-version }}
           environment-file: .github/python_test_env.yml
 
-      - name: Install GEOS
-        run: sudo apt-get install -y libgeos-dev
-
       - name: Install package
         run: pip install .[test]
 
