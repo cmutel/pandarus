@@ -42,6 +42,7 @@ def create_raster(name, array, dirpath, nodata=-1, **kwargs):
     return fp
 
 
+@pytest.mark.filterwarnings("ignore::rasterio.errors.NotGeoreferencedWarning")
 def test_create_raster(tmpdir):
     """Test the create_raster function."""
     fp = create_raster(
@@ -112,6 +113,7 @@ def test_round_raster(tmpdir):
     assert np.isclose(array[0, 0], 1.47e-7)
 
 
+@pytest.mark.filterwarnings("ignore::rasterio.errors.NotGeoreferencedWarning")
 def test_clean_raster():
     """Test the clean_raster function."""
     out = clean_raster(PATH_SIXTY_FOUR)
@@ -129,6 +131,7 @@ def test_clean_raster():
     os.remove(out)
 
 
+@pytest.mark.filterwarnings("ignore::rasterio.errors.NotGeoreferencedWarning")
 def test_clean_raster_null_nodata(tmpdir):
     """Test the clean_raster function with a null nodata value."""
     out = os.path.join(tmpdir, "test.tif")
@@ -140,6 +143,7 @@ def test_clean_raster_null_nodata(tmpdir):
     assert profile["nodata"] is None
 
 
+@pytest.mark.filterwarnings("ignore::rasterio.errors.NotGeoreferencedWarning")
 def test_clean_raster_filepath(tmpdir):
     """Test the clean_raster function with a filepath."""
     out = os.path.join(tmpdir, "test.tif")
@@ -147,6 +151,7 @@ def test_clean_raster_filepath(tmpdir):
     assert result == out
 
 
+@pytest.mark.filterwarnings("ignore::rasterio.errors.NotGeoreferencedWarning")
 def test_clean_raster_64bit(tmpdir):
     """Test the clean_raster function with a 64bit raster."""
     array = np.array([[0, -1, 1e100]])
@@ -164,6 +169,7 @@ def test_clean_raster_64bit(tmpdir):
         assert f.read(1).dtype == np.float64
 
 
+@pytest.mark.filterwarnings("ignore::rasterio.errors.NotGeoreferencedWarning")
 def test_clean_raster_out_of_bounds(tmpdir):
     """Test the clean_raster function with out of bounds values."""
     array = np.array([[0, 1.5, 42, -1e50]])
@@ -172,6 +178,7 @@ def test_clean_raster_out_of_bounds(tmpdir):
         _ = clean_raster(fp)
 
 
+@pytest.mark.filterwarnings("ignore::rasterio.errors.NotGeoreferencedWarning")
 def test_clean_raster_dont_change(tmpdir):
     """Test the clean_raster function with a given nodata value that doesn't change."""
     array = np.array([[0, 1.5, 42, -1e7]])
@@ -182,6 +189,7 @@ def test_clean_raster_dont_change(tmpdir):
     os.remove(out)
 
 
+@pytest.mark.filterwarnings("ignore::rasterio.errors.NotGeoreferencedWarning")
 def test_clean_raster_nodata(tmpdir):
     """Test the clean_raster function with a given nodata value that changes."""
     array = np.array([[0, 1.5, 42, -1e50]])
@@ -204,6 +212,7 @@ def test_clean_raster_nodata(tmpdir):
         _ = clean_raster(fp)
 
 
+@pytest.mark.filterwarnings("ignore::rasterio.errors.NotGeoreferencedWarning")
 def test_clean_raster_try_given_nodata(tmpdir):
     """Test the clean_raster function with a given nodata value to try."""
     array = np.array([[0, -1.0, -99.0, -999.0, -9999]])
