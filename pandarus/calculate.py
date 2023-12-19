@@ -135,15 +135,17 @@ def raster_statistics(
         os.remove(output)
 
     with rasterio.open(raster) as r:
-        v = next(read_features(vector_fp))
         if vector.crs != r.crs.to_string():
             warnings.warn(MISMATCHED_CRS.format(vector.crs, r.crs.to_string()))
 
-        stats_generator = exact_extract(
-            rast=r,
-            vec=v,
-            ops=("min", "max", "mean", "count"),
-        )
+        stats_generator = [
+            exact_extract(
+                rast=r,
+                vec=v,
+                ops=("min", "max", "mean", "count"),
+            )
+            for v in read_features(vector_fp, **fiona_kwargs)
+        ]
 
     mapping_dict = vector.get_fieldnames_dictionary()
     results = [(mapping_dict[index], row) for index, row in enumerate(stats_generator)]
