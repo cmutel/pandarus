@@ -31,12 +31,6 @@ from . import (
 )
 
 
-def fake_zonal_stats(vector, *_, **__) -> int:
-    """Fake zonal stats function."""
-    for i, _ in enumerate(Map(vector, "name")):
-        yield i
-
-
 def fake_intersection(first, second, indices=None, cpus=None, log_dir=None):
     # pylint: disable=unused-argument
     """Fake intersection function."""
@@ -50,10 +44,8 @@ def test_rasterstats_invalid() -> None:
         raster_statistics(PATH_GRID, "name", PATH_SQUARE)
 
 
-def test_rasterstats_new_path(monkeypatch) -> None:
+def test_rasterstats_new_path() -> None:
     """Test rasterstats with new path."""
-    monkeypatch.setattr("pandarus.calculate.gen_zonal_stats", fake_zonal_stats)
-
     fp = raster_statistics(PATH_GRID, "name", PATH_RANGE_RASTER, compress=False)
     assert "rasterstats" in fp
     assert ".json" in fp
@@ -61,10 +53,8 @@ def test_rasterstats_new_path(monkeypatch) -> None:
     os.remove(fp)
 
 
-def test_rasterstats(monkeypatch, tmpdir) -> None:
+def test_rasterstats(tmpdir) -> None:
     """Test rasterstats with output path."""
-    monkeypatch.setattr("pandarus.calculate.gen_zonal_stats", fake_zonal_stats)
-
     fp = os.path.join(tmpdir, "test.json")
     result = raster_statistics(
         PATH_GRID, "name", PATH_RANGE_RASTER, output=fp, compress=False
@@ -75,10 +65,17 @@ def test_rasterstats(monkeypatch, tmpdir) -> None:
         result = json.load(f)
 
         expected = [
-            ["grid cell 0", 0],
-            ["grid cell 1", 1],
-            ["grid cell 2", 2],
-            ["grid cell 3", 3],
+            [
+                "grid cell 0",
+                {
+                    "properties": {
+                        "min": 30.0,
+                        "max": 47.0,
+                        "mean": 38.29999923706055,
+                        "count": 10.0,
+                    }
+                },
+            ],
         ]
 
         assert result["metadata"].keys() == {"vector", "raster", "when"}
@@ -97,10 +94,8 @@ def test_rasterstats(monkeypatch, tmpdir) -> None:
         assert result["data"] == expected
 
 
-def test_rasterstats_overwrite_existing(monkeypatch, tmpdir) -> None:
+def test_rasterstats_overwrite_existing(tmpdir) -> None:
     """Test rasterstats overwriting existing file."""
-    monkeypatch.setattr("pandarus.calculate.gen_zonal_stats", fake_zonal_stats)
-
     fp = os.path.join(tmpdir, "test.json")
 
     with open(fp, "w", encoding="UTF-8") as f:
@@ -117,10 +112,8 @@ def test_rasterstats_overwrite_existing(monkeypatch, tmpdir) -> None:
         assert content != "Original content"
 
 
-def test_rasterstats_mismatched_crs(monkeypatch, tmpdir) -> None:
+def test_rasterstats_mismatched_crs(tmpdir) -> None:
     """Test rasterstats with mismatched CRS."""
-    monkeypatch.setattr("pandarus.calculate.gen_zonal_stats", fake_zonal_stats)
-
     fp = os.path.join(tmpdir, "test.json")
     with pytest.warns(UserWarning):
         raster_statistics(PATH_GRID, "name", PATH_DEM, output=fp)

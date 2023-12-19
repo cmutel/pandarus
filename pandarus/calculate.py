@@ -7,7 +7,9 @@ from functools import partial
 
 import fiona
 import rasterio
+from exactextract import exact_extract
 from fiona.crs import CRS
+from rasterstats.io import read_features
 from shapely.geometry import mapping, shape
 
 from .conversion import check_type
@@ -16,7 +18,6 @@ from .geometry import get_remaining
 from .intersections import intersection_dispatcher
 from .maps import Map
 from .projection import project
-from .rasters import gen_zonal_stats
 
 WGS84 = CRS.from_string("+datum=WGS84 +ellps=WGS84 +no_defs +proj=longlat")
 
@@ -51,7 +52,6 @@ def raster_statistics(
     band=1,
     compress=True,
     fiona_kwargs=None,
-    **kwargs,
 ):
     """Create statistics by matching ``raster`` against each spatial unit in
     ``self.from_map``.
@@ -127,13 +127,6 @@ def raster_statistics(
     vector, v_metadata = get_map(vector_fp, identifying_field, fiona_kwargs)
     assert check_type(raster) == "raster"
 
-    with rasterio.open(raster) as r:
-        raster_crs = r.crs.to_string()
-        meta = r.meta
-
-    if vector.crs != raster_crs:
-        warnings.warn(MISMATCHED_CRS.format(vector.crs, raster_crs))
-
     if not output:
         dirpath = get_appdirs_path("rasterstats")
         output = os.path.join(dirpath, f"{vector.hash}-{sha256(raster)}-{band}.json")
@@ -141,11 +134,17 @@ def raster_statistics(
     if os.path.exists(output):
         os.remove(output)
 
-    pcw = meta["height"] < 5000 and meta["width"] < 10000
+    with rasterio.open(raster) as r:
+        v = next(read_features(vector_fp))
+        if vector.crs != r.crs.to_string():
+            warnings.warn(MISMATCHED_CRS.format(vector.crs, r.crs.to_string()))
 
-    stats_generator = gen_zonal_stats(
-        vector_fp, raster, band=band, percent_cover_weighting=pcw, **kwargs
-    )
+        stats_generator = exact_extract(
+            rast=r,
+            vec=v,
+            ops=("min", "max", "mean", "count"),
+        )
+
     mapping_dict = vector.get_fieldnames_dictionary()
     results = [(mapping_dict[index], row) for index, row in enumerate(stats_generator)]
 

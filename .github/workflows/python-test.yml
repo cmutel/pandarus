@@ -20,6 +20,10 @@ on:
       - ".gitignore"
   workflow_dispatch: # also allow manual trigger, for testing purposes
 
+defaults:
+  run:
+    shell: bash -l {0}
+
 jobs:
   build:
     name: Python ${{ matrix.python-version }} on ${{ matrix.os }}
@@ -34,10 +38,14 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v4
+      - name: Setup conda
+        uses: conda-incubator/setup-miniconda@v3
         with:
           python-version: ${{ matrix.python-version }}
+          environment-file: .github/python_test_env.yml
+
+      - name: Install GEOS
+        run: sudo apt-get install -y libgeos-dev
 
       - name: Install package
         run: pip install .[test]
