@@ -8,10 +8,12 @@ from . import PATH_DATA
 
 def test_hashing() -> None:
     """Test hashing function."""
-    assert (
-        sha256(os.path.join(PATH_DATA, "testfile.hash"))
-        == "d2adeda32326a6576b73f9f387d75798d5bd6f0b4d385d36684fdb7d205a0ab0"
-    )
+    if os.name == "nt":
+        expected = "703734a71a2252ed9cabfeb5ddc4aeeb6c96becb720382f1edca0c87472bacef"
+    else:
+        expected = "d2adeda32326a6576b73f9f387d75798d5bd6f0b4d385d36684fdb7d205a0ab0"
+
+    assert sha256(os.path.join(PATH_DATA, "testfile.hash")) == expected
 
 
 def test_json_exporting_uncompressed(tmpdir) -> None:
