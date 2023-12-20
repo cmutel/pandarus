@@ -26,9 +26,10 @@ def test_chunker():
 
 def test_worker_init(tmpdir):
     """Test the worker init function."""
-    _, lq = logger_init(tmpdir)
+    ql, lq = logger_init(tmpdir)
     worker_init(lq)
     assert os.listdir(tmpdir)
+    ql.stop()
 
 
 def test_get_jobs():
