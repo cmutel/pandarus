@@ -11,6 +11,7 @@ from shapely.geometry import (
 )
 from shapely.ops import unary_union
 
+from .errors import IncompatibleTypesError
 from .projection import project
 
 kind_mapping = {
@@ -22,10 +23,6 @@ kind_mapping = {
     "Point": "point",
     "MultiPoint": "point",
 }
-
-
-class IncompatibleTypes(Exception):
-    """Geometry comparison across geometry types is meaningless"""
 
 
 def clean(geom):
@@ -178,7 +175,7 @@ def get_remaining(original, geoms, to_meters=True):
     proj_func = project if to_meters and kind != "point" else lambda x: x
 
     if geoms and {kind_mapping[g.geom_type] for g in geoms} != {kind}:
-        raise IncompatibleTypes
+        raise IncompatibleTypesError
 
     actual = get_measure(proj_func(original))
     if geoms:

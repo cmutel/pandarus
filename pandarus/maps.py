@@ -8,12 +8,9 @@ from fiona.crs import CRS
 from shapely.geometry import shape
 
 from .conversion import check_type
+from .errors import DuplicateFieldIDError
 from .filesystem import sha256
 from .projection import project
-
-
-class DuplicateFieldID(Exception):
-    """Field ID value is duplicated and should be unique"""
 
 
 class Map:
@@ -78,7 +75,7 @@ class Map:
             for index, obj in enumerate(self)
         }
         if len(fd.keys()) != len(set(fd.values())):
-            raise DuplicateFieldID("Given field name not unique for all records")
+            raise DuplicateFieldIDError("Given field name not unique for all records")
         return fd
 
     @property

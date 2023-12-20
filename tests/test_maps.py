@@ -7,7 +7,8 @@ from fiona.model import Feature
 from rtree import Rtree
 
 import pandarus
-from pandarus.maps import DuplicateFieldID, Map
+from pandarus.errors import DuplicateFieldIDError
+from pandarus.maps import Map
 
 from . import PATH_COUNTRIES, PATH_DUPLICATES, PATH_GRID, PATH_RASTER
 
@@ -63,7 +64,7 @@ def test_get_fieldnames_dictionary_errors() -> None:
         m.get_fieldnames_dictionary("bar")
 
     dupes = Map(PATH_DUPLICATES, "name")
-    with pytest.raises(DuplicateFieldID):
+    with pytest.raises(DuplicateFieldIDError):
         dupes.get_fieldnames_dictionary()
 
 

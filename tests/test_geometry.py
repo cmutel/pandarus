@@ -14,7 +14,8 @@ from shapely.geometry import (
 )
 
 from pandarus import Map
-from pandarus.geometry import IncompatibleTypes, clean
+from pandarus.errors import IncompatibleTypesError
+from pandarus.geometry import clean
 from pandarus.geometry import get_intersection as _get_intersection
 from pandarus.geometry import get_measure, get_remaining, recursive_geom_finder
 
@@ -677,7 +678,7 @@ def test_remaining_incompatible_types():
     """Test remaining calculation with incompatible types."""
     geom = Polygon([(0, 0), (0, 1), (1, 1), (1, 0), (0, 0)])
     other = LineString([(0, 0.5), (0, 1)])
-    with pytest.raises(IncompatibleTypes):
+    with pytest.raises(IncompatibleTypesError):
         get_remaining(geom, [other])
 
 
