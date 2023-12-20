@@ -10,7 +10,7 @@ from shapely.errors import TopologicalError
 from shapely.geometry import shape
 
 from .geometry import clean, get_intersection, kind_mapping
-from .maps import Map
+from .model import Map
 from .projection import project
 
 

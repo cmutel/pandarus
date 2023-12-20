@@ -17,4 +17,4 @@ from .calculate import (
     raster_statistics,
 )
 from .conversion import clean_raster, convert_to_vector, round_raster
-from .maps import Map
+from .model import Map

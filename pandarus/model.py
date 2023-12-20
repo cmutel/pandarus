@@ -1,4 +1,4 @@
-"""Maps utility functions for."""
+"""Pandarus model classes."""
 import os
 from functools import partial
 

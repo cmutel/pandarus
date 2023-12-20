@@ -1,4 +1,4 @@
-"""Test cases for the __maps__ module."""
+"""Test cases for the Mao class."""
 import os
 
 import fiona
@@ -8,7 +8,7 @@ from rtree import Rtree
 
 import pandarus
 from pandarus.errors import DuplicateFieldIDError
-from pandarus.maps import Map
+from pandarus.model import Map
 
 from . import PATH_COUNTRIES, PATH_DUPLICATES, PATH_GRID, PATH_RASTER
 
@@ -34,8 +34,8 @@ def test_metadata(monkeypatch) -> None:
     def fake_open(_, **others):
         return others
 
-    monkeypatch.setattr(pandarus.maps, "check_type", lambda x: "vector")
-    monkeypatch.setattr(pandarus.maps.fiona, "open", fake_open)
+    monkeypatch.setattr(pandarus.model, "check_type", lambda x: "vector")
+    monkeypatch.setattr(pandarus.model.fiona, "open", fake_open)
 
     m = Map(PATH_GRID, "name", foo="bar")
     assert m.metadata == {"foo": "bar"}

@@ -16,7 +16,7 @@ from .conversion import check_type
 from .filesystem import get_appdirs_path, json_exporter, json_importer, sha256
 from .geometry import get_remaining
 from .intersections import intersection_dispatcher
-from .maps import Map
+from .model import Map
 from .projection import project
 
 WGS84 = CRS.from_string("+datum=WGS84 +ellps=WGS84 +no_defs +proj=longlat")
