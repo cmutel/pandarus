@@ -15,10 +15,9 @@ from pandarus import (
     intersections_from_intersection,
     raster_statistics,
 )
-from pandarus.calculate import as_features
-from pandarus.filesystem import json_importer
+from pandarus.utils.io import import_json
 
-from . import (
+from ... import (
     PATH_DEM,
     PATH_GRID,
     PATH_INTER_RES,
@@ -40,7 +39,7 @@ def fake_intersection(first, second, indices=None, cpus=None, log_dir=None):
 
 def test_rasterstats_invalid() -> None:
     """Test rasterstats with invalid input."""
-    with pytest.raises(AssertionError):
+    with pytest.raises(ValueError):
         raster_statistics(PATH_GRID, "name", PATH_SQUARE)
 
 
@@ -57,7 +56,7 @@ def test_rasterstats(tmpdir) -> None:
     """Test rasterstats with output path."""
     fp = os.path.join(tmpdir, "test.json")
     result = raster_statistics(
-        PATH_GRID, "name", PATH_RANGE_RASTER, output=fp, compress=False
+        PATH_GRID, "name", PATH_RANGE_RASTER, output_file_path=fp, compress=False
     )
     assert result == fp
 
@@ -143,7 +142,7 @@ def test_rasterstats_overwrite_existing(tmpdir) -> None:
         f.write("Original content")
 
     result = raster_statistics(
-        PATH_GRID, "name", PATH_RANGE_RASTER, output=fp, compress=False
+        PATH_GRID, "name", PATH_RANGE_RASTER, output_file_path=fp, compress=False
     )
 
     assert result == fp
@@ -157,31 +156,19 @@ def test_rasterstats_mismatched_crs(tmpdir) -> None:
     """Test rasterstats with mismatched CRS."""
     fp = os.path.join(tmpdir, "test.json")
     with pytest.warns(UserWarning):
-        raster_statistics(PATH_GRID, "name", PATH_DEM, output=fp)
-
-
-def test_as_features(monkeypatch) -> None:
-    """Test as_features function."""
-    monkeypatch.setattr("pandarus.calculate.mapping", lambda x: x)
-
-    expected = {
-        "geometry": "Foo",
-        "properties": {"id": 0, "from_label": 1, "to_label": 2, "measure": 42},
-    }
-    dct = {(1, 2): {"measure": 42, "geom": "Foo"}}
-    assert next(as_features(dct)) == expected
+        raster_statistics(PATH_GRID, "name", PATH_DEM, output_file_path=fp)
 
 
 def test_intersect(monkeypatch, tmpdir) -> None:
     """Test intersect function."""
-    monkeypatch.setattr("pandarus.calculate.intersection_dispatcher", fake_intersection)
+    monkeypatch.setattr("pandarus.core.intersection_dispatcher", fake_intersection)
 
     vector_fp, data_fp = intersect(
         PATH_GRID,
         "name",
         PATH_SQUARE,
         "name",
-        dirpath=tmpdir,
+        out_dir=tmpdir,
         compress=False,
         cpus=None,
     )
@@ -226,7 +213,9 @@ def test_intersect(monkeypatch, tmpdir) -> None:
 
 def test_intersect_default_path(monkeypatch) -> None:
     """Test intersect function with default path."""
-    monkeypatch.setattr("pandarus.calculate.intersection_dispatcher", fake_intersection)
+    monkeypatch.setattr(
+        "pandarus.utils.multiprocess.intersection_dispatcher", fake_intersection
+    )
 
     vector_fp, data_fp = intersect(PATH_GRID, "name", PATH_SQUARE, "name", cpus=None)
 
@@ -241,14 +230,14 @@ def test_intersect_default_path(monkeypatch) -> None:
 
 def test_intersect_overwrite_existing(monkeypatch, tmpdir) -> None:
     """Test intersect function overwriting existing file."""
-    monkeypatch.setattr("pandarus.calculate.intersection_dispatcher", fake_intersection)
+    monkeypatch.setattr("pandarus.core.intersection_dispatcher", fake_intersection)
 
     vector_fp, data_fp = intersect(
         PATH_GRID,
         "name",
         PATH_SQUARE,
         "name",
-        dirpath=tmpdir,
+        out_dir=tmpdir,
         compress=False,
         cpus=None,
     )
@@ -263,7 +252,7 @@ def test_intersect_overwrite_existing(monkeypatch, tmpdir) -> None:
         "name",
         PATH_SQUARE,
         "name",
-        dirpath=tmpdir,
+        out_dir=tmpdir,
         compress=False,
         cpus=None,
     )
@@ -284,7 +273,7 @@ def test_calculate_remaining(tmpdir) -> None:
     area = 1 / 2 * (4e7 / 360) ** 2
 
     data_fp = calculate_remaining(
-        PATH_OUTSIDE, "name", PATH_REMAIN_RESULT, dirpath=tmpdir, compress=False
+        PATH_OUTSIDE, "name", PATH_REMAIN_RESULT, out_dir=tmpdir, compress=False
     )
 
     with open(data_fp, encoding="UTF-8") as f:
@@ -310,7 +299,7 @@ def test_calculate_remaining(tmpdir) -> None:
 def test_calculate_remaining_copmressed_fp(tmpdir) -> None:
     """Test calculate_remaining with compressed fp."""
     data_fp = calculate_remaining(
-        PATH_OUTSIDE, "name", PATH_REMAIN_RESULT, dirpath=tmpdir, compress=False
+        PATH_OUTSIDE, "name", PATH_REMAIN_RESULT, out_dir=tmpdir, compress=False
     )
     assert os.path.isfile(data_fp)
 
@@ -326,8 +315,8 @@ def test_calculate_remaining_default_path() -> None:
 
 def test_intersections_from_intersection(tmpdir) -> None:
     """Test intersections_from_intersection function."""
-    fp1, fp2 = intersections_from_intersection(PATH_INTER_RES, dirpath=tmpdir)
-    data = json_importer(fp1)
+    fp1, fp2 = intersections_from_intersection(PATH_INTER_RES, out_dir=tmpdir)
+    data = import_json(fp1)
     result = [
         # Order from geojson file
         [0, "grid cell 3", 3097248058.207057],
@@ -340,7 +329,7 @@ def test_intersections_from_intersection(tmpdir) -> None:
     assert data["metadata"]["first"].keys() == {"field", "filename", "path", "sha256"}
     assert data["metadata"]["second"].keys() == {"field", "filename", "path", "sha256"}
 
-    data = json_importer(fp2)
+    data = import_json(fp2)
     result = [
         [0, "single", 3097248058.207057],
         [1, "single", 3097719886.041353],
@@ -364,9 +353,9 @@ def test_intersections_from_intersection_default_path() -> None:
 def test_intersections_from_intersection_specify_md(tmpdir) -> None:
     """Test intersections_from_intersection with specified metadata."""
     fp1, _ = intersections_from_intersection(
-        PATH_INTER_RES, PATH_INTER_RES_MD, dirpath=tmpdir
+        PATH_INTER_RES, PATH_INTER_RES_MD, out_dir=tmpdir
     )
-    data = json_importer(fp1)
+    data = import_json(fp1)
     result = [
         # Order from geojson file
         [0, "grid cell 3", 3097248058.207057],
@@ -377,9 +366,9 @@ def test_intersections_from_intersection_specify_md(tmpdir) -> None:
     assert data["data"] == result
 
     fp1, _ = intersections_from_intersection(
-        PATH_INTER_RES, PATH_INTER_RES_DECOMP, dirpath=tmpdir
+        PATH_INTER_RES, PATH_INTER_RES_DECOMP, out_dir=tmpdir
     )
-    data = json_importer(fp1)
+    data = import_json(fp1)
     result = [
         # Order from geojson file
         [0, "grid cell 3", 3097248058.207057],
@@ -393,9 +382,9 @@ def test_intersections_from_intersection_specify_md(tmpdir) -> None:
     new_fp = os.path.join(tmpdir, "intersection_result.geojson")
 
     fp1, _ = intersections_from_intersection(
-        new_fp, PATH_INTER_RES_DECOMP, dirpath=tmpdir
+        new_fp, PATH_INTER_RES_DECOMP, out_dir=tmpdir
     )
-    data = json_importer(fp1)
+    data = import_json(fp1)
     result = [
         # Order from geojson file
         [0, "grid cell 3", 3097248058.207057],
@@ -408,13 +397,13 @@ def test_intersections_from_intersection_specify_md(tmpdir) -> None:
 
 def test_intersections_from_intersection_not_filepath(tmpdir) -> None:
     """Test intersections_from_intersection with invalid filepath."""
-    with pytest.raises(AssertionError):
+    with pytest.raises(FileNotFoundError):
         intersections_from_intersection("")
 
     shutil.copy(PATH_INTER_RES, tmpdir)
     new_fp = os.path.join(tmpdir, "intersection_result.geojson")
     with pytest.raises(ValueError):
-        intersections_from_intersection(new_fp, dirpath=tmpdir)
+        intersections_from_intersection(new_fp, out_dir=tmpdir)
 
 
 def test_intersections_from_intersection_find_metadata(tmpdir) -> None:
@@ -424,8 +413,8 @@ def test_intersections_from_intersection_find_metadata(tmpdir) -> None:
 
     shutil.copy(PATH_INTER_RES_MD, tmpdir)
 
-    fp1, _ = intersections_from_intersection(new_fp, dirpath=tmpdir)
-    data = json_importer(fp1)
+    fp1, _ = intersections_from_intersection(new_fp, out_dir=tmpdir)
+    data = import_json(fp1)
     result = [
         # Order from geojson file
         [0, "grid cell 3", 3097248058.207057],
@@ -440,8 +429,8 @@ def test_intersections_from_intersection_find_metadata(tmpdir) -> None:
 
     shutil.copy(PATH_INTER_RES_DECOMP, os.path.join(tmpdir, "intersection_result.json"))
 
-    fp1, _ = intersections_from_intersection(new_fp, dirpath=tmpdir)
-    data = json_importer(fp1)
+    fp1, _ = intersections_from_intersection(new_fp, out_dir=tmpdir)
+    data = import_json(fp1)
     result = [
         # Order from geojson file
         [0, "grid cell 3", 3097248058.207057],

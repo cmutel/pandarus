@@ -23,6 +23,7 @@ class Mock(MagicMock):
 MOCK_MODULES = [
     "affine",
     "appdirs",
+    "exactextract",
     "fiona",
     "fiona.crs",
     "numpy",
@@ -30,12 +31,10 @@ MOCK_MODULES = [
     "rtree",
     "rasterio",
     "rasterio.rio.helpers",
-    "rasterio.crs",
     "rasterio.features",
     "rasterio.warp",
     "rasterstats",
     "rasterstats.io",
-    "rasterstats.utils",
     "shapely",
     "shapely.geometry",
     "shapely.geos",
@@ -44,9 +43,9 @@ MOCK_MODULES = [
 sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
 
 # The short X.Y version.
-version = "1.0"
+version = "2.0"
 # The full version, including alpha/beta/rc tags.
-release = "1.0.1"
+release = "2.0.0"
 
 # Make sure we use this copy of Pandarus
 sys.path.insert(1, abspath(dirname(dirname(__file__))))

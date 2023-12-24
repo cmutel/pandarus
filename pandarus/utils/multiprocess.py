@@ -1,55 +1,26 @@
 """Calculate intersections between two maps."""
-import datetime
 import logging
 import math
 import multiprocessing
-import os
-from logging.handlers import QueueHandler, QueueListener
+from logging.handlers import QueueHandler
+from typing import Any, Dict, List, Optional, Tuple
 
 from shapely.errors import TopologicalError
 from shapely.geometry import shape
 
-from .geometry import clean, get_intersection, kind_mapping
-from .model import Map
-from .projection import project
+from ..errors import PoolTaskError
+from ..model import Map
+from .geometry import clean_geom, get_geom_kind, get_intersection
+from .logger import logger_init
+from .projection import project_geom
 
 
-def chunker(iterable, chunk_size):
+def chunker(iterable: List[Any], chunk_size: int) -> List[List[Any]]:
     """Split an iterable into chunks of size ``chunk_size``."""
-    for i in range(0, len(iterable), chunk_size):
-        yield list(iterable[i : i + chunk_size])
+    return [iterable[i : i + chunk_size] for i in range(0, len(iterable), chunk_size)]
 
 
-def logger_init(dirpath=None):
-    """Initialize a logger."""
-    # Adapted from http://stackoverflow.com/a/34964369/164864
-    logging_queue = multiprocessing.Queue()
-    # this is the handler for all log records
-    filepath = (
-        f"pandarus-worker-{datetime.datetime.now().strftime('%d-%B-%Y-%I-%M%p')}.log"
-    )
-    if dirpath is not None:
-        filepath = os.path.join(dirpath, filepath)
-    handler = logging.FileHandler(
-        filepath,
-        encoding="utf-8",
-    )
-    handler.setFormatter(
-        logging.Formatter("%(asctime)s %(levelname)s %(lineno)d %(message)s")
-    )
-
-    # queue_listener gets records from the queue and sends them to the handler
-    queue_listener = QueueListener(logging_queue, handler)
-    queue_listener.start()
-
-    logger = logging.getLogger()
-    logger.setLevel(logging.INFO)
-    logger.addHandler(handler)
-
-    return queue_listener, logging_queue
-
-
-def worker_init(logging_queue):
+def worker_init(logging_queue: multiprocessing.Queue) -> None:
     """Initialize a worker."""
     # Needed to pass logging messages from child processes to a queue
     # handler which in turn passes them onto queue listener
@@ -59,17 +30,26 @@ def worker_init(logging_queue):
     logger.addHandler(queue_handler)
 
 
-def get_jobs(map_size):
+def get_jobs(
+    map_size: int,
+    max_jobs: int = 200,
+    max_chunk_size: int = 20,
+) -> Tuple[int, int]:
     """Get number of jobs and chunk size for multiprocessing."""
     # Want a reasonable chunk size
     # But also want a maximum of 200 jobs
     # Both numbers picked more or less at random...
-    chunk_size = int(max(20, map_size / 200))
+    chunk_size = int(max(max_chunk_size, map_size / max_jobs))
     num_jobs = int(math.ceil(map_size / float(chunk_size)))
     return chunk_size, num_jobs
 
 
-def intersection_worker(from_map, from_objs, to_map, worker_id=1):
+def intersection_worker(
+    from_map: str,
+    from_objs: Optional[List[int]],
+    to_map: str,
+    worker_id: int = 1,
+) -> Dict[Tuple[int, str], Any]:
     """Multiprocessing worker for map matching"""
     logging.info(
         """
@@ -87,10 +67,10 @@ def intersection_worker(from_map, from_objs, to_map, worker_id=1):
         worker_id,
     )
 
-    results = {}
+    results: Dict[Tuple[int, str], Any] = {}
 
     to_map = Map(to_map)
-    if to_map.geometry not in ("Polygon", "MultiPolygon"):
+    if to_map.geom_type not in ("Polygon", "MultiPolygon"):
         raise ValueError("`to_map` geometry must be polygons")
     rtree_index = to_map.create_rtree_index()
 
@@ -98,7 +78,7 @@ def intersection_worker(from_map, from_objs, to_map, worker_id=1):
 
     from_map = Map(from_map)
     try:
-        kind = kind_mapping[from_map.geometry]
+        kind = get_geom_kind(from_map)
     except KeyError as exc:
         raise ValueError(f"No valid geometry type in map {from_map}") from exc
 
@@ -111,11 +91,11 @@ def intersection_worker(from_map, from_objs, to_map, worker_id=1):
 
     for from_index, from_obj in from_gen:
         try:
-            to_shape = project(shape(from_obj["geometry"]), from_map.crs, "")
-            geom = clean(to_shape)
+            to_shape = project_geom(shape(from_obj["geometry"]), from_map.crs, "")
+            geom = clean_geom(to_shape)
 
             for k, v in get_intersection(
-                geom, kind, to_map, rtree_index.intersection(geom.bounds), project
+                geom, kind, to_map, rtree_index.intersection(geom.bounds), project_geom
             ).items():
                 results[(from_index, k)] = v
 
@@ -129,7 +109,13 @@ def intersection_worker(from_map, from_objs, to_map, worker_id=1):
     return results
 
 
-def intersection_dispatcher(from_map, to_map, from_objs=None, cpus=None, log_dir=None):
+def intersection_dispatcher(
+    from_map: str,
+    to_map: str,
+    from_objs: Optional[List[int]] = None,
+    cpus: Optional[int] = None,
+    log_dir: Optional[str] = None,
+) -> Dict[Tuple[int, str], Any]:
     """Dispatch intersection workers."""
     if not cpus:
         return intersection_worker(from_map, None, to_map)
@@ -139,7 +125,7 @@ def intersection_dispatcher(from_map, to_map, from_objs=None, cpus=None, log_dir
         ids = from_objs
     else:
         map_size = len(Map(from_map))
-        ids = range(map_size)
+        ids = list(range(map_size))
 
     chunk_size, num_jobs = get_jobs(map_size)
 
@@ -160,32 +146,25 @@ def intersection_dispatcher(from_map, to_map, from_objs=None, cpus=None, log_dir
         num_jobs,
     )
 
-    results = {}
+    results: Dict[Tuple[int, str], Any] = {}
 
-    def callback_func(data):
+    def callback_func(data: Dict[Tuple[int, str], Any]) -> None:
         results.update(data)
 
     with multiprocessing.Pool(
         cpus or multiprocessing.cpu_count(), worker_init, [logging_queue]
     ) as pool:
-        arguments = [
-            (from_map, chunk, to_map, index)
-            for index, chunk in enumerate(chunker(ids, chunk_size))
+        function_results = [
+            pool.apply_async(intersection_worker, argument, callback=callback_func)
+            for argument in [
+                (from_map, chunk, to_map, index)
+                for index, chunk in enumerate(chunker(ids, chunk_size))
+            ]
         ]
-
-        function_results = []
-
-        for argument_set in arguments:
-            function_results.append(
-                pool.apply_async(
-                    intersection_worker, argument_set, callback=callback_func
-                )
-            )
-        for fr in function_results:
-            fr.wait()
+        list(map(lambda fr: fr.wait(), function_results))
 
         if any(not fr.successful() for fr in function_results):
-            raise ValueError("Couldn't complete Pandarus task")
+            raise PoolTaskError
 
     queue_listener.stop()
 

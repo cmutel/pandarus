@@ -7,9 +7,9 @@ import numpy as np
 from shapely import MultiPolygon
 
 from pandarus import intersect
-from pandarus.conversion import round_to_x_significant_digits
+from pandarus.utils.conversion import round_to_x_significant_digits
 
-from . import (
+from .. import (
     PATH_GRID,
     PATH_GRID_INTS,
     PATH_GRID_PROJ,
@@ -31,7 +31,7 @@ def test_intersection_polygon(tmpdir):
         "name",
         PATH_GRID,
         "name",
-        dirpath=tmpdir,
+        out_dir=tmpdir,
         compress=False,
         log_dir=tmpdir,
     )
@@ -101,7 +101,7 @@ def test_intersection_polygon_integer_indices(tmpdir):
         "name",
         PATH_GRID_INTS,
         "name",
-        dirpath=tmpdir,
+        out_dir=tmpdir,
         compress=False,
         log_dir=tmpdir,
     )
@@ -172,7 +172,7 @@ def test_intersection_polygon_projection(tmpdir):
         "name",
         PATH_SQUARE_PROJ,
         "name",
-        dirpath=tmpdir,
+        out_dir=tmpdir,
         compress=False,
         log_dir=tmpdir,
     )
@@ -243,7 +243,7 @@ def test_intersection_line(tmpdir):
         "name",
         PATH_GRID,
         "name",
-        dirpath=tmpdir,
+        out_dir=tmpdir,
         compress=False,
         log_dir=tmpdir,
     )
@@ -318,7 +318,7 @@ def test_intersection_line_projection(tmpdir):
         "name",
         PATH_GRID_PROJ,
         "name",
-        dirpath=tmpdir,
+        out_dir=tmpdir,
         compress=False,
         log_dir=tmpdir,
     )
@@ -406,7 +406,7 @@ def test_intersection_point(tmpdir):
         "name",
         PATH_GRID,
         "name",
-        dirpath=tmpdir,
+        out_dir=tmpdir,
         compress=False,
         log_dir=tmpdir,
     )
@@ -469,7 +469,7 @@ def test_intersection_point_projection(tmpdir):
         "name",
         PATH_GRID_PROJ,
         "name",
-        dirpath=tmpdir,
+        out_dir=tmpdir,
         compress=False,
         log_dir=tmpdir,
     )
