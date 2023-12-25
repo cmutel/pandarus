@@ -18,59 +18,61 @@ def test_hashing() -> None:
 
 def test_json_exporting_uncompressed(tmpdir) -> None:
     """Test exporting to JSON uncompressed."""
-    new_fp = os.path.join(tmpdir, "testfile")
-    fp = export_json({"d": [1, 2, 3], "e": {"foo": "bar"}}, new_fp, compress=False)
-    assert fp
-    assert not fp.endswith(".bz2")
-    assert os.path.isfile(fp)
+    new_file_path = os.path.join(tmpdir, "testfile")
+    file_path = export_json(
+        {"d": [1, 2, 3], "e": {"foo": "bar"}}, new_file_path, compress=False
+    )
+    assert file_path
+    assert not file_path.endswith(".bz2")
+    assert os.path.isfile(file_path)
 
 
 def test_json_exporting_compressed(tmpdir) -> None:
     """Test exporting to JSON compressed."""
-    new_fp = os.path.join(tmpdir, "testfile")
-    fp = export_json([1, 2, 3], new_fp, True)
-    assert fp
-    assert fp.endswith(".bz2")
-    assert os.path.isfile(fp)
+    new_file_path = os.path.join(tmpdir, "testfile")
+    file_path = export_json([1, 2, 3], new_file_path, True)
+    assert file_path
+    assert file_path.endswith(".bz2")
+    assert os.path.isfile(file_path)
 
 
 def test_json_importing_uncompressed() -> None:
     """Test importing JSON uncompressed."""
-    fp = os.path.join(PATH_DATA, "json_test.json")
-    assert import_json(fp) == {"d": [1, 2, 3], "e": {"foo": "bar"}}
+    file_path = os.path.join(PATH_DATA, "json_test.json")
+    assert import_json(file_path) == {"d": [1, 2, 3], "e": {"foo": "bar"}}
 
 
 def test_json_importing_compressed() -> None:
     """Test importing JSON compressed."""
-    fp = os.path.join(PATH_DATA, "json_test.json.bz2")
-    assert import_json(fp) == {"d": [1, 2, 3], "e": {"foo": "bar"}}
+    file_path = os.path.join(PATH_DATA, "json_test.json.bz2")
+    assert import_json(file_path) == {"d": [1, 2, 3], "e": {"foo": "bar"}}
 
 
 def test_json_roundtrip_uncompressed(tmpdir) -> None:
     """Test roundtrip of exporting and import of JSON uncompressed."""
     data = {"d": [1, 2, 3], "e": {"foo": "bar"}}
-    new_fp = os.path.join(tmpdir, "testfile")
+    new_file_path = os.path.join(tmpdir, "testfile")
 
-    fp = export_json(data, new_fp, compress=False)
-    assert import_json(fp) == data
+    file_path = export_json(data, new_file_path, compress=False)
+    assert import_json(file_path) == data
 
 
 def test_json_roundtrip_compressed(tmpdir) -> None:
     """Test roundtrip of exporting and import of JSON compressed."""
     data = {"d": [1, 2, 3], "e": {"foo": "bar"}}
-    new_fp = os.path.join(tmpdir, "testfile")
+    new_file_path = os.path.join(tmpdir, "testfile")
 
-    fp = export_json(data, new_fp)
-    assert import_json(fp) == data
+    file_path = export_json(data, new_file_path)
+    assert import_json(file_path) == data
 
 
 def test_appdirs_path() -> None:
     """Test getting appdirs path."""
-    dp = get_appdirs_path("test-dir")
-    assert os.path.exists(dp)
-    assert os.path.isdir(dp)
-    assert "test-dir" in dp
-    assert "pandarus" in dp
+    dir_path = get_appdirs_path("test-dir")
+    assert os.path.exists(dir_path)
+    assert os.path.isdir(dir_path)
+    assert "test-dir" in dir_path
+    assert "pandarus" in dir_path
 
-    os.rmdir(dp)
-    assert not os.path.exists(dp)
+    os.rmdir(dir_path)
+    assert not os.path.exists(dir_path)

@@ -1,17 +1,13 @@
 """Test cases for the __intersections_ module."""
-import os
-
 import numpy as np
 import pytest
 from shapely.geometry import Polygon
 
-from pandarus.utils.logger import logger_init
 from pandarus.utils.multiprocess import (
     chunker,
     get_jobs,
     intersection_dispatcher,
     intersection_worker,
-    worker_init,
 )
 
 from .. import PATH_GC, PATH_GRID, PATH_POINT, PATH_SQUARE
@@ -22,14 +18,6 @@ def test_chunker() -> None:
     numbers = list(range(10))
     expected = [[0, 1, 2, 3], [4, 5, 6, 7], [8, 9]]
     assert chunker(numbers, 4) == expected
-
-
-def test_worker_init(tmpdir) -> None:
-    """Test the worker init function."""
-    ql, lq = logger_init(tmpdir)
-    worker_init(lq)
-    assert os.listdir(tmpdir)
-    ql.stop()
 
 
 def test_get_jobs() -> None:
