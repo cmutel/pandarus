@@ -28,7 +28,7 @@ jobs:
   build:
     name: Python ${{ matrix.python-version }} on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 10
+    timeout-minutes: 15  # MacOS 3.8 needs more time to build wheels
 
     strategy:
       matrix:
