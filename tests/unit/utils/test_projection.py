@@ -6,7 +6,7 @@ from shapely.geometry import (
     MultiPolygon,
 )
 
-from pandarus.projection import WGS84, project, wgs84
+from pandarus.utils.projection import WGS84, project_geom, wgs84
 
 
 def test_projection() -> None:
@@ -20,7 +20,7 @@ def test_projection() -> None:
             ),
         ]
     )
-    assert project(given, WGS84, WGS84) == given
+    assert project_geom(given, WGS84, WGS84) == given
 
 
 def test_wgs84_none() -> None:

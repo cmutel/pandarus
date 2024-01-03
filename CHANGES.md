@@ -1,5 +1,13 @@
 # Changes
 
+### 2.0.0 (2023-12-24)
+
+- Upgrade to python 3.8+
+- Refactor pandarus
+- Use extactextract for raster stats
+- Add new Exceptions
+- Switch to GitHub Actions
+
 ### 1.0.4 (2017-05-04)
 
 - Include LICENSE file in manifest

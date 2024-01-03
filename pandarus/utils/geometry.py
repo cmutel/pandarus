@@ -1,4 +1,6 @@
-"""Geometry functions for Pandarus."""
+"""Geometry utilities for Pandarus."""
+from typing import Any, Dict, Iterator, List, Optional
+
 from shapely.geometry import (
     GeometryCollection,
     LinearRing,
@@ -9,26 +11,15 @@ from shapely.geometry import (
     Point,
     Polygon,
 )
+from shapely.geometry.base import BaseGeometry
 from shapely.ops import unary_union
 
-from .projection import project
-
-kind_mapping = {
-    "Polygon": "polygon",
-    "MultiPolygon": "polygon",
-    "LineString": "line",
-    "MultiLineString": "line",
-    "LinearRing": "line",
-    "Point": "point",
-    "MultiPoint": "point",
-}
+from ..errors import IncompatibleTypesError
+from ..model import Map
+from .projection import project_geom
 
 
-class IncompatibleTypes(Exception):
-    """Geometry comparison across geometry types is meaningless"""
-
-
-def clean(geom):
+def clean_geom(geom: BaseGeometry) -> BaseGeometry:
     """Clean invalid geometries using ``buffer(0)`` trick.
 
     ``geom`` is a shapely geometry; returns a shapely geometry."""
@@ -37,7 +28,7 @@ def clean(geom):
     return geom if geom.is_valid else GeometryCollection([])
 
 
-def recursive_geom_finder(geom, kind):
+def recursive_geom_finder(geom: BaseGeometry, kind: str) -> Optional[BaseGeometry]:
     """Return all elements of ``geom`` that are of ``kind``. For example, return all
     linestrings in a geometry collection.
 
@@ -47,14 +38,15 @@ def recursive_geom_finder(geom, kind):
 
     Returns either a ``MultiPoint``, ``MultiLineString``, or ``MultiPolygon``. Returns
     ``None`` is no valid element is found."""
-    assert kind in ("line", "point", "polygon"), "Invalid ``kind``"
+    if kind not in ("line", "point", "polygon"):
+        raise ValueError(f"Invalid kind: {kind}.")
 
-    TYPES = {
+    tpyes_map = {
         "line": (LineString, LinearRing, MultiLineString),
         "point": (Point, MultiPoint),
         "polygon": (Polygon, MultiPolygon),
     }
-    CONTAINER = {
+    container_map = {
         "line": MultiLineString,
         "point": MultiPoint,
         "polygon": MultiPolygon,
@@ -63,24 +55,30 @@ def recursive_geom_finder(geom, kind):
     def recurse(geom, types):
         if isinstance(geom, types):
             yield geom
-        elif isinstance(geom, GeometryCollection):
+        if isinstance(geom, GeometryCollection):
             for elem in geom.geoms:
                 for val in recurse(elem, types):
                     yield val
-        else:
-            yield None
+        yield None
 
-    elements = [elem for elem in recurse(geom, TYPES[kind]) if elem is not None]
+    elements = [elem for elem in recurse(geom, tpyes_map[kind]) if elem is not None]
     if not elements:
         return None
 
-    geom = clean(unary_union(elements))
+    geom = clean_geom(unary_union(elements))
     if "Multi" not in geom.geom_type:
-        geom = CONTAINER[kind]([geom])
+        geom = container_map[kind]([geom])
     return geom
 
 
-def get_intersection(obj, kind, collection, indices, to_meters=True, return_geoms=True):
+def get_intersection(
+    obj: BaseGeometry,
+    kind: str,
+    collection: Map,
+    indices: Iterator[int],
+    to_meters: bool = True,
+    return_geoms: bool = True,
+) -> Dict[int, Dict[str, Any]]:
     """Return a dictionary describing the intersection of ``obj`` with
     ``collection[indices]``.
 
@@ -89,8 +87,8 @@ def get_intersection(obj, kind, collection, indices, to_meters=True, return_geom
     returned.
     ``collection`` is a ``Map``.
     ``indices`` is an iterator of integers; indices into ``collection``.
-    ``projection_func`` is a function to project the results to a new CRS before taking
-    area, etc. If falsey, no projection will take place.
+    ``to_meters`` a boolean that determines if resulting groms should be projected
+    to meters.
     ``return_geoms``: Return intersected geometries in addition to area, etc.
 
     Assumes that the polygons in ``collection`` do not overlap.
@@ -112,27 +110,43 @@ def get_intersection(obj, kind, collection, indices, to_meters=True, return_geom
     development and computation time, and total error should be less than 10 percent.
 
     """
-    assert kind in ("line", "point", "polygon"), "Invalid ``kind``"
+    if kind not in ("line", "point", "polygon"):
+        raise ValueError(f"Invalid kind: {kind}.")
 
-    proj_func = project if to_meters else lambda x: x
-    obj = clean(obj)
+    proj_func = project_geom if to_meters else lambda x: x
+    obj = clean_geom(obj)
 
-    results = {}
+    results: Dict[int, Dict[str, Any]] = {}
 
     for index, geom in collection.iter_latlong(indices):
         if not geom.intersects(obj):
             continue
-        g = recursive_geom_finder(clean(obj.intersection(geom)), kind)
+        g = recursive_geom_finder(clean_geom(obj.intersection(geom)), kind)
         if not g:
             continue
-        results[index] = {"measure": get_measure(proj_func(g), kind)}
+        results[index] = {"measure": get_geom_measure(proj_func(g))}
         if return_geoms:
             results[index]["geom"] = g
 
     return results
 
 
-def get_measure(geom, kind=None):
+def get_geom_kind(geom: BaseGeometry) -> str:
+    """Get the kind of geometry (polygon, line, or point)."""
+    kind_mapping = {
+        "Polygon": "polygon",
+        "MultiPolygon": "polygon",
+        "LineString": "line",
+        "MultiLineString": "line",
+        "LinearRing": "line",
+        "Point": "point",
+        "MultiPoint": "point",
+    }
+
+    return kind_mapping[geom.geom_type]
+
+
+def get_geom_measure(geom: BaseGeometry, kind: Optional[str] = None) -> float:
     """Get area, length, or number of points in ``geom``.
 
     * ``geom``: A shapely geom.
@@ -143,8 +157,9 @@ def get_measure(geom, kind=None):
     If ``kind`` is not one of the allowed types, raises ``ValueError``.
 
     Returns a float."""
+
     if kind is None:
-        kind = kind_mapping.get(geom.geom_type)
+        kind = get_geom_kind(geom)
 
     if kind == "polygon":
         return geom.area
@@ -153,12 +168,17 @@ def get_measure(geom, kind=None):
     if kind == "point":
         if geom.geom_type == "MultiPoint":
             return float(len(geom.geoms))
-        elif geom.geom_type == "Point":
+        if geom.geom_type == "Point":
             return 1.0
-    raise ValueError(f"No applicable measure for geom: {geom}")
+
+    raise ValueError(f"No applicable measure for geom of kind {kind}")
 
 
-def get_remaining(original, geoms, to_meters=True):
+def get_geom_remaining_measure(
+    original: BaseGeometry,
+    geoms: List[BaseGeometry],
+    to_meters: bool = True,
+) -> float:
     """Get the remaining area/length/number from ``original`` after subtracting
     the union of ``geoms``.
 
@@ -171,21 +191,18 @@ def get_remaining(original, geoms, to_meters=True):
 
     Returns a float."""
     try:
-        kind = kind_mapping[original.geom_type]
-    except KeyError:
-        raise ValueError(f"Can't use this geometry type: {original.geom_type}")
+        kind = get_geom_kind(original)
+    except KeyError as exc:
+        raise ValueError(f"Can't use this geometry type: {original.geom_type}") from exc
 
-    if not to_meters or kind == "point":
-        proj_func = lambda x: x
-    else:
-        proj_func = project
+    proj_func = project_geom if to_meters and kind != "point" else lambda x: x
 
-    if geoms and {kind_mapping[g.geom_type] for g in geoms} != {kind}:
-        raise IncompatibleTypes
+    if geoms and {get_geom_kind(g) for g in geoms} != {kind}:
+        raise IncompatibleTypesError
 
-    actual = get_measure(proj_func(original))
+    actual = get_geom_measure(proj_func(original))
     if geoms:
-        union_total = get_measure(proj_func(unary_union(geoms)), kind)
-        individ_total = sum(get_measure(proj_func(geom), kind) for geom in geoms)
+        union_total = get_geom_measure(proj_func(unary_union(geoms)), kind)
+        individ_total = sum(get_geom_measure(proj_func(geom), kind) for geom in geoms)
         return (actual - union_total) * (individ_total / union_total)
     return actual

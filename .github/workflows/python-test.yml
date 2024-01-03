@@ -20,24 +20,58 @@ on:
       - ".gitignore"
   workflow_dispatch: # also allow manual trigger, for testing purposes
 
+defaults:
+  run:
+    shell: bash -l {0}
+
 jobs:
   build:
     name: Python ${{ matrix.python-version }} on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
 
     strategy:
       matrix:
         python-version: ["3.8", "3.9", "3.10", "3.11", "3.12"]
-        os: [ubuntu-latest]
+        os: [ubuntu-latest, macos-latest, windows-latest]
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v4
+      - name: Setup Mambaforge
+        uses: conda-incubator/setup-miniconda@v3
         with:
+          miniforge-variant: Mambaforge
+          miniforge-version: latest
+          activate-environment: anaconda-client-env
+          use-mamba: true
           python-version: ${{ matrix.python-version }}
+
+      - name: Get Date
+        id: get-date
+        run: echo "today=$(/bin/date -u '+%Y%m%d')" >> $GITHUB_OUTPUT
+        shell: bash
+
+      - name: Cache Conda env
+        uses: actions/cache@v3
+        with:
+          path: ~/conda/envs
+          key:
+            conda-${{ runner.os }}--${{ runner.arch }}--${{
+            steps.get-date.outputs.today }}-${{
+            hashFiles('.github/python_test_env.yml') }}-${{ env.CACHE_NUMBER
+            }}
+        env:
+          # Increase this value to reset cache if .github/python_test_env.yml has not changed
+          CACHE_NUMBER: 0
+        id: cache
+
+      - name: Update environment
+        run:
+          mamba env update -n anaconda-client-env -f
+          .github/python_test_env.yml
+        if: steps.cache.outputs.cache-hit != 'true'
 
       - name: Install package
         run: pip install .[test]

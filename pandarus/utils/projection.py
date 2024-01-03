@@ -1,7 +1,5 @@
-"""Projection utilities for pandarus package."""
-from functools import partial
-
-import pyproj
+"""Project utilities for Pandarus."""
+from pyproj import Proj, Transformer
 from shapely.geometry.base import BaseGeometry
 from shapely.ops import transform
 
@@ -22,7 +20,7 @@ def wgs84(crs: str):
     return crs
 
 
-def project(geom: BaseGeometry, from_proj: str = None, to_proj: str = None):
+def project_geom(geom: BaseGeometry, from_proj: str = None, to_proj: str = None):
     """
     Project a ``shapely`` geometry, and returns a new geometry of the same type from the
     transformed coordinates.
@@ -47,12 +45,12 @@ def project(geom: BaseGeometry, from_proj: str = None, to_proj: str = None):
     else:
         to_proj = wgs84(to_proj)
 
-    to_pyproj, from_pyproj = pyproj.Proj(to_proj), pyproj.Proj(from_proj)
+    to_pyproj, from_pyproj = Proj(to_proj), Proj(from_proj)
 
     if (to_pyproj == from_pyproj) or (
         to_pyproj.crs.is_geographic and from_pyproj.crs.is_geographic
     ):
         return geom
 
-    projection_func = partial(pyproj.transform, from_pyproj, to_pyproj)
-    return transform(projection_func, geom)
+    transformer = Transformer.from_proj(from_pyproj, to_pyproj)
+    return transform(transformer.transform, geom)

@@ -30,7 +30,7 @@ The main capability of the Pandarus library is to efficiently and correctly inte
 .. image:: images/two-vectors.png
     :align: center
 
-.. autofunction:: pandarus.intersect
+.. autofunction:: pandarus.core.intersect
     :noindex:
 
 Calculating areas
@@ -53,7 +53,7 @@ Lines and points that intersect two vector features
 .. image:: images/remaining-lines.png
     :align: center
 
-When calculating the lengths of lines (or number of points) remaining outside a intersected areas, we have the problem that lines can lie along the edge of two vector features, and hence the section of the line would be counted twice. If therefore need to adjust our formula for calculating the lengths (or number of points) outside an intersected area. The key insight is that we don't want the *actual* remaining area, but the right *relative* remaining area - these value are all normalized to one anyway.
+When calculating the lengths of lines (or number of points) remaining outside an intersected area, we have the problem that lines can lie along the edge of two vector features, and hence the section of the line would be counted twice. If we therefore need to adjust our formula for calculating the lengths (or number of points) outside an intersected area. The key insight is that we don't want the *actual* remaining area, but the right *relative* remaining area - these values are all normalized to one anyway.
 
 The formula for allocating lengths is therefore:
 
@@ -77,13 +77,13 @@ Calculating area outside of intersections
 
 For many regionalized methodologies, it is important to know how much area/length from one spatial dataset lies outside a second spatial dataset entirely. The function ``calculate_remaining`` calculates these remaining areas.
 
-.. autofunction:: pandarus.calculate_remaining
+.. autofunction:: pandarus.core.calculate_remaining
     :noindex:
 
 Using intersections spatial dataset as a new spatial scale
 ----------------------------------------------------------
 
-.. autofunction:: pandarus.intersections_from_intersection
+.. autofunction:: pandarus.core.intersections_from_intersection
     :noindex:
 
 Calculating raster statistics against a vector dataset
@@ -96,7 +96,7 @@ The vector and raster file should have the same coordinate reference system. No 
 .. image:: images/rasterstats.png
     :align: center
 
-.. autofunction:: pandarus.raster_statistics
+.. autofunction:: pandarus.core.raster_statistics
     :noindex:
 
 Manipulating raster files
@@ -104,13 +104,13 @@ Manipulating raster files
 
 Pandarus provides some utility functions to help manage and manipulate raster files. Raster files are often provided with incorrect or missing metadata, and the main pandarus capabilities only work on vector files. Unfortunately, however, many raster files require manual fixes outside of these functions.
 
-.. autofunction:: pandarus.clean_raster
+.. autofunction:: pandarus.core.clean_raster
     :noindex:
 
-.. autofunction:: pandarus.round_raster
+.. autofunction:: pandarus.core.round_raster
     :noindex:
 
-.. autofunction:: pandarus.convert_to_vector
+.. autofunction:: pandarus.core.convert_to_vector
     :noindex:
 
 FAQ
@@ -134,13 +134,13 @@ However, it is easy to run into errors if geospatial libraries like fiona, raste
 
 .. code-block:: bash
 
-    conda create -n <virtualenv name> python=3.6
+    conda create -n <virtualenv name> python=3.8
     activate <virtualenv name>  # Could also be source activate <virtualenv name>
     conda install -c conda-forge -c cmutel pandarus
 
 You should replace `<virtualenv name>` with a name you will remember.
 
-Pandarus is only compatible with Python >= 3.5. Source code is on `GitHub <https://github.com/cmutel/pandarus>`__.
+Pandarus is only compatible with Python >= 3.8. Source code is on `GitHub <https://github.com/cmutel/pandarus>`__.
 
 Requirements
 ------------
@@ -148,6 +148,7 @@ Requirements
 Pandarus uses the following libraries:
 
     * `appdirs <https://pypi.python.org/pypi/appdirs>`__
+    * `exactextract https://github.com/isciences/exactextract.git`__
     * `fiona <http://toblerity.org/fiona/index.html>`__
     * `pyproj <https://code.google.com/p/pyproj/>`__
     * `Rtree <http://toblerity.org/rtree/>`__
@@ -164,6 +165,6 @@ Technical Reference
 ===================
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 4
 
    technical
