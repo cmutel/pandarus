@@ -5,6 +5,7 @@ import os
 import tempfile
 import warnings
 from functools import partial
+from math import isfinite
 from typing import Dict, Optional, Tuple, Union
 
 import fiona
@@ -397,8 +398,8 @@ def unwrap_row(row: Union[dict, list, tuple]) -> dict:
         raise ValueError(f"Can't process data row `{row}`")
 
     first = row[0]
-    if isinstance(first, dict) and list(first.keys()) == ['properties']:
-        return first['properties']
+    if isinstance(first, dict) and list(first.keys()) == ["properties"]:
+        return first["properties"]
     elif isinstance(first, dict):
         return first
     else:
@@ -511,7 +512,10 @@ def raster_statistics(
         ]
 
     mapping_dict = vector.get_fieldnames_dictionary()
-    results = [(mapping_dict[index], unwrap_row(row)) for index, row in enumerate(stats_generator)]
+    results = [
+        (mapping_dict[index], unwrap_row(row))
+        for index, row in enumerate(stats_generator)
+    ]
 
     metadata = {
         "vector": v_metadata,
@@ -524,7 +528,9 @@ def raster_statistics(
         "when": datetime.datetime.now().isoformat(),
     }
     return export_json(
-        {"data": results, "metadata": metadata}, output_file_path, compress
+        {"data": [(x, y) for x, y in results if isfinite(y)], "metadata": metadata},
+        output_file_path,
+        compress,
     )
 
 
