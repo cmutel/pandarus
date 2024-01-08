@@ -528,7 +528,7 @@ def raster_statistics(
         "when": datetime.datetime.now().isoformat(),
     }
     return export_json(
-        {"data": [(x, y) for x, y in results if isfinite(y)], "metadata": metadata},
+        {"data": [(x, y) for x, y in results if isfinite(y['mean'])], "metadata": metadata},
         output_file_path,
         compress,
     )
