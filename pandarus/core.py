@@ -511,7 +511,7 @@ def raster_statistics(
         ]
 
     mapping_dict = vector.get_fieldnames_dictionary()
-    results = [(mapping_dict[index], row) for index, row in enumerate(stats_generator)]
+    results = [(mapping_dict[index], unwrap_row(row)) for index, row in enumerate(stats_generator)]
 
     metadata = {
         "vector": v_metadata,
