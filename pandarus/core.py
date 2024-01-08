@@ -5,7 +5,7 @@ import os
 import tempfile
 import warnings
 from functools import partial
-from typing import Dict, Optional, Tuple
+from typing import Dict, Optional, Tuple, Union
 
 import fiona
 import numpy as np
@@ -385,6 +385,24 @@ def calculate_remaining(
     }
 
     return export_json({"data": data, "metadata": metadata}, output, compress)
+
+
+def unwrap_row(row: Union[dict, list, tuple]) -> dict:
+    """The default return format from `exact_extract` is `[{'properties': {'foo': 'bar'}}]`.
+
+    We need `{'foo': 'bar'}`."""
+    if isinstance(row, dict):
+        return row
+    elif not isinstance(row, (list, tuple)) and len(row) == 1:
+        raise ValueError(f"Can't process data row `{row}`")
+
+    first = row[0]
+    if isinstance(first, dict) and list(first.keys()) == ['properties']:
+        return first['properties']
+    elif isinstance(first, dict):
+        return first
+    else:
+        raise ValueError(f"Can't process data row `{row}`")
 
 
 def raster_statistics(
