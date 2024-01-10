@@ -3,10 +3,50 @@ import json
 import os
 
 import numpy as np
+import pytest
 
 from pandarus import calculate_remaining
 
 from .. import PATH_OUTSIDE, PATH_REMAIN_RESULT
+
+
+def test_calculate_remaining_invalid_schema(tmpdir, remaining_schema) -> None:
+    """Test calculate_remaining function for invalid schema."""
+    intersection_file_path = str(tmpdir.join("vector.json"))
+    del remaining_schema["features"][0]["properties"]["id"]
+    with open(intersection_file_path, "w", encoding="UTF-8") as f:
+        json.dump(remaining_schema, f)
+
+    with pytest.raises(KeyError):
+        calculate_remaining(
+            PATH_OUTSIDE, "name", intersection_file_path, out_dir=tmpdir, compress=False
+        )
+
+
+def test_calculate_remaining_invalid_id(tmpdir, remaining_schema) -> None:
+    """Test calculate_remaining function for invalid schema."""
+    intersection_file_path = str(tmpdir.join("vector.json"))
+    remaining_schema["features"][0]["properties"]["id"] = "invalid"
+    with open(intersection_file_path, "w", encoding="UTF-8") as f:
+        json.dump(remaining_schema, f)
+
+    with pytest.raises(TypeError):
+        calculate_remaining(
+            PATH_OUTSIDE, "name", intersection_file_path, out_dir=tmpdir, compress=False
+        )
+
+
+def test_calculate_remaining_invalid_measure(tmpdir, remaining_schema) -> None:
+    """Test calculate_remaining function for invalid schema."""
+    intersection_file_path = str(tmpdir.join("vector.json"))
+    remaining_schema["features"][0]["properties"]["measure"] = "invaliud"
+    with open(intersection_file_path, "w", encoding="UTF-8") as f:
+        json.dump(remaining_schema, f)
+
+    with pytest.raises(TypeError):
+        calculate_remaining(
+            PATH_OUTSIDE, "name", intersection_file_path, out_dir=tmpdir, compress=False
+        )
 
 
 def test_calculate_remaining(tmpdir) -> None:

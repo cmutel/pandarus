@@ -340,16 +340,16 @@ def calculate_remaining(
         "to_label",
         "measure",
     }:
-        raise ValueError(
+        raise KeyError(
             """Input file does not have required fields:
             id, from_label, to_label, measure"""
         )
 
     if intersections.file.schema["properties"]["id"] != "int":
-        raise ValueError("Expected value for field id is int but found something else.")
+        raise TypeError("Expected value for field id is int but found something else.")
 
     if intersections.file.schema["properties"]["measure"] != "float":
-        raise ValueError(
+        raise TypeError(
             "Expected value for field measure is float but found something else."
         )
 
