@@ -10,7 +10,6 @@ from typing import Dict, Optional, Tuple
 import fiona
 import numpy as np
 import rasterio
-from exactextract import exact_extract
 from fiona.crs import CRS
 from rasterstats.io import read_features
 from shapely.geometry import shape
@@ -396,6 +395,7 @@ def raster_statistics(
     compress: bool = True,
     fiona_kwargs: Optional[Dict] = None,
 ) -> str:
+    # pylint: disable=import-outside-toplevel
     """Create statistics by matching ``raster_file_path`` against each spatial unit in
     ``self.from_map``.
 
@@ -403,6 +403,9 @@ def raster_statistics(
     for values from ``raster_file_path``: min, mean, max, and count. Count is the number
     of raster cells intersecting the vector spatial unit. No data values in the raster
     are not included in the generated statistics.
+
+    If ``exactextract`` is installed, uses that library to calculate statistics. If not,
+    uses the ``gen_zonal_stats`` function from ``rasterstats``.
 
     Input parameters:
 
@@ -483,14 +486,32 @@ def raster_statistics(
                 """
             )
 
-        stats_generator = [
-            exact_extract(
-                rast=r,
-                vec=v,
-                ops=("min", "max", "mean", "count"),
+        try:
+            from exactextract import exact_extract
+        except ImportError:
+            warnings.warn(
+                """exactextract module not found.
+                Using gen_zonal_stats from rasterstats instead.
+                Please install exactextract if you need it."""
             )
-            for v in read_features(vector_file_path, **fiona_kwargs)
-        ]
+            from rasterstats import gen_zonal_stats
+
+            stats_generator = gen_zonal_stats(
+                vector_file_path,
+                raster_file_path,
+                band=band,
+                stats=("min", "max", "mean", "count"),
+                # **fiona_kwargs,
+            )
+        else:
+            stats_generator = [
+                exact_extract(
+                    rast=r,
+                    vec=v,
+                    ops=("min", "max", "mean", "count"),
+                )
+                for v in read_features(vector_file_path, **fiona_kwargs)
+            ]
 
     mapping_dict = vector.get_fieldnames_dictionary()
     results = [(mapping_dict[index], row) for index, row in enumerate(stats_generator)]
