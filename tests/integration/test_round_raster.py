@@ -1,6 +1,4 @@
 """Test cases for the __round_raster__ feature."""
-import os
-
 import numpy as np
 import rasterio
 
@@ -9,12 +7,9 @@ from pandarus import round_raster
 from .. import PATH_CFS
 
 
-def test_round_raster(tmpdir) -> None:
+def test_round_raster() -> None:
     """Test the round_raster function."""
-    out = os.path.join(tmpdir, "test.tif")
-
-    assert round_raster(PATH_CFS, out) == out
-
+    out = round_raster(PATH_CFS)
     with rasterio.open(out) as src:
         array = src.read(1)
         profile = src.profile
