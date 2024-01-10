@@ -556,8 +556,10 @@ def convert_to_vector(
     if out_dir is None:
         out_dir = get_appdirs_path("raster-conversion")
     else:
-        if not os.path.isdir(out_dir) or not os.access(out_dir, os.W_OK):
-            raise ValueError(f"Can't write to directory: {out_dir}")
+        if not os.path.isdir(out_dir):
+            raise NotADirectoryError(f"{out_dir} is not a directory!")
+        if not os.access(out_dir, os.W_OK):
+            raise PermissionError(f"Can't write to directory: {out_dir}")
 
     out_fp = os.path.join(out_dir, f"{sha256_file(vector_file_path)}.{band}.geojson")
     if os.path.exists(out_fp):
