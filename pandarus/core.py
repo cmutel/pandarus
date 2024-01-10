@@ -5,7 +5,7 @@ import os
 import tempfile
 import warnings
 from functools import partial
-from typing import Dict, Optional, Tuple
+from typing import Dict, List, Optional, Tuple
 
 import fiona
 import numpy as np
@@ -360,7 +360,7 @@ def calculate_remaining(
 
     proj_geom = partial(project_geom, from_proj=source.crs, to_proj="")
 
-    def get_geoms(feat):
+    def get_geoms(feat) -> List:
         return [
             shape(x["geometry"])
             for x in intersections

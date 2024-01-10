@@ -78,13 +78,7 @@ class Map:
     @property
     def geom_type(self) -> str:
         """Geometry type, as defined by vector file."""
-        geom = self.file.meta["schema"]["geometry"]
-        if geom == "Unknown":
-            geoms = {obj["geometry"]["type"] for obj in self}
-            if len(geoms) == 1:
-                return geoms.pop()
-            return "Unknown"
-        return geom
+        return self.file.meta["schema"]["geometry"]
 
     @property
     def hash(self) -> str:

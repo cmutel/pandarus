@@ -1,4 +1,4 @@
-"""Test cases for the __intersections_ module."""
+"""Test cases for the __multiprocess_ module."""
 import numpy as np
 import pytest
 from shapely.geometry import Polygon
@@ -10,7 +10,7 @@ from pandarus.utils.multiprocess import (
     intersection_worker,
 )
 
-from .. import PATH_GC, PATH_GRID, PATH_POINT, PATH_SQUARE
+from ... import PATH_GC, PATH_GRID, PATH_POINT, PATH_SQUARE
 
 
 def test_chunker() -> None:

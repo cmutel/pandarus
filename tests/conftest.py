@@ -1,12 +1,12 @@
 """Fixtures for __pandarus__."""
-from typing import Dict
+from typing import Callable, Dict
 
 import pytest
 from shapely.geometry import MultiPolygon
 
 
 @pytest.fixture
-def equal_intersections():
+def equal_intersections() -> Callable[[Dict, Dict], bool]:
     """Return a function that checks if two intersections are equal."""
 
     def _equal_intersections(intersections1: Dict, intersections2: Dict) -> bool:

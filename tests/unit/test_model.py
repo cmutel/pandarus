@@ -1,5 +1,6 @@
-"""Test cases for the Mao class."""
+"""Test cases for the __model__ module."""
 import os
+from typing import Dict
 
 import fiona
 import pytest
@@ -10,7 +11,13 @@ import pandarus
 from pandarus.errors import DuplicateFieldIDError
 from pandarus.model import Map
 
-from ... import PATH_COUNTRIES, PATH_DUPLICATES, PATH_GRID, PATH_RASTER
+from .. import PATH_COUNTRIES, PATH_DUPLICATES, PATH_GRID, PATH_RASTER
+
+
+def test_map_init_file_not_found() -> None:
+    """Test that a FileNotFoundError is raised when a file is not found."""
+    with pytest.raises(FileNotFoundError):
+        Map("invalid_path")
 
 
 def test_init() -> None:
@@ -31,7 +38,7 @@ def test_metadata(monkeypatch) -> None:
     m = Map(PATH_GRID, "name")
     assert not m.metadata
 
-    def fake_open(_, **others):
+    def fake_open(_, **others) -> Dict:
         return others
 
     monkeypatch.setattr(pandarus.model, "check_dataset_type", lambda x: "vector")
@@ -40,6 +47,12 @@ def test_metadata(monkeypatch) -> None:
     m = Map(PATH_GRID, "name", foo="bar")
     assert m.metadata == {"foo": "bar"}
     assert m.file == {"foo": "bar"}
+
+
+def test_map_get_fieldnames_dictionary_no_field_name() -> None:
+    """Test that a ValueError is raised when no field_name is given."""
+    with pytest.raises(ValueError):
+        Map(PATH_GRID).get_fieldnames_dictionary()
 
 
 def test_get_fieldnames_dictionary() -> None:

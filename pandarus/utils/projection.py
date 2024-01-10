@@ -11,7 +11,7 @@ MOLLWEIDE = (
 )
 
 
-def wgs84(crs: str):
+def wgs84(crs: str) -> str:
     """Fix no CRS or fiona giving abbreviated wgs84 definition.
     Returns WGS84 if ``s`` is falsey."""
 
@@ -20,7 +20,11 @@ def wgs84(crs: str):
     return crs
 
 
-def project_geom(geom: BaseGeometry, from_proj: str = None, to_proj: str = None):
+def project_geom(
+    geom: BaseGeometry,
+    from_proj: str = None,
+    to_proj: str = None,
+) -> BaseGeometry:
     """
     Project a ``shapely`` geometry, and returns a new geometry of the same type from the
     transformed coordinates.

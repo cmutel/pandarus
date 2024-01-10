@@ -33,19 +33,20 @@ def check_dataset_type(file_path: str) -> str:
 
     ``file_path`` is a file path of a GIS dataset file.
 
-    Returns ``'vector'`` or ``'raster'``. Raises a ``ValueError`` if the file can't be
-    opened with fiona or rasterio."""
+    Returns ``'vector'`` or ``'raster'``.
+
+    Raises:
+    * ``MalformedMetaError`` if the file is a vector but the geometry type is unknown.
+    * ``UnknownDatasetTypeError`` if the file can't be opened with fiona or rasterio."""
     try:
         with fiona.open(file_path) as ds:
-            if ds.meta["schema"]["geometry"] != "None":
+            if ds.meta["schema"]["geometry"] != "Unknown":
                 return "vector"
             raise MalformedMetaError
-    except (DataIOError, DriverError) as fiona_exc:
+    except (DataIOError, DriverError):
         try:
             with rasterio.open(file_path) as ds:
-                if ds.meta:
-                    return "raster"
-                raise MalformedMetaError from fiona_exc
+                return "raster"
         except Exception as exc:
             raise UnknownDatasetTypeError(file_path) from exc
 
