@@ -223,7 +223,7 @@ def intersections_from_intersection(
     with fiona.open(vector_file_path) as source:
         for key in ("id", "from_label", "to_label", "measure"):
             if key not in source.schema["properties"]:
-                raise ValueError(
+                raise KeyError(
                     f"Input file {vector_file_path} does not have required field: {key}"
                 )
         data = [feat["properties"] for feat in source]

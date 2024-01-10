@@ -1,13 +1,49 @@
 """ Test cases for the __intersections_from_intersection__ feature. """
+import json
 import os
 import shutil
 
+import fiona
 import pytest
 
 from pandarus import intersections_from_intersection
 from pandarus.utils.io import import_json
 
 from .. import PATH_INTER_RES, PATH_INTER_RES_DECOMP, PATH_INTER_RES_MD
+
+
+def test_intersections_from_intersection_metadata_not_found(tmpdir) -> None:
+    """Test intersections_from_intersection function for metadata file not found."""
+    with pytest.raises(FileNotFoundError):
+        intersections_from_intersection(
+            PATH_INTER_RES, "not_found.json", out_dir=tmpdir
+        )
+
+
+def test_intersections_from_intersection_metadata_invalid_schema(tmpdir) -> None:
+    """Test intersections_from_intersection function for invalid metadata schema."""
+    vector_file_path = str(tmpdir.join("vector.shp"))
+    metadata_file_path = str(tmpdir.join("metadata.json"))
+
+    # Create dummy vector file
+    with fiona.Env():
+        with fiona.open(
+            vector_file_path,
+            "w",
+            driver="ESRI Shapefile",
+            crs="EPSG:4326",
+            schema={"geometry": "Polygon", "properties": {"id": "int"}},
+        ):
+            pass
+
+    # Create dummy metadata file
+    with open(metadata_file_path, "w", encoding="UTF-8") as f:
+        json.dump({"metadata": "dummy"}, f)
+
+    with pytest.raises(KeyError):
+        intersections_from_intersection(
+            vector_file_path, metadata_file_path, out_dir=tmpdir
+        )
 
 
 def test_intersections_from_intersection(tmpdir) -> None:
