@@ -39,8 +39,8 @@ def get_jobs(
     # Want a reasonable chunk size
     # But also want a maximum of 200 jobs
     # Both numbers picked more or less at random...
-    chunk_size = int(max(max_chunk_size, map_size / max_jobs))
-    num_jobs = int(math.ceil(map_size / float(chunk_size)))
+    chunk_size = max(max_chunk_size, map_size // max_jobs)
+    num_jobs = math.ceil(map_size / chunk_size)
     return chunk_size, num_jobs
 
 
