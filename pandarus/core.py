@@ -20,6 +20,7 @@ from .utils.conversion import (
     check_dataset_type,
     dict_to_features,
     round_to_x_significant_digits,
+    unwrap_exact_extract_stats,
 )
 from .utils.geometry import get_geom_remaining_measure
 from .utils.io import export_json, get_appdirs_path, import_json, sha256_file
@@ -501,17 +502,18 @@ def raster_statistics(
                 raster_file_path,
                 band=band,
                 stats=("min", "max", "mean", "count"),
-                # **fiona_kwargs,
             )
         else:
-            stats_generator = [
-                exact_extract(
-                    rast=r,
-                    vec=v,
-                    ops=("min", "max", "mean", "count"),
-                )
-                for v in read_features(vector_file_path, **fiona_kwargs)
-            ]
+            stats_generator = unwrap_exact_extract_stats(
+                [
+                    exact_extract(
+                        rast=r,
+                        vec=v,
+                        ops=("min", "max", "mean", "count"),
+                    )
+                    for v in read_features(vector_file_path, **fiona_kwargs)
+                ]
+            )
 
     mapping_dict = vector.get_fieldnames_dictionary()
     results = [(mapping_dict[index], row) for index, row in enumerate(stats_generator)]

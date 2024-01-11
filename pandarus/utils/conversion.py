@@ -1,5 +1,5 @@
 """Conversion utilities for Pandarus."""
-from typing import Any, Dict, Generator
+from typing import Any, Dict, Generator, List
 
 import fiona
 import numpy as np
@@ -59,3 +59,9 @@ def round_to_x_significant_digits(array: NDArray, x: int = 3) -> NDArray:
         indices = np.where(num_digits == value)
         array[indices] = np.round(array[indices], value)
     return array
+
+
+def unwrap_exact_extract_stats(results: List[List[Dict]]) -> List[Dict[str, float]]:
+    """The default return format from `exact_extract` is
+    `[{'properties': {'foo': 'bar'}}]`. We need `{'foo': 'bar'}`."""
+    return [result[0]["properties"] for result in results]

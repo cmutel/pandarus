@@ -67,55 +67,39 @@ def test_rasterstats_exactextract(tmpdir) -> None:
         expected = [
             [
                 "grid cell 0",
-                [
-                    {
-                        "properties": {
-                            "min": 30.0,
-                            "max": 47.0,
-                            "mean": 38.29999923706055,
-                            "count": 10.0,
-                        }
-                    },
-                ],
+                {
+                    "min": 30.0,
+                    "max": 47.0,
+                    "mean": 38.29999923706055,
+                    "count": 10.0,
+                },
             ],
             [
                 "grid cell 1",
-                [
-                    {
-                        "properties": {
-                            "min": 0.0,
-                            "max": 17.0,
-                            "mean": 8.300000190734863,
-                            "count": 10.0,
-                        }
-                    },
-                ],
+                {
+                    "min": 0.0,
+                    "max": 17.0,
+                    "mean": 8.300000190734863,
+                    "count": 10.0,
+                },
             ],
             [
                 "grid cell 2",
-                [
-                    {
-                        "properties": {
-                            "min": 32.0,
-                            "max": 49.0,
-                            "mean": 40.70000076293945,
-                            "count": 10.0,
-                        }
-                    },
-                ],
+                {
+                    "min": 32.0,
+                    "max": 49.0,
+                    "mean": 40.70000076293945,
+                    "count": 10.0,
+                },
             ],
             [
                 "grid cell 3",
-                [
-                    {
-                        "properties": {
-                            "min": 2.0,
-                            "max": 19.0,
-                            "mean": 10.699999809265137,
-                            "count": 10.0,
-                        }
-                    },
-                ],
+                {
+                    "min": 2.0,
+                    "max": 19.0,
+                    "mean": 10.699999809265137,
+                    "count": 10.0,
+                },
             ],
         ]
 
