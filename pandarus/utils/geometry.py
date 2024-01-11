@@ -52,7 +52,7 @@ def recursive_geom_finder(geom: BaseGeometry, kind: str) -> Optional[BaseGeometr
         "polygon": MultiPolygon,
     }
 
-    def recurse(geom, types):
+    def recurse(geom, types) -> Iterator[BaseGeometry]:
         if isinstance(geom, types):
             yield geom
         if isinstance(geom, GeometryCollection):

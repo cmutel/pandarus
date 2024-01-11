@@ -1,12 +1,15 @@
-"""Test cases for the __integration__ module."""
+"""Test cases for the __intersect__ feature."""
 import json
+import os
 from math import sqrt
+from typing import Any, Dict, Tuple
 
 import fiona
 import numpy as np
+from fiona import Feature
 from shapely import MultiPolygon
 
-from pandarus import intersect
+from pandarus import Map, intersect
 from pandarus.utils.conversion import round_to_x_significant_digits
 
 from .. import (
@@ -18,11 +21,130 @@ from .. import (
     PATH_OUTSIDE,
     PATH_POINTS,
     PATH_POINTS_PROJ,
+    PATH_SQUARE,
     PATH_SQUARE_PROJ,
 )
 
 
-def test_intersection_polygon(tmpdir):
+def fake_intersection(
+    first,
+    second,
+    indices=None,
+    cpus=None,
+    log_dir=None,
+) -> Dict[Tuple[int, int], Dict[str, Any]]:
+    # pylint: disable=unused-argument
+    """Fake intersection function."""
+    _, geom = next(Map(second).iter_latlong())
+    return {(0, 0): {"measure": 42, "geom": geom}}
+
+
+def test_intersect(monkeypatch, tmpdir) -> None:
+    """Test intersect function."""
+    monkeypatch.setattr("pandarus.core.intersection_dispatcher", fake_intersection)
+
+    vector_fp, data_fp = intersect(
+        PATH_GRID,
+        "name",
+        PATH_SQUARE,
+        "name",
+        out_dir=tmpdir,
+        compress=False,
+        cpus=None,
+    )
+
+    with open(data_fp, encoding="UTF-8") as f:
+        data = json.load(f)
+        assert data["data"] == [["grid cell 0", "single", 42]]
+        assert data["metadata"].keys() == {"first", "second", "when"}
+        assert data["metadata"]["first"].keys() == {
+            "field",
+            "filename",
+            "path",
+            "sha256",
+        }
+        assert data["metadata"]["second"].keys() == {
+            "field",
+            "filename",
+            "path",
+            "sha256",
+        }
+
+        expected = {
+            "id": "0",
+            "type": "Feature",
+            "geometry": {
+                "coordinates": [
+                    [(0.5, 0.5), (0.5, 1.5), (1.5, 1.5), (1.5, 0.5), (0.5, 0.5)]
+                ],
+                "type": "Polygon",
+            },
+            "properties": dict(
+                [
+                    ("id", 0),
+                    ("to_label", "single"),
+                    ("from_label", "grid cell 0"),
+                    ("measure", 42.0),
+                ]
+            ),
+        }
+        assert next(iter(fiona.open(vector_fp))) == Feature.from_dict(expected)
+
+
+def test_intersect_default_path(monkeypatch) -> None:
+    """Test intersect function with default path."""
+    monkeypatch.setattr(
+        "pandarus.utils.multiprocess.intersection_dispatcher", fake_intersection
+    )
+
+    vector_fp, data_fp = intersect(PATH_GRID, "name", PATH_SQUARE, "name", cpus=None)
+
+    print(vector_fp)
+    print(data_fp)
+
+    assert os.path.isfile(vector_fp)
+    os.remove(vector_fp)
+    assert os.path.isfile(data_fp)
+    os.remove(data_fp)
+
+
+def test_intersect_overwrite_existing(monkeypatch, tmpdir) -> None:
+    """Test intersect function overwriting existing file."""
+    monkeypatch.setattr("pandarus.core.intersection_dispatcher", fake_intersection)
+
+    vector_fp, data_fp = intersect(
+        PATH_GRID,
+        "name",
+        PATH_SQUARE,
+        "name",
+        out_dir=tmpdir,
+        compress=False,
+        cpus=None,
+    )
+
+    with open(vector_fp, "w", encoding="UTF-8") as f:
+        f.write("Weeeee!")
+    with open(data_fp, "w", encoding="UTF-8") as f:
+        f.write("Wooooo!")
+
+    vector_fp, data_fp = intersect(
+        PATH_GRID,
+        "name",
+        PATH_SQUARE,
+        "name",
+        out_dir=tmpdir,
+        compress=False,
+        cpus=None,
+    )
+
+    with open(data_fp, encoding="UTF-8") as f:
+        data = json.load(f)
+        assert data["data"] == [["grid cell 0", "single", 42]]
+
+    assert len(fiona.open(vector_fp)) == 1
+
+
+def test_intersection_polygon(tmpdir) -> None:
     """Test the intersection function with a polygon input."""
     area = 1 / 4 * (4e7 / 360) ** 2
 
@@ -92,7 +214,7 @@ def test_intersection_polygon(tmpdir):
             assert np.isclose(feature["properties"]["measure"], area, rtol=1e-2)
 
 
-def test_intersection_polygon_integer_indices(tmpdir):
+def test_intersection_polygon_integer_indices(tmpdir) -> None:
     """Test the intersection function with a polygon input and integer indices."""
     area = 1 / 4 * (4e7 / 360) ** 2
 
@@ -163,7 +285,7 @@ def test_intersection_polygon_integer_indices(tmpdir):
             assert np.isclose(feature["properties"]["measure"], area, rtol=1e-2)
 
 
-def test_intersection_polygon_projection(tmpdir):
+def test_intersection_polygon_projection(tmpdir) -> None:
     """Test the intersection function with a polygon input and projection."""
     area = 1 / 4 * (4e7 / 360) ** 2
 
@@ -234,7 +356,7 @@ def test_intersection_polygon_projection(tmpdir):
             assert np.isclose(feature["properties"]["measure"], area, rtol=1e-2)
 
 
-def test_intersection_line(tmpdir):
+def test_intersection_line(tmpdir) -> None:
     """Test the intersection function with a line input."""
     one_degree = 4e7 / 360
 
@@ -309,7 +431,7 @@ def test_intersection_line(tmpdir):
             }
 
 
-def test_intersection_line_projection(tmpdir):
+def test_intersection_line_projection(tmpdir) -> None:
     """Test the intersection function with a line input and projection."""
     one_degree = 4e7 / 360
 
@@ -399,7 +521,7 @@ def test_intersection_line_projection(tmpdir):
             }
 
 
-def test_intersection_point(tmpdir):
+def test_intersection_point(tmpdir) -> None:
     """Test the intersection function with a point input."""
     vector_fp, data_fp = intersect(
         PATH_POINTS,
@@ -462,7 +584,7 @@ def test_intersection_point(tmpdir):
             }
 
 
-def test_intersection_point_projection(tmpdir):
+def test_intersection_point_projection(tmpdir) -> None:
     """Test the intersection function with a point input and projection."""
     vector_fp, data_fp = intersect(
         PATH_POINTS_PROJ,

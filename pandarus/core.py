@@ -5,13 +5,11 @@ import os
 import tempfile
 import warnings
 from functools import partial
-from math import isfinite
-from typing import Dict, Optional, Tuple, Union
+from typing import Dict, List, Optional, Tuple
 
 import fiona
 import numpy as np
 import rasterio
-from exactextract import exact_extract
 from fiona.crs import CRS
 from rasterstats.io import read_features
 from shapely.geometry import shape
@@ -22,6 +20,7 @@ from .utils.conversion import (
     check_dataset_type,
     dict_to_features,
     round_to_x_significant_digits,
+    unwrap_exact_extract_stats,
 )
 from .utils.geometry import get_geom_remaining_measure
 from .utils.io import export_json, get_appdirs_path, import_json, sha256_file
@@ -225,7 +224,7 @@ def intersections_from_intersection(
     with fiona.open(vector_file_path) as source:
         for key in ("id", "from_label", "to_label", "measure"):
             if key not in source.schema["properties"]:
-                raise ValueError(
+                raise KeyError(
                     f"Input file {vector_file_path} does not have required field: {key}"
                 )
         data = [feat["properties"] for feat in source]
@@ -342,16 +341,16 @@ def calculate_remaining(
         "to_label",
         "measure",
     }:
-        raise ValueError(
+        raise KeyError(
             """Input file does not have required fields:
             id, from_label, to_label, measure"""
         )
 
     if intersections.file.schema["properties"]["id"] != "int":
-        raise ValueError("Expected value for field id is int but found something else.")
+        raise TypeError("Expected value for field id is int but found something else.")
 
     if intersections.file.schema["properties"]["measure"] != "float":
-        raise ValueError(
+        raise TypeError(
             "Expected value for field measure is float but found something else."
         )
 
@@ -362,7 +361,7 @@ def calculate_remaining(
 
     proj_geom = partial(project_geom, from_proj=source.crs, to_proj="")
 
-    def get_geoms(feat):
+    def get_geoms(feat) -> List:
         return [
             shape(x["geometry"])
             for x in intersections
@@ -388,24 +387,6 @@ def calculate_remaining(
     return export_json({"data": data, "metadata": metadata}, output, compress)
 
 
-def unwrap_row(row: Union[dict, list, tuple]) -> dict:
-    """The default return format from `exact_extract` is `[{'properties': {'foo': 'bar'}}]`.
-
-    We need `{'foo': 'bar'}`."""
-    if isinstance(row, dict):
-        return row
-    elif not isinstance(row, (list, tuple)) and len(row) == 1:
-        raise ValueError(f"Can't process data row `{row}`")
-
-    first = row[0]
-    if isinstance(first, dict) and list(first.keys()) == ["properties"]:
-        return first["properties"]
-    elif isinstance(first, dict):
-        return first
-    else:
-        raise ValueError(f"Can't process data row `{row}`")
-
-
 def raster_statistics(
     vector_file_path: str,
     identifying_field: str,
@@ -415,6 +396,7 @@ def raster_statistics(
     compress: bool = True,
     fiona_kwargs: Optional[Dict] = None,
 ) -> str:
+    # pylint: disable=import-outside-toplevel
     """Create statistics by matching ``raster_file_path`` against each spatial unit in
     ``self.from_map``.
 
@@ -422,6 +404,9 @@ def raster_statistics(
     for values from ``raster_file_path``: min, mean, max, and count. Count is the number
     of raster cells intersecting the vector spatial unit. No data values in the raster
     are not included in the generated statistics.
+
+    If ``exactextract`` is installed, uses that library to calculate statistics. If not,
+    uses the ``gen_zonal_stats`` function from ``rasterstats``.
 
     Input parameters:
 
@@ -502,20 +487,36 @@ def raster_statistics(
                 """
             )
 
-        stats_generator = [
-            exact_extract(
-                rast=r,
-                vec=v,
-                ops=("min", "max", "mean", "count"),
+        try:
+            from exactextract import exact_extract
+        except ImportError:
+            warnings.warn(
+                """exactextract module not found.
+                Using gen_zonal_stats from rasterstats instead.
+                Please install exactextract if you need it."""
             )
-            for v in read_features(vector_file_path, **fiona_kwargs)
-        ]
+            from rasterstats import gen_zonal_stats
+
+            stats_generator = gen_zonal_stats(
+                vector_file_path,
+                raster_file_path,
+                band=band,
+                stats=("min", "max", "mean", "count"),
+            )
+        else:
+            stats_generator = unwrap_exact_extract_stats(
+                [
+                    exact_extract(
+                        rast=r,
+                        vec=v,
+                        ops=("min", "max", "mean", "count"),
+                    )
+                    for v in read_features(vector_file_path, **fiona_kwargs)
+                ]
+            )
 
     mapping_dict = vector.get_fieldnames_dictionary()
-    results = [
-        (mapping_dict[index], unwrap_row(row))
-        for index, row in enumerate(stats_generator)
-    ]
+    results = [(mapping_dict[index], row) for index, row in enumerate(stats_generator)]
 
     metadata = {
         "vector": v_metadata,
@@ -528,9 +529,7 @@ def raster_statistics(
         "when": datetime.datetime.now().isoformat(),
     }
     return export_json(
-        {"data": [(x, y) for x, y in results if isfinite(y['mean'])], "metadata": metadata},
-        output_file_path,
-        compress,
+        {"data": results, "metadata": metadata}, output_file_path, compress
     )
 
 
@@ -559,8 +558,10 @@ def convert_to_vector(
     if out_dir is None:
         out_dir = get_appdirs_path("raster-conversion")
     else:
-        if not os.path.isdir(out_dir) or not os.access(out_dir, os.W_OK):
-            raise ValueError(f"Can't write to directory: {out_dir}")
+        if not os.path.isdir(out_dir):
+            raise NotADirectoryError(f"{out_dir} is not a directory!")
+        if not os.access(out_dir, os.W_OK):
+            raise PermissionError(f"Can't write to directory: {out_dir}")
 
     out_fp = os.path.join(out_dir, f"{sha256_file(vector_file_path)}.{band}.geojson")
     if os.path.exists(out_fp):

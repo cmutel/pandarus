@@ -1,5 +1,6 @@
 """pandarus"""
 __all__ = (
+    "__version__",
     "Map",
     "calculate_remaining",
     "clean_raster",
@@ -21,3 +22,4 @@ from .core import (
     round_raster,
 )
 from .model import Map
+from .version import __version__

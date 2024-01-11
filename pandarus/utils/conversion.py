@@ -1,5 +1,5 @@
 """Conversion utilities for Pandarus."""
-from typing import Any, Dict, Generator
+from typing import Any, Dict, Generator, List
 
 import fiona
 import numpy as np
@@ -33,19 +33,20 @@ def check_dataset_type(file_path: str) -> str:
 
     ``file_path`` is a file path of a GIS dataset file.
 
-    Returns ``'vector'`` or ``'raster'``. Raises a ``ValueError`` if the file can't be
-    opened with fiona or rasterio."""
+    Returns ``'vector'`` or ``'raster'``.
+
+    Raises:
+    * ``MalformedMetaError`` if the file is a vector but the geometry type is unknown.
+    * ``UnknownDatasetTypeError`` if the file can't be opened with fiona or rasterio."""
     try:
         with fiona.open(file_path) as ds:
-            if ds.meta["schema"]["geometry"] != "None":
+            if ds.meta["schema"]["geometry"] != "Unknown":
                 return "vector"
             raise MalformedMetaError
-    except (DataIOError, DriverError) as fiona_exc:
+    except (DataIOError, DriverError):
         try:
             with rasterio.open(file_path) as ds:
-                if ds.meta:
-                    return "raster"
-                raise MalformedMetaError from fiona_exc
+                return "raster"
         except Exception as exc:
             raise UnknownDatasetTypeError(file_path) from exc
 
@@ -58,3 +59,9 @@ def round_to_x_significant_digits(array: NDArray, x: int = 3) -> NDArray:
         indices = np.where(num_digits == value)
         array[indices] = np.round(array[indices], value)
     return array
+
+
+def unwrap_exact_extract_stats(results: List[List[Dict]]) -> List[Dict[str, float]]:
+    """The default return format from `exact_extract` is
+    `[{'properties': {'foo': 'bar'}}]`. We need `{'foo': 'bar'}`."""
+    return [result[0]["properties"] for result in results]

@@ -1,6 +1,6 @@
 """Helper classes for Pandarus."""
 import os
-from typing import Any, Dict, Generator, List
+from typing import Any, Dict, Generator, List, Tuple
 
 import rasterio
 import rasterio.features
@@ -31,7 +31,7 @@ class ExtractionHelper:
         self._ys: List[float] = []
 
     @property
-    def bbox(self):
+    def bbox(self) -> Tuple[float, float, float, float]:
         """Return the bounding box of the collection."""
         return min(self._xs), min(self._ys), max(self._xs), max(self._ys)
 
