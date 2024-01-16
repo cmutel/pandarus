@@ -34,7 +34,6 @@ Pandarus provides the following functionality:
 ## Requirements
 
 * [appdirs](https://pypi.python.org/pypi/appdirs)
-* [exactextract](https://github.com/isciences/exactextract.git)
 * [fiona](https://pypi.python.org/pypi/Fiona)
 * [numpy](http://www.numpy.org/)
 * [pyproj](https://pypi.python.org/pypi/pyproj)
