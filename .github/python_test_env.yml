@@ -5,3 +5,5 @@ dependencies:
   - gdal
   - geos
   - pybind11
+  - pip:
+    - git+https://github.com/isciences/exactextract.git#subdirectory=python&egg=exactextract

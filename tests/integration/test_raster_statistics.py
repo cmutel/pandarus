@@ -20,6 +20,9 @@ class ExactExtractMockModule:
         raise ImportError("No module named 'exact_extract'")
 
 
+@pytest.mark.skipif(
+    not pytest.importorskip("exactextract"), reason="exactextract not available"
+)
 def test_rasterstats_exactextract_invalid() -> None:
     """Test rasterstats using exactextract with invalid input."""
     with pytest.raises(ValueError):
@@ -33,6 +36,9 @@ def test_rasterstats_gen_zonal_stats_invalid(monkeypatch) -> None:
         raster_statistics(PATH_GRID, "name", PATH_SQUARE)
 
 
+@pytest.mark.skipif(
+    not pytest.importorskip("exactextract"), reason="exactextract not available"
+)
 def test_rasterstats_exactextract_new_path() -> None:
     """Test rasterstats using exactextract with new path."""
     fp = raster_statistics(PATH_GRID, "name", PATH_RANGE_RASTER, compress=False)
@@ -53,6 +59,9 @@ def test_rasterstats_gen_zonal_stats_new_path(monkeypatch) -> None:
         os.remove(fp)
 
 
+@pytest.mark.skipif(
+    not pytest.importorskip("exactextract"), reason="exactextract not available"
+)
 def test_rasterstats_exactextract(tmpdir) -> None:
     """Test rasterstats using exactextract with output path."""
     fp = os.path.join(tmpdir, "test.json")
@@ -187,6 +196,9 @@ def test_rasterstats_gen_zonal_stats(tmpdir, monkeypatch) -> None:
             assert result["data"] == expected
 
 
+@pytest.mark.skipif(
+    not pytest.importorskip("exactextract"), reason="exactextract not available"
+)
 def test_rasterstats_exactextract_overwrite_existing(tmpdir) -> None:
     """Test rasterstats using exactextract overwriting existing file."""
     fp = os.path.join(tmpdir, "test.json")
@@ -226,6 +238,9 @@ def test_rasterstats_gen_zonal_stats_overwrite_existing(tmpdir, monkeypatch) -> 
             assert content != "Original content"
 
 
+@pytest.mark.skipif(
+    not pytest.importorskip("exactextract"), reason="exactextract not available"
+)
 def test_rasterstats_exactextract_mismatched_crs(tmpdir) -> None:
     """Test rasterstats using exactextract with mismatched CRS."""
     fp = os.path.join(tmpdir, "test.json")
