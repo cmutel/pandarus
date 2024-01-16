@@ -73,11 +73,11 @@ jobs:
           .github/python_test_env.yml
         if: steps.cache.outputs.cache-hit != 'true'
 
-      - name: Install package
-        run: pip install .[test]
-
       - name: Install exactextract
         run: pip install git+https://github.com/isciences/exactextract.git@af9267a#subdirectory=python&egg=exactextract
+
+      - name: Install package
+        run: pip install .[test]
 
       - name: Lint with flake8
         run: |
