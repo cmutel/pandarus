@@ -59,9 +59,6 @@ def test_rasterstats_gen_zonal_stats_new_path(monkeypatch) -> None:
         os.remove(fp)
 
 
-@pytest.mark.skipif(
-    not pytest.importorskip("exactextract"), reason="exactextract not available"
-)
 def test_rasterstats_exactextract(tmpdir) -> None:
     """Test rasterstats using exactextract with output path."""
     fp = os.path.join(tmpdir, "test.json")

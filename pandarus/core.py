@@ -40,7 +40,7 @@ def intersect(
     driver: str = "GeoJSON",
     compress: bool = True,
     log_dir: Optional[str] = None,
-):
+) -> Tuple[str, str]:
     """Calculate the intersection of two vector spatial datasets.
 
     The first spatial input file **must** have only one type of geometry, i.e. points,
@@ -274,7 +274,7 @@ def calculate_remaining(
     source_field: str,
     intersection_file_path: str,
     source_kwargs: Optional[Dict] = None,
-    out_dir: Optional[Dict] = None,
+    out_dir: Optional[str] = None,
     compress: bool = True,
 ) -> str:
     """Calculate the remaining area/length/number of points left out of an intersections
