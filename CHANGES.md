@@ -1,5 +1,10 @@
 # Changes
 
+### 2.0.1 (2024-03-18)
+
+- Fixed some type hinting
+- Removed skipping exactextract tests
+
 ### 2.0.0 (2023-12-24)
 
 - Upgrade to python 3.8+
