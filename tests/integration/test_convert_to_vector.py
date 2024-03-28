@@ -1,4 +1,5 @@
 """Test cases for the __convert_to_vector__ feature."""
+
 import os
 
 import fiona

@@ -1,4 +1,5 @@
 """Test cases for the __projection__ module."""
+
 from shapely.geometry import (
     GeometryCollection,
     MultiLineString,

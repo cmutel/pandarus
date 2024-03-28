@@ -1,4 +1,5 @@
 """Test cases for the __clean_raster__ feature."""
+
 import os
 from typing import Dict
 

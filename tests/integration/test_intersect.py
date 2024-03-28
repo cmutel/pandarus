@@ -1,4 +1,5 @@
 """Test cases for the __intersect__ feature."""
+
 import json
 import os
 from math import sqrt

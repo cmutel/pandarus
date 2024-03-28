@@ -1,4 +1,5 @@
 """Test cases for the __round_raster__ feature."""
+
 import numpy as np
 import rasterio
 

@@ -1,4 +1,5 @@
 """Test cases for the __geometry__ module."""
+
 import numpy as np
 import pytest
 from shapely.geometry import (

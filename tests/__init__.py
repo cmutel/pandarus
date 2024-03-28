@@ -1,4 +1,5 @@
 """Test suite for the __pandarus__ package."""
+
 import os
 
 PATH_DATA: str = os.path.abspath(os.path.join(os.path.dirname(__file__), "data"))

@@ -1,4 +1,5 @@
 """Fixtures for __pandarus__."""
+
 from typing import Any, Callable, Dict
 
 import pytest

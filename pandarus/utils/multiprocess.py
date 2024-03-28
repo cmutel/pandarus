@@ -1,4 +1,5 @@
 """Calculate intersections between two maps."""
+
 import logging
 import math
 import multiprocessing

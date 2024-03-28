@@ -1,4 +1,5 @@
 """IO utilities for Pandarus."""
+
 import bz2
 import hashlib
 import json
@@ -28,8 +29,10 @@ def export_json(
     Returns the filepath of the JSON file. Returned filepath is not necessarily
     ``filepath``, if ``compress`` is ``True``."""
     filepath = filepath + ".bz2" if compress else filepath
-    with bz2.open(filepath, "wt", encoding="utf-8") if compress else open(
-        filepath, "w", encoding="utf-8"
+    with (
+        bz2.open(filepath, "wt", encoding="utf-8")
+        if compress
+        else open(filepath, "w", encoding="utf-8")
     ) as f:
         json.dump(data, f, ensure_ascii=False)
     return filepath
@@ -39,9 +42,11 @@ def import_json(filepath: str) -> Dict[str, Any]:
     """Load a JSON file. Can be compressed with ``bz2`` - if so, it should have the
     extension ``.bz2``.
     Returns the data in the JSON file."""
-    with bz2.open(filepath, "rt", encoding="utf-8") if filepath.endswith(
-        ".bz2"
-    ) else open(filepath, "r", encoding="UTF-8") as f:
+    with (
+        bz2.open(filepath, "rt", encoding="utf-8")
+        if filepath.endswith(".bz2")
+        else open(filepath, "r", encoding="UTF-8")
+    ) as f:
         data = json.load(f)
     return data
 

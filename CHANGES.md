@@ -1,5 +1,9 @@
 # Changes
 
+### 2.0.2 (2024-03-28)
+
+- Fixed some packaging issues
+
 ### 2.0.1 (2024-03-18)
 
 - Fixed some type hinting

@@ -1,4 +1,5 @@
 """Test cases for the __raster_statistics__ feature."""
+
 import json
 import os
 import sys

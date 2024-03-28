@@ -1,4 +1,5 @@
 """ Test cases for the __intersections_from_intersection__ feature. """
+
 import json
 import os
 import shutil
