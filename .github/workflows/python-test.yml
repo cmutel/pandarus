@@ -74,7 +74,7 @@ jobs:
         if: steps.cache.outputs.cache-hit != 'true'
 
       - name: Install package
-        run: pip install .[test]
+        run: pip install .[testing]
 
       - name: Run unit tests
         run: pytest tests/unit
