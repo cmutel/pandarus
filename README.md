@@ -21,7 +21,7 @@
 
 Pandarus is a GIS software toolkit for regionalized life cycle assessment. It is designed to work with [brightway LCA framework](https://brightwaylca.org), [brightway2-regional](https://bitbucket.org/cmutel/brightway2-regional), and [Constructive Geometries](https://bitbucket.org/cmutel/constructive-geometries).
 
-For more information, including installation instructions, see the [online documentation](https://pandarus.readthedocs.io/), including a [usage example](https://github.com/cmutel/pandarus/blob/master/docs/usage_example.ipynb). Pandarus is only compatible with >= Python 3.8.
+For more information, including installation instructions, see the [online documentation](https://pandarus.readthedocs.io/), including a [usage example](https://github.com/cmutel/pandarus/blob/master/docs/usage_example.ipynb). Pandarus is only compatible with >= Python 3.9.
 
 Pandarus provides the following functionality:
 

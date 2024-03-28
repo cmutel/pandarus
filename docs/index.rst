@@ -134,13 +134,13 @@ However, it is easy to run into errors if geospatial libraries like fiona, raste
 
 .. code-block:: bash
 
-    conda create -n <virtualenv name> python=3.8
+    conda create -n <virtualenv name> python=3.9
     activate <virtualenv name>  # Could also be source activate <virtualenv name>
     conda install -c conda-forge -c cmutel pandarus
 
 You should replace `<virtualenv name>` with a name you will remember.
 
-Pandarus is only compatible with Python >= 3.8. Source code is on `GitHub <https://github.com/cmutel/pandarus>`__.
+Pandarus is only compatible with Python >= 3.9. Source code is on `GitHub <https://github.com/cmutel/pandarus>`__.
 
 Requirements
 ------------

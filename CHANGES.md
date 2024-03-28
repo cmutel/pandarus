@@ -3,6 +3,7 @@
 ### 2.0.2 (2024-03-28)
 
 - Fixed some packaging issues
+- No long supports python<3.9
 
 ### 2.0.1 (2024-03-18)
 
